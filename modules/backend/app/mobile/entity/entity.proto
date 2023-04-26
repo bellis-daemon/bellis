@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+package bellis.backend.mobile.entity;
+
+option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/entity';
+
+message EntityID{
+  string ID =1;
+  optional int32 scheme_id = 2;
+}
+
+message EntityStatus{
+  string ID = 1;
+  bool live = 2;
+  repeated bool live_series = 3;
+  string sentry_time = 4;
+  string err_message = 5;
+  google.protobuf.Struct fields = 6;
+}
+
+message AllEntityStatus{
+  repeated EntityStatus status = 1;
+}
+
+message EntitySeries{
+  string ID = 1;
+  google.protobuf.Struct series = 2;
+}
+
+message Entity{
+  string ID = 1;
+  string name  = 2;
+  string description = 3;
+  string userID  =4;
+  string createdAt = 5;
+  int32 schemeID = 6;
+  bool active = 7;
+  google.protobuf.Struct Options = 8;
+}
+
+message AllEntities{
+  repeated Entity entities = 1;
+}
+
+service EntityService{
+  rpc DeleteEntity(EntityID) returns(google.protobuf.Empty);
+  rpc NewEntity(Entity) returns(EntityID);
+  rpc UpdateEntity(Entity) returns (google.protobuf.Empty);
+  rpc GetEntity(EntityID) returns (Entity);
+  rpc GetAllEntities(google.protobuf.Empty) returns(AllEntities);
+  rpc GetStatus(EntityID) returns (EntityStatus);
+  rpc GetAllStatus(google.protobuf.Empty) returns(AllEntityStatus);
+  rpc GetSeries(EntityID) returns(EntitySeries);
+}

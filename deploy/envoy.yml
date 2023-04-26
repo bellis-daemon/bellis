@@ -1,0 +1,18 @@
+version: "3.1"
+
+services:
+  envoy:
+    hostname: envoy
+    container_name: envoy
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: envoy
+    networks:
+      - bellis
+    restart: always
+
+networks:
+  bellis:
+    external: true

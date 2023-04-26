@@ -1,0 +1,78 @@
+version: "3.1"
+
+services:
+  mongo1:
+    hostname: mongo1
+    container_name: mongo1
+    image: mongo
+    networks:
+      - bellis
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./dist/database/mongo1/configdb:/data/configdb
+      - ./dist/database/mongo1/db:/data/db
+  mongo2:
+    hostname: mongo2
+    container_name: mongo2
+    image: mongo
+    networks:
+      - bellis
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./dist/database/mongo2/configdb:/data/configdb
+      - ./dist/database/mongo2/db:/data/db
+  mongo3:
+    hostname: mongo3
+    container_name: mongo3
+    image: mongo
+    networks:
+      - bellis
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./dist/database/mongo3/configdb:/data/configdb
+      - ./dist/database/mongo3/db:/data/db
+
+  mongo-init:
+    image: mongo
+    networks:
+      - bellis
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    restart: on-failure
+    command:
+      - mongo
+      - mongodb://mongo1:27017/admin
+      - --eval
+      - 'rs.initiate({ _id: "rs0", members: [{_id:1,host:"mongo1:27017"},{_id:2,host:"mongo2:27017"},{_id:3,host:"mongo3:27017"}]})'
+
+  mongo-express:
+    image: mongo-express:1.0.0-alpha.4
+    container_name: mongo-express
+    hostname: mongo-express
+    ports:
+      - "8081:8081"
+    networks:
+      - bellis
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    restart: always
+    environment:
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo1,mongo2,mongo3?replicaSet=rs0
+
+networks:
+  bellis:
+    external: true

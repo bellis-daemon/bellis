@@ -1,0 +1,20 @@
+version: "3.1"
+
+services:
+  backend:
+    hostname: backend
+    container_name: backend
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: backend
+        PORT: 7001
+    networks:
+      - bellis
+    restart: always
+    ports:
+      - "7001:7001"
+networks:
+  bellis:
+    external: true

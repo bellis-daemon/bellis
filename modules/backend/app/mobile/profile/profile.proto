@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+package bellis.backend.mobile.profile;
+
+option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile';
+
+message UserProfile{
+  string email = 1;
+  string createdAt = 2;
+  bool isVip = 3;
+}
+
+service ProfileService{
+  rpc GetUserProfile(google.protobuf.Empty)returns(UserProfile);
+}

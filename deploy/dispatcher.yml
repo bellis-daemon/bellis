@@ -1,0 +1,17 @@
+version: "3.1"
+
+services:
+  dispatcher:
+    hostname: dispatcher
+    container_name: dispatcher
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: dispatcher
+    networks:
+      - bellis
+    restart: always
+networks:
+  bellis:
+    external: true

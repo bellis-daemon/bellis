@@ -1,0 +1,24 @@
+version: "3.1"
+
+services:
+  influxdb:
+    hostname: influxdb
+    container_name: influxdb
+    image: influxdb
+    networks:
+      - bellis
+    restart: always
+    environment:
+      - DOCKER_INFLUXDB_INIT_ORG=bellis
+      - DOCKER_INFLUXDB_INIT_BUCKET=backend
+      - DOCKER_INFLUXDB_INIT_USERNAME=minoic
+      - DOCKER_INFLUXDB_INIT_PASSWORD=Nightgod_
+      - TZ=Asia/Shanghai
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./dist/database/influxdb:/var/lib/influxdb2
+
+networks:
+  bellis:
+    external: true
