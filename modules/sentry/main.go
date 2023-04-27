@@ -1,6 +1,8 @@
 package main
 
-import "github.com/bellis-daemon/bellis/modules/sentry/consumer"
+import (
+	"github.com/bellis-daemon/bellis/common/redistream"
+)
 
 var (
 	BUILD_TIME string
@@ -8,5 +10,5 @@ var (
 )
 
 func main() {
-	consumer.Serve()
+	redistream.Instance().Serve()
 }

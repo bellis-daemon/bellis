@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/bellis-daemon/bellis/common/redistream"
 	"github.com/bellis-daemon/bellis/common/storage"
-	"github.com/bellis-daemon/bellis/modules/envoy/consumer"
 )
 
 var (
@@ -12,5 +12,5 @@ var (
 
 func main() {
 	storage.ConnectMongo()
-	consumer.Serve()
+	redistream.Instance().Serve()
 }

@@ -3,6 +3,8 @@ package redistream
 import (
 	"context"
 	"fmt"
+	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/minoic/glgf"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"net"
@@ -298,4 +300,18 @@ func incrementMessageID(id string) (string, error) {
 		return "", errors.Wrapf(err, "error parsing message ID %q", id)
 	}
 	return fmt.Sprintf("%s-%d", parts[0], parsed+1), nil
+}
+
+var consumer *Consumer
+
+func Instance() *Consumer {
+	if consumer == nil {
+		consumer = NewConsumer(storage.Redis(), &ConsumerOptions{
+			Workers: 1,
+			ErrorHandler: func(err error) {
+				glgf.Error(err)
+			},
+		})
+	}
+	return consumer
 }

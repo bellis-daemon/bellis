@@ -17,6 +17,7 @@ type User struct {
 	Password  string             `json:"Password" bson:"Password"`
 	CreatedAt time.Time          `json:"CreatedAt" bson:"CreatedAt"`
 	IsVip     bool               `json:"IsVip" bson:"IsVip"`
+	Envoy     EnvoyPolicy        `json:"Envoy" bson:"Envoy"`
 }
 
 func hashPassword(pwd string) string {
@@ -41,4 +42,19 @@ func (this *User) SetPassword(ctx context.Context, pwd string) error {
 	}
 	this.Password = hpwd
 	return nil
+}
+
+const (
+	IsEnvoyEmail = iota + 1000
+	IsEnvoyGotify
+	IsEnvoySMS
+	IsEnvoyTelegram
+	IsEnvoyWebhook
+)
+
+type EnvoyPolicy struct {
+	PolicyID     primitive.ObjectID `json:"PolicyID" bson:"PolicyID"`
+	PolicyType   int                `json:"PolicyType" bson:"PolicyType"`
+	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
+	PredictAlert bool               `json:"PredictAlert" bson:"PredictAlert"`
 }

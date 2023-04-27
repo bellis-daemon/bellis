@@ -11,14 +11,14 @@ import (
 )
 
 func registerEmailCaptcha() {
-	instance().Register("CaptchaToEmail", func(message *redistream.Message) error {
+	redistream.Instance().Register("CaptchaToEmail", func(message *redistream.Message) error {
 		glgf.Debug(message)
 		return nil
 	})
 }
 
 func registerEntityAlert() {
-	instance().Register("EntityAlert", func(message *redistream.Message) error {
+	redistream.Instance().Register("EntityAlert", func(message *redistream.Message) error {
 		id, err := primitive.ObjectIDFromHex(message.Values["EntityID"].(string))
 		if err != nil {
 			return err

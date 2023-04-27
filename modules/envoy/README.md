@@ -12,4 +12,3 @@ bellis-be 信使结点
 - [ ] Telegram
 - [ ] Slack
 - [ ] Wechat
-- [ ] Webhook
