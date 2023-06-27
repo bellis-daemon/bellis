@@ -6,6 +6,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
+	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -122,17 +123,49 @@ func useNewPolicy(ctx context.Context, policy any) (*EnvoyPolicy, error) {
 
 func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*UserProfile, error) {
 	user := midwares.GetUserFromCtx(ctx)
-	return &UserProfile{
+	ret := &UserProfile{
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt.Format(time.RFC3339),
 		IsVip:     user.IsVip,
 		Envoy: &EnvoyPolicy{
-			PolicyID:     user.Envoy.PolicyID.Hex(),
-			PolicyType:   int32(user.Envoy.PolicyType),
-			OfflineAlert: user.Envoy.OfflineAlert,
-			PredictAlert: user.Envoy.PredictAlert,
+			PolicyID:      user.Envoy.PolicyID.Hex(),
+			PolicyType:    int32(user.Envoy.PolicyType),
+			OfflineAlert:  user.Envoy.OfflineAlert,
+			PredictAlert:  user.Envoy.PredictAlert,
+			PolicyContent: &EnvoyPolicyContent{},
 		},
-	}, nil
+	}
+	switch user.Envoy.PolicyType {
+	case models.IsEnvoyGotify:
+		var policy models.EnvoyGotify
+		err := storage.CEnvoyGotify.FindOne(ctx, bson.M{
+			"_id": user.Envoy.PolicyID,
+		}).Decode(&policy)
+		if err != nil {
+			glgf.Error(err)
+			return ret, nil
+		}
+		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Gotify{
+			Gotify: &Gotify{
+				Url:   policy.URL,
+				Token: policy.Token,
+			},
+		}
+	case models.IsEnvoyEmail:
+		var policy models.EnvoyEmail
+		err := storage.CEnvoyGotify.FindOne(ctx, bson.M{
+			"_id": user.Envoy.PolicyID,
+		}).Decode(&policy)
+		if err != nil {
+			return ret, nil
+		}
+		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Email{
+			Email: &Email{
+				Address: policy.Address,
+			},
+		}
+	}
+	return ret, nil
 }
 
 func (h handler) NeedAuth() bool {

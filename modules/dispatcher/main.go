@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/dispatcher/dispatch"
-	"net/http"
 	_ "net/http/pprof"
 )
 
@@ -12,9 +12,6 @@ var (
 )
 
 func main() {
-	go func() {
-		http.ListenAndServe(":6001", nil)
-
-	}()
+	storage.ConnectMongo()
 	dispatch.RunTasks()
 }

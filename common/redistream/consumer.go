@@ -87,7 +87,7 @@ func (this *Consumer) Register(stream string, handler MessageHandler) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 	this.handlers[stream] = handler
-	this.streams = append(this.streams, stream, ">")
+	this.streams = append(this.streams, stream)
 	this.r.XGroupCreateMkStream(context.Background(), stream, this.options.GroupName, "0")
 }
 
@@ -107,7 +107,9 @@ func (this *Consumer) Serve() {
 		}
 	}
 
-	go this.fetch(ctx)
+	for _, stream := range this.streams {
+		go this.fetch(ctx, stream)
+	}
 	go this.reclaim(ctx)
 
 	for i := 0; i < this.options.BufferSize; i++ {
@@ -121,7 +123,7 @@ func (this *Consumer) Stop() {
 	this.cancel()
 }
 
-func (this *Consumer) fetch(ctx context.Context) {
+func (this *Consumer) fetch(ctx context.Context, stream string) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -130,10 +132,13 @@ func (this *Consumer) fetch(ctx context.Context) {
 			cmd := this.r.XReadGroup(ctx, &redis.XReadGroupArgs{
 				Group:    this.options.GroupName,
 				Consumer: this.options.ConsumerName,
-				Streams:  this.streams,
-				Count:    1,
-				Block:    this.options.BlockTimeout,
-				NoAck:    false,
+				Streams: []string{
+					stream,
+					">",
+				},
+				Count: 1,
+				Block: this.options.BlockTimeout,
+				NoAck: false,
 			})
 			result, err := cmd.Result()
 			if err != nil {
@@ -145,7 +150,7 @@ func (this *Consumer) fetch(ctx context.Context) {
 				if err == redis.Nil {
 					continue
 				}
-				this.options.ErrorHandler(err)
+				this.options.ErrorHandler(errors.Wrapf(err, "cant read group for %+v", stream))
 				continue
 			}
 			if result == nil || len(result) == 0 || result[0].Messages == nil || len(result[0].Messages) == 0 {
@@ -280,12 +285,12 @@ func (this *Consumer) safeProcess(ctx context.Context, message *Message) {
 	}()
 	err := this.handlers[message.Stream](message)
 	if err != nil {
-		this.options.ErrorHandler(err)
+		this.options.ErrorHandler(errors.Wrapf(err, "ConsumerFunc error: %v", message))
 		return
 	}
 	err = this.r.XAck(ctx, message.Stream, this.options.GroupName, message.ID).Err()
 	if err != nil {
-		this.options.ErrorHandler(err)
+		this.options.ErrorHandler(errors.Wrap(err, "Ack failed"))
 	}
 }
 

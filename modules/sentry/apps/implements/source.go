@@ -2,6 +2,7 @@ package implements
 
 import (
 	"context"
+	"github.com/rumblefrog/go-a2s"
 )
 
 type Source struct {

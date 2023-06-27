@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bellis-daemon/bellis/common/redistream"
+	"github.com/bellis-daemon/bellis/modules/sentry/consumer"
 )
 
 var (
@@ -10,5 +11,6 @@ var (
 )
 
 func main() {
+	consumer.Register()
 	redistream.Instance().Serve()
 }

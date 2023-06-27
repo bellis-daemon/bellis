@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func registerEntityUpdate() {
+func entityUpdate() {
 	redistream.Instance().Register("EntityUpdate", func(message *redistream.Message) error {
 		entity, err := factory.GetEntity(cast.ToString(message.Values["EntityID"]))
 		if err != nil {
@@ -29,7 +29,7 @@ func registerEntityUpdate() {
 	})
 }
 
-func registerEntityClaim() {
+func entityClaim() {
 	redistream.Instance().Register("EntityClaim", func(message *redistream.Message) error {
 		glgf.Debug(message.Values)
 		ddl, err := time.Parse(time.RFC3339, cast.ToString(message.Values["Deadline"]))
@@ -50,9 +50,4 @@ func registerEntityClaim() {
 		}
 		return nil
 	})
-}
-
-func init() {
-	//registerEntityUpdate()
-	registerEntityClaim()
 }

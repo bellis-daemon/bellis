@@ -6,6 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.3.4
 	github.com/go-ping/ping v1.1.0
 	github.com/golang/protobuf v1.5.3
+	github.com/gotify/go-api-client/v2 v2.0.4
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/minoic/PterodactylGoApi v0.2.4
 	github.com/minoic/bt-go-sdk v0.1.17
@@ -15,6 +16,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.0.3
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/rumblefrog/go-a2s v1.0.2
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/cast v1.5.0
 	github.com/v2fly/v2ray-core/v5 v5.4.1
@@ -26,14 +28,28 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/purell v1.1.0 // indirect
+	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
+	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/docker v23.0.4+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/globalsign/mgo v0.0.0-20180905125535-1ca0a4f7cbcb // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/go-openapi/analysis v0.17.0 // indirect
+	github.com/go-openapi/errors v0.17.2 // indirect
+	github.com/go-openapi/jsonpointer v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.17.0 // indirect
+	github.com/go-openapi/loads v0.17.0 // indirect
+	github.com/go-openapi/runtime v0.17.2 // indirect
+	github.com/go-openapi/spec v0.17.0 // indirect
+	github.com/go-openapi/strfmt v0.17.0 // indirect
+	github.com/go-openapi/swag v0.19.5 // indirect
+	github.com/go-openapi/validate v0.17.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -41,6 +57,7 @@ require (
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/kpango/fastime v1.0.16 // indirect
+	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
@@ -59,5 +76,6 @@ require (
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
 )

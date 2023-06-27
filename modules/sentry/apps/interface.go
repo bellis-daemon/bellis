@@ -121,7 +121,7 @@ func (this *Application) refresh() {
 		if this.failedCount == 1 {
 			defer this.reclaim()
 		} else if this.failedCount == 2 {
-			this.alert()
+			this.alert(err.Error())
 		}
 	} else {
 		this.failedCount = 0
@@ -143,15 +143,16 @@ func (this *Application) reclaim() {
 	this.Cancel()
 }
 
-func (this *Application) alert() {
+func (this *Application) alert(msg string) {
 	retry.Do(func() error {
 		glgf.Debug("alerting", this.Options.Name)
 		return storage.Redis().XAdd(this.ctx, &redis.XAddArgs{
-			Stream: "EntityAlert",
+			Stream: "EntityOfflineAlert",
 			MaxLen: 256,
 			Approx: true,
 			Values: map[string]interface{}{
 				"EntityID": this.Options.ID.Hex(),
+				"Message":  msg,
 			},
 		}).Err()
 	}, retry.Context(this.ctx), retry.Delay(300*time.Millisecond))
