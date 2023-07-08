@@ -232,6 +232,10 @@ from(bucket: "backend")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => types.isNumeric(v: r["_value"]))
   |> filter(fn: (r) => not strings.hasPrefix(v: r["_field"], prefix: "c_"))`, common.Measurements[int(id.GetSchemeId())], id.GetID()))
+	if err != nil {
+		glgf.Error(err)
+		return ret, status.Error(codes.Internal, err.Error())
+	}
 	for query.Next() {
 		if series[query.Record().Field()] == nil {
 			series[query.Record().Field()] = []interface{}{}

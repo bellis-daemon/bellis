@@ -9,7 +9,13 @@ const (
 	V2Ray
 	DNS
 	VPS
+	NPS
+	FRP
+	HTML
+	CloudFlare
 	Pterodactyl
+	qiniu
+	upyun
 	Docker
 	Source
 )

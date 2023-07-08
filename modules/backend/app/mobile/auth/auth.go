@@ -57,13 +57,15 @@ func (handler) Register(ctx context.Context, request *RegisterRequest) (*empty.E
 			return &empty.Empty{}, status.Error(codes.InvalidArgument, "User already exist")
 		}
 	}
-	result, err := storage.Redis().Get(ctx, "RCAPTCHA"+request.Email).Result()
-	if err != nil {
-		return &empty.Empty{}, status.Error(codes.Internal, "Redis error")
-	}
-	if request.Captcha != result {
-		return &empty.Empty{}, status.Error(codes.InvalidArgument, "Wrong captcha")
-	}
+	//// todo: implement email captcha
+	//result, err := storage.Redis().Get(ctx, "RCAPTCHA"+request.Email).Result()
+	//if err != nil {
+	//	glgf.Error(err)
+	//	return &empty.Empty{}, status.Error(codes.Internal, "Redis error")
+	//}
+	//if request.Captcha != result {
+	//	return &empty.Empty{}, status.Error(codes.InvalidArgument, "Wrong captcha")
+	//}
 	user := models.User{
 		ID:        primitive.NewObjectID(),
 		Email:     request.Email,
@@ -71,7 +73,7 @@ func (handler) Register(ctx context.Context, request *RegisterRequest) (*empty.E
 		CreatedAt: time.Now(),
 		IsVip:     false,
 	}
-	_, err = storage.CUser.InsertOne(ctx, user)
+	_, err := storage.CUser.InsertOne(ctx, user)
 	if err != nil {
 		glgf.Error(err)
 		return &empty.Empty{}, status.Error(codes.Internal, "DB Error")

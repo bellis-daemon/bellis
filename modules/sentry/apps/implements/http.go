@@ -29,10 +29,9 @@ func (this *HTTP) Fetch(ctx context.Context) (any, error) {
 	}
 	if resp.StatusCode >= 400 {
 		return &httpStatus{}, errors.New(resp.Status)
-
 	}
 	return &httpStatus{
-		IP:     resp.Request.RemoteAddr,
+		IP:     resp.Request.Host,
 		Status: resp.Status,
 	}, nil
 }
