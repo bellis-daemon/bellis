@@ -3,6 +3,7 @@ package producer
 import (
 	"context"
 	"encoding/json"
+	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/redis/go-redis/v9"
@@ -14,7 +15,7 @@ func NoticeEntityUpdate(ctx context.Context, id string, entity *models.Applicati
 		return err
 	}
 	return storage.Redis().XAdd(ctx, &redis.XAddArgs{
-		Stream: "EntityUpdate",
+		Stream: common.EntityUpdate,
 		MaxLen: 256,
 		Approx: true,
 		Values: map[string]interface{}{
@@ -26,7 +27,7 @@ func NoticeEntityUpdate(ctx context.Context, id string, entity *models.Applicati
 
 func NoticeEntityDelete(ctx context.Context, id string) error {
 	return storage.Redis().XAdd(ctx, &redis.XAddArgs{
-		Stream: "EntityDelete",
+		Stream: common.EntityDelete,
 		MaxLen: 256,
 		Approx: true,
 		Values: map[string]interface{}{

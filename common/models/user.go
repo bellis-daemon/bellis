@@ -57,4 +57,5 @@ type EnvoyPolicy struct {
 	PolicyType   int                `json:"PolicyType" bson:"PolicyType"`
 	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
 	PredictAlert bool               `json:"PredictAlert" bson:"PredictAlert"`
+	Sensitive    int                `json:"Sensitive" bson:"Sensitive"`
 }

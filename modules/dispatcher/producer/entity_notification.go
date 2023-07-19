@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/redis/go-redis/v9"
@@ -18,7 +19,7 @@ func EntityClaim(ctx context.Context, id string, deadline time.Time, entity mode
 		return err
 	}
 	return storage.Redis().XAdd(ctx, &redis.XAddArgs{
-		Stream: "EntityClaim",
+		Stream: common.EntityClaim,
 		MaxLen: 256,
 		Approx: true,
 		Values: map[string]interface{}{

@@ -8,49 +8,18 @@ import (
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/producer"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/minoic/glgf"
 	"github.com/mitchellh/mapstructure"
-	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
 	"sync"
 	"time"
 )
 
-// Implement 必须在每个子类中实现的实际方法
-type Implement interface {
-	// Fetch must return non nil status value, or it will panic
-	// return error if entity is offline
-	Fetch(ctx context.Context) (any, error)
-	Init(setOptions func(options any) error) error
-}
-
-func NewApplication(ctx context.Context, deadline time.Time, entity models.Application) (*Application, error) {
-	var (
-		handler Implement
-	)
-	switch entity.SchemeID {
-	case BT:
-		handler = &implements.BT{}
-	case Ping:
-		handler = &implements.Ping{}
-	case HTTP:
-		handler = &implements.HTTP{}
-	case Minecraft:
-		handler = &implements.Minecraft{}
-	case V2Ray:
-		handler = &implements.Minecraft{}
-	case DNS:
-		handler = &implements.DNS{}
-	case VPS:
-		handler = &implements.VPS{}
-	case Docker:
-		handler = &implements.Docker{}
-	case Source:
-		handler = &implements.Source{}
-	default:
+func NewApplication(ctx context.Context, deadline time.Time, entity *models.Application) (*Application, error) {
+	handler := parseImplements(ctx, entity)
+	if handler == nil {
 		return nil, errors.New("cant find this application type")
 	}
 	ctx2, cancel := context.WithDeadline(ctx, deadline)
@@ -77,6 +46,7 @@ type Application struct {
 	deadline    time.Time
 	failedCount uint
 	once        sync.Once
+	startTime   time.Time
 }
 
 func (this *Application) Run() {
@@ -113,29 +83,31 @@ func (this *Application) refresh() {
 		m,
 		t,
 	)
-	glgf.Debug(status, err)
 	if err != nil {
 		point.AddField("c_err", err.Error())
 		point.AddField("c_live", false)
+		point.AddField("c_start_time", time.Now())
 		this.failedCount++
 		if this.failedCount == 1 {
 			defer this.reclaim()
-		} else if this.failedCount == 2 {
+		} else if this.failedCount == 3 {
 			this.alert(err.Error())
 		}
 	} else {
 		this.failedCount = 0
 		point.AddField("c_err", "")
 		point.AddField("c_live", true)
+		point.AddField("c_start_time", this.startTime)
 	}
 	point.AddField("c_failed_count", this.failedCount)
+	point.AddField("c_sentry", common.Hostname())
 	storage.WriteInfluxDB.WritePoint(point)
 }
 
 func (this *Application) reclaim() {
 	storage.WriteInfluxDB.Flush()
 	glgf.Debug("reclaiming", this.Options.Name)
-	err := producer.EntityClaim(this.ctx, this.Options.ID.Hex(), this.deadline)
+	err := producer.EntityClaim(this.ctx, this.Options.ID.Hex(), this.deadline, &this.Options)
 	if err != nil {
 		glgf.Warn("cant reclaim entity,", err)
 		return
@@ -144,22 +116,20 @@ func (this *Application) reclaim() {
 }
 
 func (this *Application) alert(msg string) {
-	retry.Do(func() error {
-		glgf.Debug("alerting", this.Options.Name)
-		return storage.Redis().XAdd(this.ctx, &redis.XAddArgs{
-			Stream: "EntityOfflineAlert",
-			MaxLen: 256,
-			Approx: true,
-			Values: map[string]interface{}{
-				"EntityID": this.Options.ID.Hex(),
-				"Message":  msg,
-			},
-		}).Err()
+	storage.WriteInfluxDB.Flush()
+	time.Sleep(2 * time.Second)
+	offlineTime := time.Now()
+	glgf.Debug("alerting", this.Options.Name)
+	err := retry.Do(func() error {
+		return producer.EntityOffline(this.ctx, this.Options.ID.Hex(), msg, offlineTime)
 	}, retry.Context(this.ctx), retry.Delay(300*time.Millisecond))
+	if err != nil {
+		glgf.Error(err)
+	}
 }
 
-func (this *Application) UpdateOptions(option models.Application) error {
-	this.Options = option
+func (this *Application) UpdateOptions(option *models.Application) error {
+	this.Options = *option
 	err := this.Handler.Init(func(options any) error {
 		return mapstructure.Decode(this.Options.Options, options)
 	})
@@ -173,7 +143,7 @@ func (this *Application) UpdateOptions(option models.Application) error {
   |> range(start: -1h)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["_field"] == "c_failed_count")
+  |> filter(fn: (r) => r["_field"] == "c_failed_count" or r["_field"] == "c_start_time")
   |> filter(fn: (r) => r["id"] == "%s")`,
 			this.measurement,
 			this.Options.ID.Hex(),
@@ -182,12 +152,17 @@ func (this *Application) UpdateOptions(option models.Application) error {
 	if err != nil {
 		return err
 	}
-	if query.Next() {
-		this.failedCount = cast.ToUint(query.Record().Value())
-		glgf.Debug("entity failed count:", this.failedCount)
-	} else {
-		glgf.Warn("cant find failed count in influxdb for entity", this.Options.ID.Hex())
-		this.failedCount = 0
+	for query.Next() {
+		if query.Record().Field() == "c_start_time" {
+			this.startTime = cast.ToTime(query.Record().Value())
+			glgf.Debug("entity start time:", this.startTime)
+		} else if query.Record().Field() == "c_failed_count" {
+			this.failedCount = cast.ToUint(query.Record().Value())
+			glgf.Debug("entity failed count:", this.failedCount)
+		}
+	}
+	if this.startTime.IsZero() {
+		this.startTime = time.Now()
 	}
 	return nil
 }

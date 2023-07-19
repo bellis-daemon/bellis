@@ -96,7 +96,6 @@ func (this *Consumer) Serve() {
 	defer this.lock.Unlock()
 	var ctx context.Context
 	ctx, this.cancel = context.WithCancel(context.Background())
-
 	if this.options.Workers == 0 {
 		this.wg.Add(1)
 		go this.infiniteWork(ctx)
@@ -283,7 +282,7 @@ func (this *Consumer) safeProcess(ctx context.Context, message *Message) {
 			this.options.ErrorHandler(errors.Errorf("ConsumerFunc panic: %v", r))
 		}
 	}()
-	err := this.handlers[message.Stream](message)
+	err := this.handlers[message.Stream](ctx, message)
 	if err != nil {
 		this.options.ErrorHandler(errors.Wrapf(err, "ConsumerFunc error: %v", message))
 		return

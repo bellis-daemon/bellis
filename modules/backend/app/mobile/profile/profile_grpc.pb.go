@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.22.2
-// source: profile.proto
+// source: profile/profile.proto
 
 package profile
 
@@ -20,12 +20,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ProfileService_GetUserProfile_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/GetUserProfile"
-	ProfileService_ChangePassword_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/ChangePassword"
-	ProfileService_ChangeEmail_FullMethodName    = "/bellis.backend.mobile.profile.ProfileService/ChangeEmail"
-	ProfileService_ChangeAlert_FullMethodName    = "/bellis.backend.mobile.profile.ProfileService/ChangeAlert"
-	ProfileService_UseGotify_FullMethodName      = "/bellis.backend.mobile.profile.ProfileService/UseGotify"
-	ProfileService_UseEmail_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/UseEmail"
+	ProfileService_GetUserProfile_FullMethodName  = "/bellis.backend.mobile.profile.ProfileService/GetUserProfile"
+	ProfileService_ChangePassword_FullMethodName  = "/bellis.backend.mobile.profile.ProfileService/ChangePassword"
+	ProfileService_ChangeEmail_FullMethodName     = "/bellis.backend.mobile.profile.ProfileService/ChangeEmail"
+	ProfileService_ChangeAlert_FullMethodName     = "/bellis.backend.mobile.profile.ProfileService/ChangeAlert"
+	ProfileService_ChangeSensitive_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/ChangeSensitive"
+	ProfileService_UseGotify_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/UseGotify"
+	ProfileService_UseEmail_FullMethodName        = "/bellis.backend.mobile.profile.ProfileService/UseEmail"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -36,6 +37,7 @@ type ProfileServiceClient interface {
 	ChangePassword(ctx context.Context, in *NewPassword, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ChangeEmail(ctx context.Context, in *NewEmail, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ChangeAlert(ctx context.Context, in *Alert, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ChangeSensitive(ctx context.Context, in *Sensitive, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UseGotify(ctx context.Context, in *Gotify, opts ...grpc.CallOption) (*EnvoyPolicy, error)
 	UseEmail(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EnvoyPolicy, error)
 }
@@ -84,6 +86,15 @@ func (c *profileServiceClient) ChangeAlert(ctx context.Context, in *Alert, opts 
 	return out, nil
 }
 
+func (c *profileServiceClient) ChangeSensitive(ctx context.Context, in *Sensitive, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ProfileService_ChangeSensitive_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *profileServiceClient) UseGotify(ctx context.Context, in *Gotify, opts ...grpc.CallOption) (*EnvoyPolicy, error) {
 	out := new(EnvoyPolicy)
 	err := c.cc.Invoke(ctx, ProfileService_UseGotify_FullMethodName, in, out, opts...)
@@ -110,6 +121,7 @@ type ProfileServiceServer interface {
 	ChangePassword(context.Context, *NewPassword) (*emptypb.Empty, error)
 	ChangeEmail(context.Context, *NewEmail) (*emptypb.Empty, error)
 	ChangeAlert(context.Context, *Alert) (*emptypb.Empty, error)
+	ChangeSensitive(context.Context, *Sensitive) (*emptypb.Empty, error)
 	UseGotify(context.Context, *Gotify) (*EnvoyPolicy, error)
 	UseEmail(context.Context, *Email) (*EnvoyPolicy, error)
 }
@@ -129,6 +141,9 @@ func (UnimplementedProfileServiceServer) ChangeEmail(context.Context, *NewEmail)
 }
 func (UnimplementedProfileServiceServer) ChangeAlert(context.Context, *Alert) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeAlert not implemented")
+}
+func (UnimplementedProfileServiceServer) ChangeSensitive(context.Context, *Sensitive) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeSensitive not implemented")
 }
 func (UnimplementedProfileServiceServer) UseGotify(context.Context, *Gotify) (*EnvoyPolicy, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UseGotify not implemented")
@@ -220,6 +235,24 @@ func _ProfileService_ChangeAlert_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_ChangeSensitive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Sensitive)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ChangeSensitive(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ChangeSensitive_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ChangeSensitive(ctx, req.(*Sensitive))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_UseGotify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Gotify)
 	if err := dec(in); err != nil {
@@ -280,6 +313,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProfileService_ChangeAlert_Handler,
 		},
 		{
+			MethodName: "ChangeSensitive",
+			Handler:    _ProfileService_ChangeSensitive_Handler,
+		},
+		{
 			MethodName: "UseGotify",
 			Handler:    _ProfileService_UseGotify_Handler,
 		},
@@ -289,5 +326,5 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "profile.proto",
+	Metadata: "profile/profile.proto",
 }

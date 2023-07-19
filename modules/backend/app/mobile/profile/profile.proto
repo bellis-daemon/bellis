@@ -1,7 +1,8 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
 package bellis.backend.mobile.profile;
+
+import "google/protobuf/empty.proto";
 
 option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile';
 
@@ -15,9 +16,10 @@ message UserProfile{
 message EnvoyPolicy{
   string policyID = 1;
   int32 policyType = 2;
-  bool offlineAlert = 3;
-  bool predictAlert = 4;
-  EnvoyPolicyContent policyContent = 5;
+  int32 sensitive = 3;
+  bool offlineAlert = 4;
+  bool predictAlert = 5;
+  EnvoyPolicyContent policyContent = 6;
 }
 
 message NewPassword{
@@ -29,8 +31,8 @@ message NewEmail{
 }
 
 message Alert{
-  bool OfflineAlert = 1;
-  bool PredictAlert = 2;
+  bool offlineAlert = 1;
+  bool predictAlert = 2;
 }
 
 message Gotify{
@@ -49,11 +51,16 @@ message EnvoyPolicyContent{
   }
 }
 
+message Sensitive{
+  int32 level  = 1;
+}
+
 service ProfileService{
   rpc GetUserProfile(google.protobuf.Empty)returns(UserProfile);
   rpc ChangePassword(NewPassword) returns(google.protobuf.Empty);
   rpc ChangeEmail(NewEmail) returns (google.protobuf.Empty);
   rpc ChangeAlert(Alert) returns(google.protobuf.Empty);
+  rpc ChangeSensitive(Sensitive) returns (google.protobuf.Empty);
   rpc UseGotify(Gotify) returns (EnvoyPolicy);
   rpc UseEmail(Email) returns(EnvoyPolicy);
 }

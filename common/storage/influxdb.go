@@ -7,6 +7,7 @@ import (
 
 var WriteInfluxDB api.WriteAPI
 var QueryInfluxDB api.QueryAPI
+var DeleteInfluxDB api.DeleteAPI
 
 func init() {
 	client := influxdb2.NewClientWithOptions(
@@ -21,4 +22,5 @@ func init() {
 	)
 	WriteInfluxDB = client.WriteAPI("bellis", "backend")
 	QueryInfluxDB = client.QueryAPI("bellis")
+	DeleteInfluxDB = client.DeleteAPI()
 }

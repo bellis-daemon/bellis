@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/bellis-daemon/bellis/common"
+	"github.com/bellis-daemon/bellis/common/cryptoo"
+	"github.com/bellis-daemon/bellis/common/generic"
 	"github.com/bellis-daemon/bellis/common/midwares"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
@@ -23,6 +25,35 @@ import (
 
 // implements EntityServiceServer
 type handler struct{}
+
+func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) (*OfflineLogPage, error) {
+	find, err := storage.COfflineLog.Find(ctx, bson.M{"EntityID": request.EntityID}, request.Pagination.ToOptions())
+	if err != nil {
+		return &OfflineLogPage{}, status.Error(codes.Internal, err.Error())
+	}
+	var logs []models.OfflineLog
+	err = find.All(ctx, &logs)
+	if err != nil {
+		return &OfflineLogPage{}, status.Error(codes.Internal, err.Error())
+	}
+	return &OfflineLogPage{
+		Length: int32(len(logs)),
+		OfflineLogs: generic.SliceConvert[models.OfflineLog, *OfflineLog](logs, func(log models.OfflineLog) *OfflineLog {
+			return &OfflineLog{
+				EnvoyTime: log.EnvoyTime.Local().Format(time.DateTime),
+				EnvoyType: log.EnvoyType,
+				Duration:  cryptoo.FormatDuration(log.OnlineTime.Sub(log.EnvoyTime)),
+				SentryLogs: generic.SliceConvert[models.SentryLog, *SentryLog](log.SentryLogs, func(log models.SentryLog) *SentryLog {
+					return &SentryLog{
+						SentryName:   log.SentryName,
+						SentryTime:   log.SentryTime.Local().Format(time.DateTime),
+						ErrorMessage: log.ErrorMessage,
+					}
+				}),
+			}
+		}),
+	}, nil
+}
 
 func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*empty.Empty, error) {
 	oid, err := primitive.ObjectIDFromHex(id.ID)
@@ -179,10 +210,12 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 	for query.Next() {
 		switch query.Record().Field() {
 		case "c_live":
-			entityStatus.SentryTime = query.Record().Time().Format(time.RFC3339)
+			entityStatus.SentryTime = query.Record().Time().Local().Format(time.TimeOnly)
 			entityStatus.Live = cast.ToBool(query.Record().Value())
 		case "c_err":
 			entityStatus.ErrMessage = cast.ToString(query.Record().Value())
+		case "c_start_time":
+			entityStatus.UpTime = cryptoo.FormatDuration(time.Now().Sub(cast.ToTime(query.Record().Value())))
 		default:
 			fields[query.Record().Field()] = query.Record().Value()
 		}

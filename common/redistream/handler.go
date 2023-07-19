@@ -1,3 +1,5 @@
 package redistream
 
-type MessageHandler func(message *Message) error
+import "context"
+
+type MessageHandler func(ctx context.Context, message *Message) error

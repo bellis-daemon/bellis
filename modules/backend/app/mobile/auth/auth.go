@@ -72,6 +72,11 @@ func (handler) Register(ctx context.Context, request *RegisterRequest) (*empty.E
 		Password:  "",
 		CreatedAt: time.Now(),
 		IsVip:     false,
+		Envoy: models.EnvoyPolicy{
+			OfflineAlert: false,
+			PredictAlert: false,
+			Sensitive:    3,
+		},
 	}
 	_, err := storage.CUser.InsertOne(ctx, user)
 	if err != nil {

@@ -18,9 +18,9 @@ func init() {
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ConnectionTimeout(3*time.Second),
 		grpc.ChainUnaryInterceptor(
-			midwares.PanicRecover,
-			midwares.AuthChecker,
-			midwares.BasicLogger,
+			midwares.PanicRecover(),
+			midwares.AuthChecker(),
+			midwares.BasicLogger(),
 		),
 	)
 }

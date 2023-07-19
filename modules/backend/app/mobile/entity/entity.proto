@@ -1,9 +1,10 @@
 syntax = "proto3";
 
+package bellis.backend.mobile.entity;
+
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
-
-package bellis.backend.mobile.entity;
+import "public/public.proto";
 
 option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/entity';
 
@@ -15,10 +16,11 @@ message EntityID{
 message EntityStatus{
   string ID = 1;
   bool live = 2;
-  repeated bool live_series = 3;
+  string up_time = 3;
   string sentry_time = 4;
   string err_message = 5;
   google.protobuf.Struct fields = 6;
+  repeated bool live_series = 7;
 }
 
 message AllEntityStatus{
@@ -45,6 +47,29 @@ message AllEntities{
   repeated Entity entities = 1;
 }
 
+message OfflineLogRequest{
+  string entityID = 1;
+  public.Pagination pagination = 2;
+}
+
+message OfflineLogPage{
+  int32 length = 1;
+  repeated OfflineLog offlineLogs = 2;
+}
+
+message OfflineLog{
+  string envoyTime = 1;
+  string envoyType = 2;
+  string duration = 3;
+  repeated SentryLog sentryLogs = 4;
+}
+
+message SentryLog{
+  string sentryName = 1;
+  string sentryTime = 2;
+  string errorMessage = 3;
+}
+
 service EntityService{
   rpc DeleteEntity(EntityID) returns(google.protobuf.Empty);
   rpc NewEntity(Entity) returns(EntityID);
@@ -54,4 +79,5 @@ service EntityService{
   rpc GetStatus(EntityID) returns (EntityStatus);
   rpc GetAllStatus(google.protobuf.Empty) returns(AllEntityStatus);
   rpc GetSeries(EntityID) returns(EntitySeries);
+  rpc GetOfflineLog(OfflineLogRequest) returns (OfflineLogPage);
 }

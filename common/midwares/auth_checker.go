@@ -24,15 +24,17 @@ func GetUserFromCtx(ctx context.Context) *models.User {
 	return ctx.Value(UserIncomingCtx{}).(*models.User)
 }
 
-var AuthChecker grpc.UnaryServerInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-	if !info.Server.(NeedAuthChecker).NeedAuth() {
-		return handler(ctx, req)
+func AuthChecker() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		if !info.Server.(NeedAuthChecker).NeedAuth() {
+			return handler(ctx, req)
+		}
+		user := check(ctx)
+		if user == nil {
+			return resp, status.Error(codes.Unauthenticated, "Unauthenticated")
+		}
+		return handler(context.WithValue(ctx, UserIncomingCtx{}, user), req)
 	}
-	user := check(ctx)
-	if user == nil {
-		return resp, status.Error(codes.Unauthenticated, "Unauthenticated")
-	}
-	return handler(context.WithValue(ctx, UserIncomingCtx{}, user), req)
 }
 
 func check(ctx context.Context) *models.User {

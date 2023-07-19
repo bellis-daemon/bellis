@@ -5,16 +5,18 @@ import (
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/redis/go-redis/v9"
+	"time"
 )
 
-func EnvoyCaptchaToEmail(ctx context.Context, receiver string, captcha string) error {
+func EntityOffline(ctx context.Context, entityID string, message string, offlineTime time.Time) error {
 	return storage.Redis().XAdd(ctx, &redis.XAddArgs{
-		Stream: common.CaptchaToEmail,
+		Stream: common.EntityOfflineAlert,
 		MaxLen: 256,
 		Approx: true,
 		Values: map[string]interface{}{
-			"Receiver": receiver,
-			"Captcha":  captcha,
+			"EntityID":    entityID,
+			"Message":     message,
+			"OfflineTime": offlineTime.UnixMilli(),
 		},
 	}).Err()
 }

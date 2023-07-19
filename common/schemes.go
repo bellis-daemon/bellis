@@ -1,5 +1,10 @@
 package common
 
+import (
+	"github.com/bellis-daemon/bellis/common/cryptoo"
+	"os"
+)
+
 var Measurements = map[int]string{
 	0:  "null",
 	1:  "bt",
@@ -49,3 +54,27 @@ var Measurements = map[int]string{
 	45: "discuz",
 	46: "gitlab",
 }
+
+var hostname string
+
+func Hostname() string {
+	if hostname == "" {
+		hostname = os.Getenv("HOSTNAME")
+		if hostname == "" {
+			hostname = cryptoo.RandString(4)
+		}
+		if len(hostname) > 4 {
+			hostname = hostname[:4]
+		}
+	}
+	return hostname
+}
+
+const (
+	EntityOfflineAlert = "EntityOfflineAlert"
+	EntityOnlineAlert  = "EntityOnlineAlert"
+	EntityClaim        = "EntityClaim"
+	EntityUpdate       = "EntityUpdate"
+	EntityDelete       = "EntityDelete"
+	CaptchaToEmail     = "CaptchaToEmail"
+)

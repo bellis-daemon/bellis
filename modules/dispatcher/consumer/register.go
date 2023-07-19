@@ -6,12 +6,9 @@ import (
 )
 
 var stream = redistream.NewConsumer(storage.Redis(), &redistream.ConsumerOptions{
-	GroupName: "Envoy",
+	GroupName: "Dispatcher",
 })
 
 func Serve() {
-	emailCaptcha()
-	entityOfflineAlert()
-	// entityOnlineAlert()
 	stream.Serve()
 }

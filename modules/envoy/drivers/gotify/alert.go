@@ -12,16 +12,16 @@ import (
 	"time"
 )
 
-func AlertOffline(entity *models.Application, policy *models.EnvoyGotify, msg string) error {
-	url, err := url.Parse(policy.URL)
+func AlertOffline(entity *models.Application, policy *models.EnvoyGotify, msg string, offlineTime time.Time) error {
+	gotifyURL, err := url.Parse(policy.URL)
 	if err != nil {
 		return err
 	}
-	client := gotify.NewClient(url, &http.Client{})
+	client := gotify.NewClient(gotifyURL, &http.Client{})
 	params := message.NewCreateMessageParams()
 	params.Body = &gmodels.MessageExternal{
 		Title:    "Offline alert - " + entity.Name,
-		Message:  fmt.Sprintf("Your application <%s> just went offline at %s, error message: %s", entity.Name, time.Now().Format(time.RFC3339), msg),
+		Message:  fmt.Sprintf("Your application <%s> just went offline at %s, error message: %s", entity.Name, offlineTime.Local().Format(time.DateTime), msg),
 		Priority: 7,
 	}
 	_, err = client.Message.CreateMessage(params, auth.TokenAuth(policy.Token))

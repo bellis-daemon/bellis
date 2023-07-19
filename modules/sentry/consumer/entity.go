@@ -1,9 +1,13 @@
 package consumer
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/redistream"
+	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/sentry/factory"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
@@ -11,7 +15,7 @@ import (
 )
 
 func entityUpdate() {
-	redistream.Instance().Register("EntityUpdate", func(message *redistream.Message) error {
+	stream.Register(common.EntityUpdate, func(ctx context.Context, message *redistream.Message) error {
 		entity, err := factory.GetEntity(cast.ToString(message.Values["EntityID"]))
 		if err != nil {
 			return nil
@@ -21,7 +25,7 @@ func entityUpdate() {
 		if err != nil {
 			return err
 		}
-		err = entity.UpdateOptions(options)
+		err = entity.UpdateOptions(&options)
 		if err != nil {
 			return err
 		}
@@ -30,8 +34,8 @@ func entityUpdate() {
 }
 
 func entityClaim() {
-	redistream.Instance().Register("EntityClaim", func(message *redistream.Message) error {
-		glgf.Debug(message.Values)
+	stream.Register(common.EntityClaim, func(ctx context.Context, message *redistream.Message) error {
+		glgf.Debug("Claim received: ", message)
 		ddl, err := time.Parse(time.RFC3339, cast.ToString(message.Values["Deadline"]))
 		if err != nil {
 			return err
@@ -44,10 +48,18 @@ func entityClaim() {
 		if err != nil {
 			return err
 		}
-		err = factory.RunEntity(cast.ToString(message.Values["EntityID"]), ddl, entity)
+		err = factory.RunEntity(cast.ToString(message.Values["EntityID"]), ddl, &entity)
 		if err != nil {
 			return err
 		}
 		return nil
+	})
+}
+
+func entityDelete() {
+	stream.Register(common.EntityDelete, func(ctx context.Context, message *redistream.Message) error {
+		id := cast.ToString(message.Values["EntityID"])
+		factory.DeleteEntity(id)
+		return storage.DeleteInfluxDB.DeleteWithName(ctx, "bellis", "backend", time.UnixMilli(0), time.Now().Add(time.Hour), fmt.Sprintf(`id="%s"`, id))
 	})
 }

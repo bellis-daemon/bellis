@@ -20,6 +20,17 @@ import (
 // implement ProfileServiceServer
 type handler struct{}
 
+func (h handler) ChangeSensitive(ctx context.Context, sensitive *Sensitive) (*emptypb.Empty, error) {
+	user := midwares.GetUserFromCtx(ctx)
+	_, err := storage.CUser.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{
+		"Envoy.Sensitive": sensitive.Level,
+	}})
+	if err != nil {
+		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
+	}
+	return &emptypb.Empty{}, nil
+}
+
 func (h handler) ChangePassword(ctx context.Context, password *NewPassword) (*emptypb.Empty, error) {
 	user := midwares.GetUserFromCtx(ctx)
 	err := user.SetPassword(ctx, password.Password)
@@ -125,7 +136,7 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 	user := midwares.GetUserFromCtx(ctx)
 	ret := &UserProfile{
 		Email:     user.Email,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		CreatedAt: user.CreatedAt.Local().Format(time.DateTime),
 		IsVip:     user.IsVip,
 		Envoy: &EnvoyPolicy{
 			PolicyID:      user.Envoy.PolicyID.Hex(),

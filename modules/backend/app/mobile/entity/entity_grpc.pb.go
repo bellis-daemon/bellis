@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.22.2
-// source: entity.proto
+// source: entity/entity.proto
 
 package entity
 
@@ -28,6 +28,7 @@ const (
 	EntityService_GetStatus_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetStatus"
 	EntityService_GetAllStatus_FullMethodName   = "/bellis.backend.mobile.entity.EntityService/GetAllStatus"
 	EntityService_GetSeries_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetSeries"
+	EntityService_GetOfflineLog_FullMethodName  = "/bellis.backend.mobile.entity.EntityService/GetOfflineLog"
 )
 
 // EntityServiceClient is the client API for EntityService service.
@@ -42,6 +43,7 @@ type EntityServiceClient interface {
 	GetStatus(ctx context.Context, in *EntityID, opts ...grpc.CallOption) (*EntityStatus, error)
 	GetAllStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AllEntityStatus, error)
 	GetSeries(ctx context.Context, in *EntityID, opts ...grpc.CallOption) (*EntitySeries, error)
+	GetOfflineLog(ctx context.Context, in *OfflineLogRequest, opts ...grpc.CallOption) (*OfflineLogPage, error)
 }
 
 type entityServiceClient struct {
@@ -124,6 +126,15 @@ func (c *entityServiceClient) GetSeries(ctx context.Context, in *EntityID, opts 
 	return out, nil
 }
 
+func (c *entityServiceClient) GetOfflineLog(ctx context.Context, in *OfflineLogRequest, opts ...grpc.CallOption) (*OfflineLogPage, error) {
+	out := new(OfflineLogPage)
+	err := c.cc.Invoke(ctx, EntityService_GetOfflineLog_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EntityServiceServer is the server API for EntityService service.
 // All implementations should embed UnimplementedEntityServiceServer
 // for forward compatibility
@@ -136,6 +147,7 @@ type EntityServiceServer interface {
 	GetStatus(context.Context, *EntityID) (*EntityStatus, error)
 	GetAllStatus(context.Context, *emptypb.Empty) (*AllEntityStatus, error)
 	GetSeries(context.Context, *EntityID) (*EntitySeries, error)
+	GetOfflineLog(context.Context, *OfflineLogRequest) (*OfflineLogPage, error)
 }
 
 // UnimplementedEntityServiceServer should be embedded to have forward compatible implementations.
@@ -165,6 +177,9 @@ func (UnimplementedEntityServiceServer) GetAllStatus(context.Context, *emptypb.E
 }
 func (UnimplementedEntityServiceServer) GetSeries(context.Context, *EntityID) (*EntitySeries, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSeries not implemented")
+}
+func (UnimplementedEntityServiceServer) GetOfflineLog(context.Context, *OfflineLogRequest) (*OfflineLogPage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOfflineLog not implemented")
 }
 
 // UnsafeEntityServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -322,6 +337,24 @@ func _EntityService_GetSeries_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EntityService_GetOfflineLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OfflineLogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityServiceServer).GetOfflineLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityService_GetOfflineLog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityServiceServer).GetOfflineLog(ctx, req.(*OfflineLogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EntityService_ServiceDesc is the grpc.ServiceDesc for EntityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -361,7 +394,11 @@ var EntityService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetSeries",
 			Handler:    _EntityService_GetSeries_Handler,
 		},
+		{
+			MethodName: "GetOfflineLog",
+			Handler:    _EntityService_GetOfflineLog_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "entity.proto",
+	Metadata: "entity/entity.proto",
 }

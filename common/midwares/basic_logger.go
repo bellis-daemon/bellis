@@ -7,13 +7,15 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-var BasicLogger grpc.UnaryServerInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-	p, _ := peer.FromContext(ctx)
-	resp, err = handler(ctx, req)
-	if err != nil {
-		glgf.Warnf("| %s |<%s> {%+v} => <ERR:%s>", p.Addr.String(), info.FullMethod, req, err.Error())
-	} else {
-		glgf.Infof("| %s |<%s> {%+v} => {%+v}", p.Addr.String(), info.FullMethod, req, resp)
+func BasicLogger() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		p, _ := peer.FromContext(ctx)
+		resp, err = handler(ctx, req)
+		if err != nil {
+			glgf.Warnf("| %s |<%s> ERR:%s", p.Addr.String(), info.FullMethod, req, err.Error())
+		} else {
+			glgf.Infof("| %s |<%s>", p.Addr.String(), info.FullMethod)
+		}
+		return
 	}
-	return
 }
