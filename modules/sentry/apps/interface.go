@@ -68,22 +68,23 @@ func (this *Application) Run() {
 }
 
 func (this *Application) refresh() {
-	t := time.Now()
+	sentryTime := time.Now()
 	status, err := this.Handler.Fetch(this.ctx)
 	if status == nil {
 		panic(err)
 	}
-	m := map[string]any{}
-	_ = mapstructure.Decode(status, &m)
+	fields := map[string]any{}
+	_ = mapstructure.Decode(status, &fields)
 	point := write.NewPoint(
 		this.measurement,
 		map[string]string{
 			"id": this.Options.ID.Hex(),
 		},
-		m,
-		t,
+		fields,
+		sentryTime,
 	)
 	if err != nil {
+		// 状态不正常时
 		point.AddField("c_err", err.Error())
 		point.AddField("c_live", false)
 		point.AddField("c_start_time", time.Now())
@@ -94,6 +95,10 @@ func (this *Application) refresh() {
 			this.alert(err.Error())
 		}
 	} else {
+		// 状态正常时
+		if this.failedCount != 0 {
+			this.onlineLog()
+		}
 		this.failedCount = 0
 		point.AddField("c_err", "")
 		point.AddField("c_live", true)
@@ -113,6 +118,19 @@ func (this *Application) reclaim() {
 		return
 	}
 	this.Cancel()
+}
+
+func (this *Application) onlineLog() {
+	storage.WriteInfluxDB.Flush()
+	time.Sleep(2 * time.Second)
+	onlineTime := time.Now()
+	glgf.Debug("online logging", this.Options.Name)
+	err := retry.Do(func() error {
+		return producer.EntityOnline(this.ctx, this.Options.ID.Hex(), onlineTime)
+	}, retry.Context(this.ctx), retry.Delay(300*time.Millisecond))
+	if err != nil {
+		glgf.Error(err)
+	}
 }
 
 func (this *Application) alert(msg string) {

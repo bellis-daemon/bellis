@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -121,10 +122,33 @@ from(bucket: "backend")
 
 func entityOnlineAlert() {
 	stream.Register(common.EntityOnlineAlert, func(ctx context.Context, message *redistream.Message) error {
-		panic("not implemented")
+		glgf.Debug(message)
+		onlineTime := time.UnixMilli(cast.ToInt64(message.Values["OfflineTime"]))
+		id, err := primitive.ObjectIDFromHex(message.Values["EntityID"].(string))
+		if err != nil {
+			return err
+		}
+		var entity models.Application
+		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
+		if err != nil {
+			return err
+		}
+		err = retry.Do(func() error {
+			return writeOnlineLog(ctx, &entity, onlineTime)
+		})
+		if err != nil {
+			glgf.Error(err)
+		}
+		return err
 	})
 }
 
-func writeOnlineLog(entity *models.Application, onlineTIme time.Time) error {
-	panic("not implemented")
+func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme time.Time) error {
+	var log models.OfflineLog
+	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
+	if err != nil {
+		return err
+	}
+	_, err = storage.COfflineLog.UpdateOne(ctx, bson.M{"_id": log.ID}, bson.M{"$set": bson.M{"OnlineTime": onlineTIme}})
+	return err
 }

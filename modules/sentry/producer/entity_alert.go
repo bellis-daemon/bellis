@@ -20,3 +20,15 @@ func EntityOffline(ctx context.Context, entityID string, message string, offline
 		},
 	}).Err()
 }
+
+func EntityOnline(ctx context.Context, entityID string, onlineTime time.Time) error {
+	return storage.Redis().XAdd(ctx, &redis.XAddArgs{
+		Stream: common.EntityOnlineAlert,
+		MaxLen: 256,
+		Approx: true,
+		Values: map[string]interface{}{
+			"EntityID":    entityID,
+			"OfflineTime": onlineTime.UnixMilli(),
+		},
+	}).Err()
+}

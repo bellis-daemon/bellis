@@ -14,7 +14,7 @@ func BasicLogger() grpc.UnaryServerInterceptor {
 		if err != nil {
 			glgf.Warnf("| %s |<%s> ERR:%s", p.Addr.String(), info.FullMethod, req, err.Error())
 		} else {
-			glgf.Infof("| %s |<%s>", p.Addr.String(), info.FullMethod)
+			glgf.Infof("| %s |<%s> => %v", p.Addr.String(), info.FullMethod, resp)
 		}
 		return
 	}

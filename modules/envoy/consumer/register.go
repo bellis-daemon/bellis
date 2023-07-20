@@ -12,6 +12,6 @@ var stream = redistream.NewConsumer(storage.Redis(), &redistream.ConsumerOptions
 func Serve() {
 	emailCaptcha()
 	entityOfflineAlert()
-	// entityOnlineAlert()
+	entityOnlineAlert()
 	stream.Serve()
 }

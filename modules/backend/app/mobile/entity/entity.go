@@ -27,7 +27,11 @@ import (
 type handler struct{}
 
 func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) (*OfflineLogPage, error) {
-	find, err := storage.COfflineLog.Find(ctx, bson.M{"EntityID": request.EntityID}, request.Pagination.ToOptions())
+	eid, err := primitive.ObjectIDFromHex(request.EntityID)
+	if err != nil {
+		return &OfflineLogPage{}, status.Error(codes.InvalidArgument, err.Error())
+	}
+	find, err := storage.COfflineLog.Find(ctx, bson.M{"EntityID": eid}, request.Pagination.ToOptions().SetSort(bson.M{"$natural": -1}))
 	if err != nil {
 		return &OfflineLogPage{}, status.Error(codes.Internal, err.Error())
 	}
