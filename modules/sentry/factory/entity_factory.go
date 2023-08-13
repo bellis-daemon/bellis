@@ -33,6 +33,7 @@ func GetEntity(entityID string) (*apps.Application, error) {
 }
 
 func DeleteEntity(entityID string) {
+
 	entity, ok := entities.Load(entityID)
 	if ok {
 		entity.(*apps.Application).Cancel()

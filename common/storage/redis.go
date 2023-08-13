@@ -1,7 +1,12 @@
 package storage
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"github.com/minoic/glgf"
 	"github.com/redis/go-redis/v9"
+	"reflect"
 	"time"
 )
 
@@ -15,4 +20,37 @@ func Redis() *redis.Client {
 		})
 	}
 	return rdb
+}
+
+func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, error)) (*T, error) {
+	const QUICK_RC = "QUICK_RC"
+	cmd := Redis().Get(ctx, QUICK_RC+key)
+	if cmd.Err() != nil {
+		value, err := fallback()
+		if err != nil {
+			return nil, err
+		}
+		go func() {
+			var buf bytes.Buffer
+			err := json.NewEncoder(&buf).Encode(map[string]any{
+				"t": reflect.TypeOf(value).String(),
+				"v": value,
+			})
+			if err != nil {
+				glgf.Warn(err)
+				return
+			}
+			Redis().Set(ctx, QUICK_RC+key, buf.String(), time.Minute)
+		}()
+		return &value, nil
+	}
+	var dec struct {
+		Type  string `json:"t"`
+		Value T      `json:"v"`
+	}
+	err := json.Unmarshal([]byte(cmd.Val()), &dec)
+	if err != nil {
+		return nil, err
+	}
+	return &dec.Value, nil
 }

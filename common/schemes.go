@@ -55,16 +55,17 @@ var Measurements = map[int]string{
 	46: "gitlab",
 }
 
-var hostname string
+var (
+	hostname  string
+	BuildTime string
+	GoVersion string
+)
 
 func Hostname() string {
 	if hostname == "" {
 		hostname = os.Getenv("HOSTNAME")
 		if hostname == "" {
-			hostname = cryptoo.RandString(4)
-		}
-		if len(hostname) > 4 {
-			hostname = hostname[:4]
+			hostname = cryptoo.RandString(8)
 		}
 	}
 	return hostname

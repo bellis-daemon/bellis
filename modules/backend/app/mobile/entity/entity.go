@@ -10,6 +10,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
+	"github.com/bellis-daemon/bellis/modules/backend/assertion"
 	"github.com/bellis-daemon/bellis/modules/backend/producer"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/minoic/glgf"
@@ -27,11 +28,19 @@ import (
 type handler struct{}
 
 func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) (*OfflineLogPage, error) {
+	err := assertion.Assert(
+		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), request.EntityID),
+	)
+	if err != nil {
+		return &OfflineLogPage{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	eid, err := primitive.ObjectIDFromHex(request.EntityID)
 	if err != nil {
 		return &OfflineLogPage{}, status.Error(codes.InvalidArgument, err.Error())
 	}
-	find, err := storage.COfflineLog.Find(ctx, bson.M{"EntityID": eid}, request.Pagination.ToOptions().SetSort(bson.M{"$natural": -1}))
+	options := request.Pagination.ToOptions().SetSort(bson.M{"$natural": -1})
+	glgf.Debug(options)
+	find, err := storage.COfflineLog.Find(ctx, bson.M{"EntityID": eid}, options)
 	if err != nil {
 		return &OfflineLogPage{}, status.Error(codes.Internal, err.Error())
 	}
@@ -42,12 +51,12 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 	}
 	return &OfflineLogPage{
 		Length: int32(len(logs)),
-		OfflineLogs: generic.SliceConvert[models.OfflineLog, *OfflineLog](logs, func(log models.OfflineLog) *OfflineLog {
+		OfflineLogs: generic.SliceConvert(logs, func(log models.OfflineLog) *OfflineLog {
 			return &OfflineLog{
 				EnvoyTime: log.EnvoyTime.Local().Format(time.DateTime),
 				EnvoyType: log.EnvoyType,
 				Duration:  cryptoo.FormatDuration(log.OnlineTime.Sub(log.EnvoyTime)),
-				SentryLogs: generic.SliceConvert[models.SentryLog, *SentryLog](log.SentryLogs, func(log models.SentryLog) *SentryLog {
+				SentryLogs: generic.SliceConvert(log.SentryLogs, func(log models.SentryLog) *SentryLog {
 					return &SentryLog{
 						SentryName:   log.SentryName,
 						SentryTime:   log.SentryTime.Local().Format(time.DateTime),
@@ -60,6 +69,12 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 }
 
 func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*empty.Empty, error) {
+	err := assertion.Assert(
+		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
+	)
+	if err != nil {
+		return &empty.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	oid, err := primitive.ObjectIDFromHex(id.ID)
 	if err != nil {
 		return &empty.Empty{}, status.Error(codes.InvalidArgument, err.Error())
@@ -102,6 +117,12 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 }
 
 func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty, error) {
+	err := assertion.Assert(
+		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), entity.ID),
+	)
+	if err != nil {
+		return &empty.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	oid, err := primitive.ObjectIDFromHex(entity.ID)
 	if err != nil {
 		glgf.Warn(err)
@@ -133,6 +154,12 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty
 }
 
 func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
+	err := assertion.Assert(
+		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
+	)
+	if err != nil {
+		return &Entity{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	oid, err := primitive.ObjectIDFromHex(id.ID)
 	if err != nil {
 		glgf.Warn(err)
@@ -196,6 +223,12 @@ func (h handler) GetAllEntities(ctx context.Context, e *empty.Empty) (*AllEntiti
 }
 
 func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, error) {
+	err := assertion.Assert(
+		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
+	)
+	if err != nil {
+		return &EntityStatus{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	entityStatus := &EntityStatus{
 		ID:         id.ID,
 		LiveSeries: []bool{},
@@ -254,6 +287,12 @@ func (h handler) GetAllStatus(ctx context.Context, e *empty.Empty) (*AllEntitySt
 }
 
 func (h handler) GetSeries(ctx context.Context, id *EntityID) (*EntitySeries, error) {
+	err := assertion.Assert(
+		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
+	)
+	if err != nil {
+		return &EntitySeries{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	ret := &EntitySeries{
 		ID: id.GetID(),
 	}

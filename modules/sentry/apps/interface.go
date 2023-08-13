@@ -67,6 +67,8 @@ func (this *Application) Run() {
 	})
 }
 
+const THRESHOLD = 3
+
 func (this *Application) refresh() {
 	sentryTime := time.Now()
 	status, err := this.Handler.Fetch(this.ctx)
@@ -91,15 +93,26 @@ func (this *Application) refresh() {
 		this.failedCount++
 		if this.failedCount == 1 {
 			defer this.reclaim()
-		} else if this.failedCount == 3 {
+		} else if this.failedCount == THRESHOLD {
 			this.alert(err.Error())
 		}
 	} else {
 		// 状态正常时
+		// 防抖
 		if this.failedCount != 0 {
-			this.onlineLog()
+			if this.failedCount >= THRESHOLD {
+				this.failedCount = THRESHOLD
+			}
+			this.failedCount -= THRESHOLD / 3
+			if this.failedCount < 0 {
+				this.failedCount = 0
+			}
+			if this.failedCount == 0 {
+				// 确认恢复
+				this.startTime = time.Now()
+				this.onlineLog()
+			}
 		}
-		this.failedCount = 0
 		point.AddField("c_err", "")
 		point.AddField("c_live", true)
 		point.AddField("c_start_time", this.startTime)
@@ -157,7 +170,8 @@ func (this *Application) UpdateOptions(option *models.Application) error {
 	query, err := storage.QueryInfluxDB.Query(
 		this.ctx,
 		fmt.Sprintf(
-			`from(bucket: "backend")
+			`
+from(bucket: "backend")
   |> range(start: -1h)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
@@ -176,6 +190,7 @@ func (this *Application) UpdateOptions(option *models.Application) error {
 			glgf.Debug("entity start time:", this.startTime)
 		} else if query.Record().Field() == "c_failed_count" {
 			this.failedCount = cast.ToUint(query.Record().Value())
+
 			glgf.Debug("entity failed count:", this.failedCount)
 		}
 	}
