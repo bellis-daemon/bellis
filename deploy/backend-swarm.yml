@@ -1,9 +1,10 @@
 version: "3.1"
 
 services:
+  # bellis containers
   backend:
     hostname: backend
-    image: bellis-backend
+    image: registry.minoic.top/bellis/backend
     build:
       dockerfile: Dockerfile
       context: ..
@@ -12,13 +13,14 @@ services:
         PORT: 7001
     networks:
       - bellis
-    restart: always
     ports:
       - "7001:7001"
-
+    deploy:
+      restart_policy:
+        condition: on-failure
   dispatcher:
     hostname: dispatcher
-    image: bellis-dispatcher
+    image: registry.minoic.top/bellis/dispatcher
     build:
       dockerfile: Dockerfile
       context: ..
@@ -26,11 +28,14 @@ services:
         MODULE: dispatcher
     networks:
       - bellis
-    restart: always
 
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 2
   envoy:
     hostname: envoy
-    image: bellis-envoy
+    image: registry.minoic.top/bellis/envoy
     build:
       dockerfile: Dockerfile
       context: ..
@@ -38,14 +43,28 @@ services:
         MODULE: envoy
     networks:
       - bellis
-    restart: always
+  sentry:
+    hostname: sentry
+    image: registry.minoic.top/bellis/sentry
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: sentry
+    networks:
+      - bellis
 
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 3
+
+  # database containers
   influxdb:
     hostname: influxdb
     image: influxdb
     networks:
       - bellis
-    restart: always
     environment:
       - DOCKER_INFLUXDB_INIT_ORG=bellis
       - DOCKER_INFLUXDB_INIT_BUCKET=backend
@@ -55,14 +74,11 @@ services:
     ports:
       - "8086:8086"
     volumes:
-      - /bellis/dist/database/influxdb:/var/lib/influxdb2
+      - ../bellis/dist/database/influxdb:/var/lib/influxdb2
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==dev
 
   mongo1:
     hostname: mongo1
@@ -71,15 +87,13 @@ services:
       - bellis
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
-      - /bellis/dist/database/mongo1/configdb:/data/configdb
-      - /bellis/dist/database/mongo1/db:/data/db
+      - ../bellis/dist/database/mongo1/configdb:/data/configdb
+      - ../bellis/dist/database/mongo1/db:/data/db
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==dev
+
   mongo2:
     hostname: mongo2
     image: mongo
@@ -87,15 +101,13 @@ services:
       - bellis
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
-      - /bellis/dist/database/mongo2/configdb:/data/configdb
-      - /bellis/dist/database/mongo2/db:/data/db
+      - ../bellis/dist/database/mongo2/configdb:/data/configdb
+      - ../bellis/dist/database/mongo2/db:/data/db
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==dev
+
   mongo3:
     hostname: mongo3
     image: mongo
@@ -103,15 +115,12 @@ services:
       - bellis
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
-      - /bellis/dist/database/mongo3/configdb:/data/configdb
-      - /bellis/dist/database/mongo3/db:/data/db'
+      - ../bellis/dist/database/mongo3/configdb:/data/configdb
+      - ../bellis/dist/database/mongo3/db:/data/db'
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==dev
 
   mongo-init:
     image: mongo
@@ -139,7 +148,7 @@ services:
       - mongo1
       - mongo2
       - mongo3
-    restart: always
+
     environment:
       - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
       - ME_CONFIG_MONGODB_URL=mongodb://mongo1,mongo2,mongo3?replicaSet=rs0
@@ -147,32 +156,23 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==dev
 
   redis:
     hostname: redis
     image: redis
     networks:
       - bellis
-    restart: always
-    ports:
-      - "6379:6379"
     volumes:
-      - /bellis/dist/database/redis:/data
+      - ../bellis/dist/database/redis:/data
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==dev
 
   redis-commander:
     hostname: redis-commander
     image: rediscommander/redis-commander:latest
-    restart: always
+
     networks:
       - bellis
     environment:
@@ -185,22 +185,6 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 1
-      placement:
-        constraints:
-          - node.hostname==docker-desktop
-
-  sentry:
-    hostname: sentry
-    image: bellis-sentry
-    build:
-      dockerfile: Dockerfile
-      context: ..
-      args:
-        MODULE: sentry
-    networks:
-      - bellis
-    restart: always
-
 
 networks:
   bellis:

@@ -14,9 +14,5 @@ type Application struct {
 	CreatedAt   time.Time          `json:"CreatedAt" bson:"CreatedAt"`
 	SchemeID    int                `json:"SchemeID" bson:"SchemeID"`
 	Active      bool               `json:"Active" bson:"Active"`
-	General     Constrains         `json:"General" bson:"General"`
 	Options     bson.M             `json:"Options" bson:"Options"`
-}
-
-type Constrains struct {
 }

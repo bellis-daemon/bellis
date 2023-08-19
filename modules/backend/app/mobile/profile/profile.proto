@@ -44,6 +44,11 @@ message Email{
   string address = 1;
 }
 
+message Webhook{
+  string url = 1;
+  bool insecure = 2;
+}
+
 message EnvoyPolicyContent{
   oneof content{
     Gotify gotify = 1;
@@ -63,5 +68,6 @@ service ProfileService{
   rpc ChangeSensitive(Sensitive) returns (google.protobuf.Empty);
   rpc UseGotify(Gotify) returns (EnvoyPolicy);
   rpc UseEmail(Email) returns(EnvoyPolicy);
+  rpc UseWebhook(Webhook) returns(EnvoyPolicy);
 }
 

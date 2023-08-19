@@ -8,8 +8,6 @@ import (
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -71,65 +69,8 @@ func (h handler) UseEmail(ctx context.Context, email *Email) (*EnvoyPolicy, erro
 	return useNewPolicy(ctx, email)
 }
 
-func useNewPolicy(ctx context.Context, policy any) (*EnvoyPolicy, error) {
-	user := midwares.GetUserFromCtx(ctx)
-	err := storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
-		// delete old policy
-		if user.Envoy.PolicyID != primitive.NilObjectID {
-			var coll *mongo.Collection
-			switch user.Envoy.PolicyType {
-			case models.IsEnvoyGotify:
-				coll = storage.CEnvoyGotify
-			case models.IsEnvoyEmail:
-				coll = storage.CEnvoyEmail
-			}
-			_, err := coll.DeleteOne(sessionContext, bson.M{
-				"_id": user.Envoy.PolicyID,
-			})
-			if err != nil {
-				return err
-			}
-		}
-		// create new policy
-		switch policy.(type) {
-		case *Gotify:
-			one, err := storage.CEnvoyGotify.InsertOne(sessionContext, &models.EnvoyGotify{
-				ID:    primitive.NewObjectID(),
-				URL:   policy.(*Gotify).Url,
-				Token: policy.(*Gotify).Token,
-			})
-			if err != nil {
-				return err
-			}
-			user.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
-			user.Envoy.PolicyType = models.IsEnvoyGotify
-		case *Email:
-			one, err := storage.CEnvoyEmail.InsertOne(sessionContext, &models.EnvoyEmail{
-				ID:      primitive.NewObjectID(),
-				Address: policy.(*Email).Address,
-			})
-			if err != nil {
-				return err
-			}
-			user.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
-			user.Envoy.PolicyType = models.IsEnvoyEmail
-		}
-		// modify user model
-		_, err := storage.CUser.ReplaceOne(sessionContext, bson.M{"_id": user.ID}, user)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return &EnvoyPolicy{}, status.Error(codes.Internal, err.Error())
-	}
-	return &EnvoyPolicy{
-		PolicyID:     user.Envoy.PolicyID.Hex(),
-		PolicyType:   int32(user.Envoy.PolicyType),
-		OfflineAlert: user.Envoy.OfflineAlert,
-		PredictAlert: user.Envoy.PredictAlert,
-	}, nil
+func (h handler) UseWebhook(ctx context.Context, webhook *Webhook) (*EnvoyPolicy, error) {
+	return useNewPolicy(ctx, webhook)
 }
 
 func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*UserProfile, error) {

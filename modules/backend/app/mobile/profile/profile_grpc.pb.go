@@ -27,6 +27,7 @@ const (
 	ProfileService_ChangeSensitive_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/ChangeSensitive"
 	ProfileService_UseGotify_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/UseGotify"
 	ProfileService_UseEmail_FullMethodName        = "/bellis.backend.mobile.profile.ProfileService/UseEmail"
+	ProfileService_UseWebhook_FullMethodName      = "/bellis.backend.mobile.profile.ProfileService/UseWebhook"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -40,6 +41,7 @@ type ProfileServiceClient interface {
 	ChangeSensitive(ctx context.Context, in *Sensitive, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UseGotify(ctx context.Context, in *Gotify, opts ...grpc.CallOption) (*EnvoyPolicy, error)
 	UseEmail(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EnvoyPolicy, error)
+	UseWebhook(ctx context.Context, in *Webhook, opts ...grpc.CallOption) (*EnvoyPolicy, error)
 }
 
 type profileServiceClient struct {
@@ -113,6 +115,15 @@ func (c *profileServiceClient) UseEmail(ctx context.Context, in *Email, opts ...
 	return out, nil
 }
 
+func (c *profileServiceClient) UseWebhook(ctx context.Context, in *Webhook, opts ...grpc.CallOption) (*EnvoyPolicy, error) {
+	out := new(EnvoyPolicy)
+	err := c.cc.Invoke(ctx, ProfileService_UseWebhook_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations should embed UnimplementedProfileServiceServer
 // for forward compatibility
@@ -124,6 +135,7 @@ type ProfileServiceServer interface {
 	ChangeSensitive(context.Context, *Sensitive) (*emptypb.Empty, error)
 	UseGotify(context.Context, *Gotify) (*EnvoyPolicy, error)
 	UseEmail(context.Context, *Email) (*EnvoyPolicy, error)
+	UseWebhook(context.Context, *Webhook) (*EnvoyPolicy, error)
 }
 
 // UnimplementedProfileServiceServer should be embedded to have forward compatible implementations.
@@ -150,6 +162,9 @@ func (UnimplementedProfileServiceServer) UseGotify(context.Context, *Gotify) (*E
 }
 func (UnimplementedProfileServiceServer) UseEmail(context.Context, *Email) (*EnvoyPolicy, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UseEmail not implemented")
+}
+func (UnimplementedProfileServiceServer) UseWebhook(context.Context, *Webhook) (*EnvoyPolicy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UseWebhook not implemented")
 }
 
 // UnsafeProfileServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -289,6 +304,24 @@ func _ProfileService_UseEmail_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_UseWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Webhook)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).UseWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_UseWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).UseWebhook(ctx, req.(*Webhook))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -323,6 +356,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UseEmail",
 			Handler:    _ProfileService_UseEmail_Handler,
+		},
+		{
+			MethodName: "UseWebhook",
+			Handler:    _ProfileService_UseWebhook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -12,7 +12,7 @@ var DeleteInfluxDB api.DeleteAPI
 func init() {
 	client := influxdb2.NewClientWithOptions(
 		"http://influxdb:8086",
-		"nhIDF8c0tM_6dD2ESKy9aqxoPSuzUhAa3onvlUv0h0cXlovRLv6Szfp3TfHzdFXc8emSlw4Mq7T-TkI3fT2uQw==",
+		Secret("influxdb_token"),
 		influxdb2.DefaultOptions().SetBatchSize(50).
 			SetFlushInterval(200).
 			SetUseGZip(true).
