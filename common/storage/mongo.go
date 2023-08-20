@@ -11,6 +11,7 @@ var (
 	CEntity       *mongo.Collection
 	CEnvoyGotify  *mongo.Collection
 	CEnvoyEmail   *mongo.Collection
+	CEnvoyWebhook *mongo.Collection
 	COfflineLog   *mongo.Collection
 	client        *mongo.Client
 	bellisBackend *mongo.Database
@@ -30,6 +31,7 @@ func ConnectMongo() {
 	COfflineLog = bellisBackend.Collection("OfflineLog")
 	CEnvoyEmail = bellisBackend.Collection("EnvoyEmail")
 	CEnvoyGotify = bellisBackend.Collection("EnvoyGotify")
+	CEnvoyWebhook = bellisBackend.Collection("EnvoyWebhook")
 }
 
 func MongoUseSession(ctx context.Context, f func(sessionContext mongo.SessionContext) error) error {

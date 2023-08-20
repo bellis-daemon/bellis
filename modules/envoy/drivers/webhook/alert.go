@@ -1,4 +1,4 @@
-package email
+package webhook
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 type handler struct {
-	policy *models.EnvoyEmail
+	policy *models.EnvoyWebhook
 	ctx    context.Context
 }
 
@@ -22,13 +22,13 @@ func (this *handler) AlertOffline(entity *models.Application, msg string, offlin
 }
 
 func (this *handler) WithPolicy(policy any) drivers.EnvoyDriver {
-	this.policy = policy.(*models.EnvoyEmail)
+	this.policy = policy.(*models.EnvoyWebhook)
 	return this
 }
 
 func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriver {
-	this.policy = new(models.EnvoyEmail)
-	err := storage.CEnvoyEmail.FindOne(this.ctx, bson.M{"_id": policyId}).Decode(this.policy)
+	this.policy = new(models.EnvoyWebhook)
+	err := storage.CEnvoyWebhook.FindOne(this.ctx, bson.M{"_id": policyId}).Decode(this.policy)
 	if err != nil {
 		glgf.Error(err)
 	}

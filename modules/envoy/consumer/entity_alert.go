@@ -10,6 +10,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/email"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/gotify"
+	"github.com/bellis-daemon/bellis/modules/envoy/drivers/webhook"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
@@ -40,26 +41,19 @@ func entityOfflineAlert() {
 		switch user.Envoy.PolicyType {
 		case models.IsEnvoyGotify:
 			envoyType = "Gotify"
-			var policy models.EnvoyGotify
-			err = storage.CEnvoyGotify.FindOne(ctx, bson.M{"_id": user.Envoy.PolicyID}).Decode(&policy)
-			if err != nil {
-				return err
-			}
-			err = gotify.AlertOffline(&entity, &policy, message.Values["Message"].(string), offlineTime)
+			err = gotify.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
 				return err
 			}
 		case models.IsEnvoyEmail:
 			envoyType = "Email"
-			var policy models.EnvoyEmail
-			err = storage.CEnvoyEmail.FindOne(ctx, bson.M{"_id": user.Envoy.PolicyID}).Decode(&policy)
+			err = email.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
 				return err
 			}
-			err = email.AlertOffline(&entity, &policy, message.Values["Message"].(string), offlineTime)
-			if err != nil {
-				return err
-			}
+		case models.IsEnvoyWebhook:
+			envoyType = "Webhook"
+			err = webhook.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 		default:
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
 			return nil

@@ -1,5 +1,5 @@
 # 打包依赖阶段使用golang作为基础镜像
-FROM golang:1.20-alpine as builder
+FROM golang:1.21.0-alpine as builder
 
 WORKDIR /workspace
 
@@ -22,7 +22,6 @@ COPY . .
 # CGO_ENABLED禁用cgo 然后指定OS等，并go build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GO_VERSION=$(go version)' -X 'main.BUILD_TIME=`TZ=Asia/Shanghai date "+%F %T"`'" -o entry modules/$MODULE/main.go \
     && upx -9 entry
-
 
 FROM alpine
 
