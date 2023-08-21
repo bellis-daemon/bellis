@@ -1,13 +1,20 @@
 package webhook
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -17,8 +24,45 @@ type handler struct {
 }
 
 func (this *handler) AlertOffline(entity *models.Application, msg string, offlineTime time.Time) error {
-	//TODO implement me
-	panic("implement me")
+	parsedUrl, err := url.Parse(this.policy.URL)
+	if err != nil {
+		return err
+	}
+	if !this.policy.Insecure {
+		if parsedUrl.Scheme != "https" {
+			return errors.New("Cant send alert to none https server without insecure option ")
+		}
+		dial, err := tls.Dial("tcp", fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port()), nil)
+		if err != nil {
+			return err
+		}
+		err = dial.VerifyHostname(parsedUrl.Hostname())
+		if err != nil {
+			return err
+		}
+		expire := dial.ConnectionState().PeerCertificates[0].NotAfter
+		if expire.Before(time.Now()) {
+			return errors.New("Cant send alert to server with ssl certification without insecure option ")
+		}
+	}
+	body := map[string]any{
+		"EntityId":          entity.ID.Hex(),
+		"EntityName":        entity.Name,
+		"EntityDescription": entity.Description,
+		"EntityCreatedAt":   entity.CreatedAt,
+		"OfflineTime":       offlineTime.Format(time.RFC3339),
+		"OfflineMessage":    msg,
+	}
+	var buf bytes.Buffer
+	err = json.NewEncoder(&buf).Encode(body)
+	if err != nil {
+		return err
+	}
+	_, err = http.Post(parsedUrl.String(), "application/json", &buf)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (this *handler) WithPolicy(policy any) drivers.EnvoyDriver {

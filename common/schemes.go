@@ -2,7 +2,7 @@ package common
 
 import (
 	"github.com/bellis-daemon/bellis/common/cryptoo"
-	"os"
+	"os/exec"
 )
 
 var Measurements = map[int]string{
@@ -63,9 +63,13 @@ var (
 
 func Hostname() string {
 	if hostname == "" {
-		hostname = os.Getenv("HOSTNAME")
+		b, _ := exec.Command(`cat /proc/self/mountinfo | grep "/docker/containers/" | head -1 | awk '{print $4}' | sed 's/\/var\/lib\/docker\/containers\///g' | sed 's/\/resolv.conf//g'`).Output()
+		hostname = string(b)
 		if hostname == "" {
-			hostname = cryptoo.RandString(8)
+			hostname = "RND" + cryptoo.RandString(5)
+		}
+		if len(hostname) > 8 {
+			hostname = hostname[:8]
 		}
 	}
 	return hostname
