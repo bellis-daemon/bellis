@@ -17,6 +17,7 @@ import (
 var mutex *relock.Mutex
 
 const EntityList = "EntityList"
+const TermDuration = 5 * time.Minute
 
 func init() {
 	mutex = relock.NewMutex(storage.Redis(), "EntityListMutex")
@@ -75,7 +76,7 @@ func checkEntities() {
 	}
 	for i := range result {
 		if scoreToTime(result[i].Score).Before(time.Now()) {
-			ddl := time.Now().Add(30 * time.Second)
+			ddl := time.Now().Add(TermDuration)
 			result[i].Score = timeToScore(ddl)
 			glgf.Debug("entity claiming:", scoreToTime(result[i].Score).Format(time.RFC3339), result[i].Member)
 			id, err := primitive.ObjectIDFromHex(cast.ToString(result[i].Member))

@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/bellis-daemon/bellis/common/cryptoo"
+	"github.com/minoic/glgf"
 	"os/exec"
 )
 
@@ -63,7 +64,10 @@ var (
 
 func Hostname() string {
 	if hostname == "" {
-		b, _ := exec.Command(`cat /proc/self/mountinfo | grep "/docker/containers/" | head -1 | awk '{print $4}' | sed 's/\/var\/lib\/docker\/containers\///g' | sed 's/\/resolv.conf//g'`).Output()
+		b, err := exec.Command("sh", "hostname.sh").Output()
+		if err != nil {
+			glgf.Error(err)
+		}
 		hostname = string(b)
 		if hostname == "" {
 			hostname = "RND" + cryptoo.RandString(5)

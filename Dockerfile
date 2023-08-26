@@ -34,7 +34,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/re
 #COPY --from=builder /go/bin/dlv /
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert
 COPY --from=builder --chmod=777 /workspace/entry .
-
+COPY --chmod=777 hostname.sh .
 ## 需要运行的命令
 #ENTRYPOINT ["/dlv","--listen=:2345","--headless=true","--accept-multiclient","--api-version=2","exec","/entry"]
 ENTRYPOINT ["/entry"]
