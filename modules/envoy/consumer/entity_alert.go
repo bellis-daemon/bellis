@@ -12,6 +12,7 @@ import (
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/gotify"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/webhook"
 	"github.com/minoic/glgf"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -25,17 +26,17 @@ func entityOfflineAlert() {
 		offlineTime := time.UnixMilli(cast.ToInt64(message.Values["OfflineTime"]))
 		id, err := primitive.ObjectIDFromHex(message.Values["EntityID"].(string))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "Cant parse hex user id: "+message.Values["EntityID"].(string))
 		}
 		var entity models.Application
 		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "Cant find entity using entity id: "+id.Hex())
 		}
 		var user models.User
 		err = storage.CUser.FindOne(ctx, bson.M{"_id": entity.UserID}).Decode(&user)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "Cant find user using user id: "+entity.UserID.Hex())
 		}
 		envoyType := ""
 		switch user.Envoy.PolicyType {
@@ -43,27 +44,31 @@ func entityOfflineAlert() {
 			envoyType = "Gotify"
 			err = gotify.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "Cant find gotify policy using policy id: "+user.Envoy.PolicyID.Hex())
 			}
 		case models.IsEnvoyEmail:
 			envoyType = "Email"
 			err = email.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "Cant find email policy using policy id: "+user.Envoy.PolicyID.Hex())
 			}
 		case models.IsEnvoyWebhook:
 			envoyType = "Webhook"
 			err = webhook.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
+			if err != nil {
+				return errors.Wrap(err, "Cant find webhook policy using policy id: "+user.Envoy.PolicyID.Hex())
+			}
 		default:
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
 			return nil
 		}
-		go func() {
-			retry.Do(func() error {
-				err := writeOfflineLog(ctx, &entity, offlineTime, envoyType)
-				return err
-			}, retry.Context(ctx))
-		}()
+		err = retry.Do(func() error {
+			err := writeOfflineLog(ctx, &entity, offlineTime, envoyType)
+			return err
+		}, retry.Context(ctx), retry.Attempts(3))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -88,7 +93,7 @@ from(bucket: "backend")
   |> group(columns: ["_time"])
 `, offlineTime.Format(time.RFC3339), common.Measurements[entity.SchemeID], entity.ID.Hex()))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error querying influxdb")
 	}
 	for query.Next() {
 		sl := models.SentryLog{
@@ -111,7 +116,7 @@ from(bucket: "backend")
 	}
 	glgf.Debug(log)
 	_, err = storage.COfflineLog.InsertOne(ctx, log)
-	return err
+	return errors.Wrap(err, "Error inserting offline log")
 }
 
 func entityOnlineAlert() {
@@ -125,15 +130,15 @@ func entityOnlineAlert() {
 		var entity models.Application
 		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "Cant find entity using id: "+id.Hex())
 		}
 		err = retry.Do(func() error {
 			return writeOnlineLog(ctx, &entity, onlineTime)
-		})
+		}, retry.Context(ctx), retry.Attempts(3))
 		if err != nil {
-			glgf.Error(err)
+			return err
 		}
-		return err
+		return nil
 	})
 }
 
@@ -141,8 +146,8 @@ func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme 
 	var log models.OfflineLog
 	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error finding entity in mongodb")
 	}
 	_, err = storage.COfflineLog.UpdateOne(ctx, bson.M{"_id": log.ID}, bson.M{"$set": bson.M{"OnlineTime": onlineTIme}})
-	return err
+	return errors.Wrap(err, "Error updating offline log in mongodb")
 }

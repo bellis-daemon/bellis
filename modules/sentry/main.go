@@ -14,6 +14,7 @@ func init() {
 	common.BuildTime = BuildTime
 	common.GoVersion = GoVersion
 }
+
 func main() {
 	consumer.Serve()
 }
