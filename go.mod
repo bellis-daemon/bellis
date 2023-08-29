@@ -1,6 +1,6 @@
 module github.com/bellis-daemon/bellis
 
-go 1.20
+go 1.21
 
 require (
 	github.com/avast/retry-go/v4 v4.3.4

@@ -90,8 +90,8 @@ func (this *Application) refresh() {
 		point.AddField("c_err", err.Error())
 		point.AddField("c_live", false)
 		point.AddField("c_start_time", time.Now())
-		this.failedCount++
-		if this.failedCount == 1 {
+		this.failedCount = min(this.failedCount+1, THRESHOLD+1)
+		if this.failedCount < THRESHOLD && (this.failedCount&1 == 0) {
 			defer this.reclaim()
 		} else if this.failedCount == THRESHOLD {
 			this.alert(err.Error())

@@ -1,10 +1,10 @@
-version: "3.1"
+version: "3.8"
 
 services:
   # bellis containers
   backend:
     hostname: backend
-    image: registry.minoic.top/bellis/backend
+    image: registry.cn-shanghai.aliyuncs.com/bellis/backend
     build:
       dockerfile: Dockerfile
       context: ..
@@ -18,9 +18,12 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+      replicas: 2
+    secrets:
+      - influxdb_token
   dispatcher:
     hostname: dispatcher
-    image: registry.minoic.top/bellis/dispatcher
+    image: registry.cn-shanghai.aliyuncs.com/bellis/dispatcher
     build:
       dockerfile: Dockerfile
       context: ..
@@ -28,14 +31,15 @@ services:
         MODULE: dispatcher
     networks:
       - bellis
-
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 2
+    secrets:
+      - influxdb_token
   envoy:
     hostname: envoy
-    image: registry.minoic.top/bellis/envoy
+    image: registry.cn-shanghai.aliyuncs.com/bellis/envoy
     build:
       dockerfile: Dockerfile
       context: ..
@@ -43,9 +47,11 @@ services:
         MODULE: envoy
     networks:
       - bellis
+    secrets:
+      - influxdb_token
   sentry:
     hostname: sentry
-    image: registry.minoic.top/bellis/sentry
+    image: registry.cn-shanghai.aliyuncs.com/bellis/sentry
     build:
       dockerfile: Dockerfile
       context: ..
@@ -53,11 +59,12 @@ services:
         MODULE: sentry
     networks:
       - bellis
-
     deploy:
       restart_policy:
         condition: on-failure
       replicas: 3
+    secrets:
+      - influxdb_token
 
   # database containers
   influxdb:
@@ -74,7 +81,7 @@ services:
     ports:
       - "8086:8086"
     volumes:
-      - ../bellis/dist/database/influxdb:/var/lib/influxdb2
+      - /bellis/dist/database/influxdb:/var/lib/influxdb2
     deploy:
       restart_policy:
         condition: on-failure
@@ -87,8 +94,8 @@ services:
       - bellis
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
-      - ../bellis/dist/database/mongo1/configdb:/data/configdb
-      - ../bellis/dist/database/mongo1/db:/data/db
+      - /bellis/dist/database/mongo1/configdb:/data/configdb
+      - /bellis/dist/database/mongo1/db:/data/db
     deploy:
       restart_policy:
         condition: on-failure
@@ -101,8 +108,8 @@ services:
       - bellis
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
-      - ../bellis/dist/database/mongo2/configdb:/data/configdb
-      - ../bellis/dist/database/mongo2/db:/data/db
+      - /bellis/dist/database/mongo2/configdb:/data/configdb
+      - /bellis/dist/database/mongo2/db:/data/db
     deploy:
       restart_policy:
         condition: on-failure
@@ -115,8 +122,8 @@ services:
       - bellis
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
-      - ../bellis/dist/database/mongo3/configdb:/data/configdb
-      - ../bellis/dist/database/mongo3/db:/data/db'
+      - /bellis/dist/database/mongo3/configdb:/data/configdb
+      - /bellis/dist/database/mongo3/db:/data/db'
     deploy:
       restart_policy:
         condition: on-failure
@@ -163,7 +170,7 @@ services:
     networks:
       - bellis
     volumes:
-      - ../bellis/dist/database/redis:/data
+      - /bellis/dist/database/redis:/data
     deploy:
       restart_policy:
         condition: on-failure
@@ -185,6 +192,10 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 1
+
+secrets:
+  influxdb_token:
+    external: true
 
 networks:
   bellis:

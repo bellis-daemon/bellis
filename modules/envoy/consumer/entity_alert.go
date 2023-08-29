@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/bellis-daemon/bellis/common"
@@ -12,31 +13,39 @@ import (
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/gotify"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/webhook"
 	"github.com/minoic/glgf"
-	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
 func entityOfflineAlert() {
 	stream.Register(common.EntityOfflineAlert, func(ctx context.Context, message *redistream.Message) error {
-		glgf.Debug(message)
 		offlineTime := time.UnixMilli(cast.ToInt64(message.Values["OfflineTime"]))
 		id, err := primitive.ObjectIDFromHex(message.Values["EntityID"].(string))
 		if err != nil {
-			return errors.Wrap(err, "Cant parse hex user id: "+message.Values["EntityID"].(string))
+			return fmt.Errorf("cant parse hex user id: %s: %w", message.Values["EntityID"].(string), err)
 		}
 		var entity models.Application
 		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
 		if err != nil {
-			return errors.Wrap(err, "Cant find entity using entity id: "+id.Hex())
+			return fmt.Errorf("cant find entity using entity id: %s: %w", id.Hex(), err)
 		}
 		var user models.User
 		err = storage.CUser.FindOne(ctx, bson.M{"_id": entity.UserID}).Decode(&user)
 		if err != nil {
-			return errors.Wrap(err, "Cant find user using user id: "+entity.UserID.Hex())
+			return fmt.Errorf("cant find user using user id: %s: %w", entity.UserID.Hex(), err)
+		}
+		// check if entity is previously offline
+		ok, err := isOnlineState(ctx, &entity)
+		if err != nil {
+			return fmt.Errorf("cant get entity offline log: %w", err)
+		}
+		if !ok {
+			glgf.Warn("entity alert canceled because of previously offline: ", entity, message)
+			return nil
 		}
 		envoyType := ""
 		switch user.Envoy.PolicyType {
@@ -44,19 +53,19 @@ func entityOfflineAlert() {
 			envoyType = "Gotify"
 			err = gotify.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
-				return errors.Wrap(err, "Cant find gotify policy using policy id: "+user.Envoy.PolicyID.Hex())
+				return fmt.Errorf("cant find gotify policy using policy id: %s: %w", user.Envoy.PolicyID.Hex(), err)
 			}
 		case models.IsEnvoyEmail:
 			envoyType = "Email"
 			err = email.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
-				return errors.Wrap(err, "Cant find email policy using policy id: "+user.Envoy.PolicyID.Hex())
+				return fmt.Errorf("cant find email policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
 			}
 		case models.IsEnvoyWebhook:
 			envoyType = "Webhook"
 			err = webhook.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
 			if err != nil {
-				return errors.Wrap(err, "Cant find webhook policy using policy id: "+user.Envoy.PolicyID.Hex())
+				return fmt.Errorf("cant find webhook policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
 			}
 		default:
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
@@ -93,7 +102,7 @@ from(bucket: "backend")
   |> group(columns: ["_time"])
 `, offlineTime.Format(time.RFC3339), common.Measurements[entity.SchemeID], entity.ID.Hex()))
 	if err != nil {
-		return errors.Wrap(err, "Error querying influxdb")
+		return fmt.Errorf("error querying influxdb: %w", err)
 	}
 	for query.Next() {
 		sl := models.SentryLog{
@@ -116,7 +125,7 @@ from(bucket: "backend")
 	}
 	glgf.Debug(log)
 	_, err = storage.COfflineLog.InsertOne(ctx, log)
-	return errors.Wrap(err, "Error inserting offline log")
+	return fmt.Errorf("error inserting offline log: %w", err)
 }
 
 func entityOnlineAlert() {
@@ -130,7 +139,7 @@ func entityOnlineAlert() {
 		var entity models.Application
 		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
 		if err != nil {
-			return errors.Wrap(err, "Cant find entity using id: "+id.Hex())
+			return fmt.Errorf("cant find entity using id: %s: %w ", id.Hex(), err)
 		}
 		err = retry.Do(func() error {
 			return writeOnlineLog(ctx, &entity, onlineTime)
@@ -146,8 +155,21 @@ func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme 
 	var log models.OfflineLog
 	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
 	if err != nil {
-		return errors.Wrap(err, "Error finding entity in mongodb")
+		return fmt.Errorf("error finding entity in mongodb: %w", err)
 	}
 	_, err = storage.COfflineLog.UpdateOne(ctx, bson.M{"_id": log.ID}, bson.M{"$set": bson.M{"OnlineTime": onlineTIme}})
-	return errors.Wrap(err, "Error updating offline log in mongodb")
+	return fmt.Errorf("error updating offline log in mongodb: %w", err)
+}
+
+func isOnlineState(ctx context.Context, entity *models.Application) (bool, error) {
+	var log models.OfflineLog
+	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNilDocument) {
+			return false, fmt.Errorf("internal mongodb err: %w", err)
+		} else {
+			return true, nil
+		}
+	}
+	return !log.OnlineTime.IsZero(), nil
 }
