@@ -6,6 +6,7 @@ import (
 )
 
 var WriteInfluxDB api.WriteAPI
+var WriteInfluxDBBlocking api.WriteAPIBlocking
 var QueryInfluxDB api.QueryAPI
 var DeleteInfluxDB api.DeleteAPI
 
@@ -21,6 +22,7 @@ func init() {
 			SetMaxRetryInterval(500),
 	)
 	WriteInfluxDB = client.WriteAPI("bellis", "backend")
+	WriteInfluxDBBlocking = client.WriteAPIBlocking("bellis", "backend")
 	QueryInfluxDB = client.QueryAPI("bellis")
 	DeleteInfluxDB = client.DeleteAPI()
 }

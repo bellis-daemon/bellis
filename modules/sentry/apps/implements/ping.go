@@ -11,11 +11,11 @@ import (
 )
 
 type Ping struct {
-	Options pingOptions
+	options pingOptions
 }
 
 func (this *Ping) Init(setOptions func(options any) error) error {
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 type pingOptions struct {
@@ -32,7 +32,7 @@ type pingStatus struct {
 }
 
 func (this *Ping) Fetch(ctx context.Context) (any, error) {
-	client, err := ping.NewPinger(this.Options.Address)
+	client, err := ping.NewPinger(this.options.Address)
 	defer client.Stop()
 	if err != nil {
 		return &pingStatus{}, err
@@ -48,7 +48,7 @@ func (this *Ping) Fetch(ctx context.Context) (any, error) {
 	statistics := client.Statistics()
 	if statistics.PacketsRecv == 0 {
 		return &pingStatus{}, errors.New("Address " + statistics.IPAddr.IP.String() + " unreachable from our server")
-	} else if statistics.PacketLoss > this.Options.LossThreshold {
+	} else if statistics.PacketLoss > this.options.LossThreshold {
 		return &pingStatus{}, errors.New("Address " + statistics.IPAddr.IP.String() + " Excessive packet loss from our server:" + cast.ToString(statistics.PacketLoss))
 	}
 	return &pingStatus{

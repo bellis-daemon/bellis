@@ -101,7 +101,10 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 		CreatedAt:   time.Now(),
 		SchemeID:    int(entity.SchemeID),
 		Active:      true,
-		Options:     entity.Options.AsMap(),
+		Public: models.ApplicationPublicOptions{
+			Threshold: int(entity.Public.Threshold),
+		},
+		Options: entity.Options.AsMap(),
 	}
 	_, err := storage.CEntity.InsertOne(ctx, e)
 	if err != nil {
@@ -134,7 +137,7 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty
 			"Name":        entity.Name,
 			"Description": entity.Description,
 			"Active":      entity.Active,
-			"Options":     entity.Options.AsMap(),
+			"options":     entity.Options.AsMap(),
 		},
 	})
 	if err != nil {

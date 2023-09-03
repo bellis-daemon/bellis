@@ -280,14 +280,15 @@ type Entity struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ID          string           `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
-	Name        string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string           `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	UserID      string           `protobuf:"bytes,4,opt,name=userID,proto3" json:"userID,omitempty"`
-	CreatedAt   string           `protobuf:"bytes,5,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	SchemeID    int32            `protobuf:"varint,6,opt,name=schemeID,proto3" json:"schemeID,omitempty"`
-	Active      bool             `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
-	Options     *structpb.Struct `protobuf:"bytes,8,opt,name=Options,proto3" json:"Options,omitempty"`
+	ID          string               `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	Name        string               `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description string               `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	UserID      string               `protobuf:"bytes,4,opt,name=userID,proto3" json:"userID,omitempty"`
+	CreatedAt   string               `protobuf:"bytes,5,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	SchemeID    int32                `protobuf:"varint,6,opt,name=schemeID,proto3" json:"schemeID,omitempty"`
+	Active      bool                 `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
+	Public      *EntityPublicOptions `protobuf:"bytes,8,opt,name=public,proto3" json:"public,omitempty"`
+	Options     *structpb.Struct     `protobuf:"bytes,9,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *Entity) Reset() {
@@ -371,11 +372,65 @@ func (x *Entity) GetActive() bool {
 	return false
 }
 
+func (x *Entity) GetPublic() *EntityPublicOptions {
+	if x != nil {
+		return x.Public
+	}
+	return nil
+}
+
 func (x *Entity) GetOptions() *structpb.Struct {
 	if x != nil {
 		return x.Options
 	}
 	return nil
+}
+
+type EntityPublicOptions struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Threshold int32 `protobuf:"varint,1,opt,name=threshold,proto3" json:"threshold,omitempty"`
+}
+
+func (x *EntityPublicOptions) Reset() {
+	*x = EntityPublicOptions{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_entity_entity_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EntityPublicOptions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntityPublicOptions) ProtoMessage() {}
+
+func (x *EntityPublicOptions) ProtoReflect() protoreflect.Message {
+	mi := &file_entity_entity_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntityPublicOptions.ProtoReflect.Descriptor instead.
+func (*EntityPublicOptions) Descriptor() ([]byte, []int) {
+	return file_entity_entity_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *EntityPublicOptions) GetThreshold() int32 {
+	if x != nil {
+		return x.Threshold
+	}
+	return 0
 }
 
 type AllEntities struct {
@@ -389,7 +444,7 @@ type AllEntities struct {
 func (x *AllEntities) Reset() {
 	*x = AllEntities{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_entity_proto_msgTypes[5]
+		mi := &file_entity_entity_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -402,7 +457,7 @@ func (x *AllEntities) String() string {
 func (*AllEntities) ProtoMessage() {}
 
 func (x *AllEntities) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_entity_proto_msgTypes[5]
+	mi := &file_entity_entity_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -415,7 +470,7 @@ func (x *AllEntities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AllEntities.ProtoReflect.Descriptor instead.
 func (*AllEntities) Descriptor() ([]byte, []int) {
-	return file_entity_entity_proto_rawDescGZIP(), []int{5}
+	return file_entity_entity_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AllEntities) GetEntities() []*Entity {
@@ -437,7 +492,7 @@ type OfflineLogRequest struct {
 func (x *OfflineLogRequest) Reset() {
 	*x = OfflineLogRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_entity_proto_msgTypes[6]
+		mi := &file_entity_entity_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -450,7 +505,7 @@ func (x *OfflineLogRequest) String() string {
 func (*OfflineLogRequest) ProtoMessage() {}
 
 func (x *OfflineLogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_entity_proto_msgTypes[6]
+	mi := &file_entity_entity_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -463,7 +518,7 @@ func (x *OfflineLogRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineLogRequest.ProtoReflect.Descriptor instead.
 func (*OfflineLogRequest) Descriptor() ([]byte, []int) {
-	return file_entity_entity_proto_rawDescGZIP(), []int{6}
+	return file_entity_entity_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *OfflineLogRequest) GetEntityID() string {
@@ -492,7 +547,7 @@ type OfflineLogPage struct {
 func (x *OfflineLogPage) Reset() {
 	*x = OfflineLogPage{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_entity_proto_msgTypes[7]
+		mi := &file_entity_entity_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -505,7 +560,7 @@ func (x *OfflineLogPage) String() string {
 func (*OfflineLogPage) ProtoMessage() {}
 
 func (x *OfflineLogPage) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_entity_proto_msgTypes[7]
+	mi := &file_entity_entity_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -518,7 +573,7 @@ func (x *OfflineLogPage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineLogPage.ProtoReflect.Descriptor instead.
 func (*OfflineLogPage) Descriptor() ([]byte, []int) {
-	return file_entity_entity_proto_rawDescGZIP(), []int{7}
+	return file_entity_entity_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *OfflineLogPage) GetLength() int32 {
@@ -549,7 +604,7 @@ type OfflineLog struct {
 func (x *OfflineLog) Reset() {
 	*x = OfflineLog{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_entity_proto_msgTypes[8]
+		mi := &file_entity_entity_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -562,7 +617,7 @@ func (x *OfflineLog) String() string {
 func (*OfflineLog) ProtoMessage() {}
 
 func (x *OfflineLog) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_entity_proto_msgTypes[8]
+	mi := &file_entity_entity_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -575,7 +630,7 @@ func (x *OfflineLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineLog.ProtoReflect.Descriptor instead.
 func (*OfflineLog) Descriptor() ([]byte, []int) {
-	return file_entity_entity_proto_rawDescGZIP(), []int{8}
+	return file_entity_entity_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *OfflineLog) GetEnvoyTime() string {
@@ -619,7 +674,7 @@ type SentryLog struct {
 func (x *SentryLog) Reset() {
 	*x = SentryLog{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_entity_proto_msgTypes[9]
+		mi := &file_entity_entity_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -632,7 +687,7 @@ func (x *SentryLog) String() string {
 func (*SentryLog) ProtoMessage() {}
 
 func (x *SentryLog) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_entity_proto_msgTypes[9]
+	mi := &file_entity_entity_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -645,7 +700,7 @@ func (x *SentryLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SentryLog.ProtoReflect.Descriptor instead.
 func (*SentryLog) Descriptor() ([]byte, []int) {
-	return file_entity_entity_proto_rawDescGZIP(), []int{9}
+	return file_entity_entity_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SentryLog) GetSentryName() string {
@@ -709,7 +764,7 @@ var file_entity_entity_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x49, 0x44, 0x12, 0x2f, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x69,
 	0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
 	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63,
-	0x74, 0x52, 0x06, 0x73, 0x65, 0x72, 0x69, 0x65, 0x73, 0x22, 0xeb, 0x01, 0x0a, 0x06, 0x45, 0x6e,
+	0x74, 0x52, 0x06, 0x73, 0x65, 0x72, 0x69, 0x65, 0x73, 0x22, 0xb6, 0x02, 0x0a, 0x06, 0x45, 0x6e,
 	0x74, 0x69, 0x74, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x02, 0x49, 0x44, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63,
@@ -721,10 +776,18 @@ var file_entity_entity_proto_rawDesc = []byte{
 	0x12, 0x1a, 0x0a, 0x08, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x65, 0x49, 0x44, 0x18, 0x06, 0x20, 0x01,
 	0x28, 0x05, 0x52, 0x08, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x65, 0x49, 0x44, 0x12, 0x16, 0x0a, 0x06,
 	0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x61, 0x63,
-	0x74, 0x69, 0x76, 0x65, 0x12, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18,
-	0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x07,
-	0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x4f, 0x0a, 0x0b, 0x41, 0x6c, 0x6c, 0x45, 0x6e,
+	0x74, 0x69, 0x76, 0x65, 0x12, 0x49, 0x0a, 0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x18, 0x08,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x62, 0x65, 0x6c, 0x6c, 0x69, 0x73, 0x2e, 0x62, 0x61,
+	0x63, 0x6b, 0x65, 0x6e, 0x64, 0x2e, 0x6d, 0x6f, 0x62, 0x69, 0x6c, 0x65, 0x2e, 0x65, 0x6e, 0x74,
+	0x69, 0x74, 0x79, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63,
+	0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x12,
+	0x31, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x17, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
+	0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x22, 0x33, 0x0a, 0x13, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x50, 0x75, 0x62, 0x6c,
+	0x69, 0x63, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x68, 0x72,
+	0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x74, 0x68,
+	0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64, 0x22, 0x4f, 0x0a, 0x0b, 0x41, 0x6c, 0x6c, 0x45, 0x6e,
 	0x74, 0x69, 0x74, 0x69, 0x65, 0x73, 0x12, 0x40, 0x0a, 0x08, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x69,
 	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x62, 0x65, 0x6c, 0x6c, 0x69,
 	0x73, 0x2e, 0x62, 0x61, 0x63, 0x6b, 0x65, 0x6e, 0x64, 0x2e, 0x6d, 0x6f, 0x62, 0x69, 0x6c, 0x65,
@@ -834,54 +897,56 @@ func file_entity_entity_proto_rawDescGZIP() []byte {
 	return file_entity_entity_proto_rawDescData
 }
 
-var file_entity_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_entity_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_entity_entity_proto_goTypes = []interface{}{
-	(*EntityID)(nil),          // 0: bellis.backend.mobile.entity.EntityID
-	(*EntityStatus)(nil),      // 1: bellis.backend.mobile.entity.EntityStatus
-	(*AllEntityStatus)(nil),   // 2: bellis.backend.mobile.entity.AllEntityStatus
-	(*EntitySeries)(nil),      // 3: bellis.backend.mobile.entity.EntitySeries
-	(*Entity)(nil),            // 4: bellis.backend.mobile.entity.Entity
-	(*AllEntities)(nil),       // 5: bellis.backend.mobile.entity.AllEntities
-	(*OfflineLogRequest)(nil), // 6: bellis.backend.mobile.entity.OfflineLogRequest
-	(*OfflineLogPage)(nil),    // 7: bellis.backend.mobile.entity.OfflineLogPage
-	(*OfflineLog)(nil),        // 8: bellis.backend.mobile.entity.OfflineLog
-	(*SentryLog)(nil),         // 9: bellis.backend.mobile.entity.SentryLog
-	(*structpb.Struct)(nil),   // 10: google.protobuf.Struct
-	(*public.Pagination)(nil), // 11: bellis.backend.mobile.public.Pagination
-	(*emptypb.Empty)(nil),     // 12: google.protobuf.Empty
+	(*EntityID)(nil),            // 0: bellis.backend.mobile.entity.EntityID
+	(*EntityStatus)(nil),        // 1: bellis.backend.mobile.entity.EntityStatus
+	(*AllEntityStatus)(nil),     // 2: bellis.backend.mobile.entity.AllEntityStatus
+	(*EntitySeries)(nil),        // 3: bellis.backend.mobile.entity.EntitySeries
+	(*Entity)(nil),              // 4: bellis.backend.mobile.entity.Entity
+	(*EntityPublicOptions)(nil), // 5: bellis.backend.mobile.entity.EntityPublicOptions
+	(*AllEntities)(nil),         // 6: bellis.backend.mobile.entity.AllEntities
+	(*OfflineLogRequest)(nil),   // 7: bellis.backend.mobile.entity.OfflineLogRequest
+	(*OfflineLogPage)(nil),      // 8: bellis.backend.mobile.entity.OfflineLogPage
+	(*OfflineLog)(nil),          // 9: bellis.backend.mobile.entity.OfflineLog
+	(*SentryLog)(nil),           // 10: bellis.backend.mobile.entity.SentryLog
+	(*structpb.Struct)(nil),     // 11: google.protobuf.Struct
+	(*public.Pagination)(nil),   // 12: bellis.backend.mobile.public.Pagination
+	(*emptypb.Empty)(nil),       // 13: google.protobuf.Empty
 }
 var file_entity_entity_proto_depIdxs = []int32{
-	10, // 0: bellis.backend.mobile.entity.EntityStatus.fields:type_name -> google.protobuf.Struct
+	11, // 0: bellis.backend.mobile.entity.EntityStatus.fields:type_name -> google.protobuf.Struct
 	1,  // 1: bellis.backend.mobile.entity.AllEntityStatus.status:type_name -> bellis.backend.mobile.entity.EntityStatus
-	10, // 2: bellis.backend.mobile.entity.EntitySeries.series:type_name -> google.protobuf.Struct
-	10, // 3: bellis.backend.mobile.entity.Entity.Options:type_name -> google.protobuf.Struct
-	4,  // 4: bellis.backend.mobile.entity.AllEntities.entities:type_name -> bellis.backend.mobile.entity.Entity
-	11, // 5: bellis.backend.mobile.entity.OfflineLogRequest.pagination:type_name -> bellis.backend.mobile.public.Pagination
-	8,  // 6: bellis.backend.mobile.entity.OfflineLogPage.offlineLogs:type_name -> bellis.backend.mobile.entity.OfflineLog
-	9,  // 7: bellis.backend.mobile.entity.OfflineLog.sentryLogs:type_name -> bellis.backend.mobile.entity.SentryLog
-	0,  // 8: bellis.backend.mobile.entity.EntityService.DeleteEntity:input_type -> bellis.backend.mobile.entity.EntityID
-	4,  // 9: bellis.backend.mobile.entity.EntityService.NewEntity:input_type -> bellis.backend.mobile.entity.Entity
-	4,  // 10: bellis.backend.mobile.entity.EntityService.UpdateEntity:input_type -> bellis.backend.mobile.entity.Entity
-	0,  // 11: bellis.backend.mobile.entity.EntityService.GetEntity:input_type -> bellis.backend.mobile.entity.EntityID
-	12, // 12: bellis.backend.mobile.entity.EntityService.GetAllEntities:input_type -> google.protobuf.Empty
-	0,  // 13: bellis.backend.mobile.entity.EntityService.GetStatus:input_type -> bellis.backend.mobile.entity.EntityID
-	12, // 14: bellis.backend.mobile.entity.EntityService.GetAllStatus:input_type -> google.protobuf.Empty
-	0,  // 15: bellis.backend.mobile.entity.EntityService.GetSeries:input_type -> bellis.backend.mobile.entity.EntityID
-	6,  // 16: bellis.backend.mobile.entity.EntityService.GetOfflineLog:input_type -> bellis.backend.mobile.entity.OfflineLogRequest
-	12, // 17: bellis.backend.mobile.entity.EntityService.DeleteEntity:output_type -> google.protobuf.Empty
-	0,  // 18: bellis.backend.mobile.entity.EntityService.NewEntity:output_type -> bellis.backend.mobile.entity.EntityID
-	12, // 19: bellis.backend.mobile.entity.EntityService.UpdateEntity:output_type -> google.protobuf.Empty
-	4,  // 20: bellis.backend.mobile.entity.EntityService.GetEntity:output_type -> bellis.backend.mobile.entity.Entity
-	5,  // 21: bellis.backend.mobile.entity.EntityService.GetAllEntities:output_type -> bellis.backend.mobile.entity.AllEntities
-	1,  // 22: bellis.backend.mobile.entity.EntityService.GetStatus:output_type -> bellis.backend.mobile.entity.EntityStatus
-	2,  // 23: bellis.backend.mobile.entity.EntityService.GetAllStatus:output_type -> bellis.backend.mobile.entity.AllEntityStatus
-	3,  // 24: bellis.backend.mobile.entity.EntityService.GetSeries:output_type -> bellis.backend.mobile.entity.EntitySeries
-	7,  // 25: bellis.backend.mobile.entity.EntityService.GetOfflineLog:output_type -> bellis.backend.mobile.entity.OfflineLogPage
-	17, // [17:26] is the sub-list for method output_type
-	8,  // [8:17] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	11, // 2: bellis.backend.mobile.entity.EntitySeries.series:type_name -> google.protobuf.Struct
+	5,  // 3: bellis.backend.mobile.entity.Entity.public:type_name -> bellis.backend.mobile.entity.EntityPublicOptions
+	11, // 4: bellis.backend.mobile.entity.Entity.options:type_name -> google.protobuf.Struct
+	4,  // 5: bellis.backend.mobile.entity.AllEntities.entities:type_name -> bellis.backend.mobile.entity.Entity
+	12, // 6: bellis.backend.mobile.entity.OfflineLogRequest.pagination:type_name -> bellis.backend.mobile.public.Pagination
+	9,  // 7: bellis.backend.mobile.entity.OfflineLogPage.offlineLogs:type_name -> bellis.backend.mobile.entity.OfflineLog
+	10, // 8: bellis.backend.mobile.entity.OfflineLog.sentryLogs:type_name -> bellis.backend.mobile.entity.SentryLog
+	0,  // 9: bellis.backend.mobile.entity.EntityService.DeleteEntity:input_type -> bellis.backend.mobile.entity.EntityID
+	4,  // 10: bellis.backend.mobile.entity.EntityService.NewEntity:input_type -> bellis.backend.mobile.entity.Entity
+	4,  // 11: bellis.backend.mobile.entity.EntityService.UpdateEntity:input_type -> bellis.backend.mobile.entity.Entity
+	0,  // 12: bellis.backend.mobile.entity.EntityService.GetEntity:input_type -> bellis.backend.mobile.entity.EntityID
+	13, // 13: bellis.backend.mobile.entity.EntityService.GetAllEntities:input_type -> google.protobuf.Empty
+	0,  // 14: bellis.backend.mobile.entity.EntityService.GetStatus:input_type -> bellis.backend.mobile.entity.EntityID
+	13, // 15: bellis.backend.mobile.entity.EntityService.GetAllStatus:input_type -> google.protobuf.Empty
+	0,  // 16: bellis.backend.mobile.entity.EntityService.GetSeries:input_type -> bellis.backend.mobile.entity.EntityID
+	7,  // 17: bellis.backend.mobile.entity.EntityService.GetOfflineLog:input_type -> bellis.backend.mobile.entity.OfflineLogRequest
+	13, // 18: bellis.backend.mobile.entity.EntityService.DeleteEntity:output_type -> google.protobuf.Empty
+	0,  // 19: bellis.backend.mobile.entity.EntityService.NewEntity:output_type -> bellis.backend.mobile.entity.EntityID
+	13, // 20: bellis.backend.mobile.entity.EntityService.UpdateEntity:output_type -> google.protobuf.Empty
+	4,  // 21: bellis.backend.mobile.entity.EntityService.GetEntity:output_type -> bellis.backend.mobile.entity.Entity
+	6,  // 22: bellis.backend.mobile.entity.EntityService.GetAllEntities:output_type -> bellis.backend.mobile.entity.AllEntities
+	1,  // 23: bellis.backend.mobile.entity.EntityService.GetStatus:output_type -> bellis.backend.mobile.entity.EntityStatus
+	2,  // 24: bellis.backend.mobile.entity.EntityService.GetAllStatus:output_type -> bellis.backend.mobile.entity.AllEntityStatus
+	3,  // 25: bellis.backend.mobile.entity.EntityService.GetSeries:output_type -> bellis.backend.mobile.entity.EntitySeries
+	8,  // 26: bellis.backend.mobile.entity.EntityService.GetOfflineLog:output_type -> bellis.backend.mobile.entity.OfflineLogPage
+	18, // [18:27] is the sub-list for method output_type
+	9,  // [9:18] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_entity_entity_proto_init() }
@@ -951,7 +1016,7 @@ func file_entity_entity_proto_init() {
 			}
 		}
 		file_entity_entity_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AllEntities); i {
+			switch v := v.(*EntityPublicOptions); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -963,7 +1028,7 @@ func file_entity_entity_proto_init() {
 			}
 		}
 		file_entity_entity_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OfflineLogRequest); i {
+			switch v := v.(*AllEntities); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -975,7 +1040,7 @@ func file_entity_entity_proto_init() {
 			}
 		}
 		file_entity_entity_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OfflineLogPage); i {
+			switch v := v.(*OfflineLogRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -987,7 +1052,7 @@ func file_entity_entity_proto_init() {
 			}
 		}
 		file_entity_entity_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OfflineLog); i {
+			switch v := v.(*OfflineLogPage); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -999,6 +1064,18 @@ func file_entity_entity_proto_init() {
 			}
 		}
 		file_entity_entity_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OfflineLog); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_entity_entity_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SentryLog); i {
 			case 0:
 				return &v.state
@@ -1018,7 +1095,7 @@ func file_entity_entity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_entity_entity_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

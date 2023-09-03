@@ -40,7 +40,12 @@ message Entity{
   string createdAt = 5;
   int32 schemeID = 6;
   bool active = 7;
-  google.protobuf.Struct Options = 8;
+  EntityPublicOptions public = 8;
+  google.protobuf.Struct options = 9;
+}
+
+message EntityPublicOptions{
+  int32 threshold = 1;
 }
 
 message AllEntities{

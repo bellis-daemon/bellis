@@ -17,7 +17,7 @@ import (
 var mutex *relock.Mutex
 
 const EntityList = "EntityList"
-const TermDuration = 5 * time.Minute
+const TermDuration = 1 * time.Minute
 
 func init() {
 	mutex = relock.NewMutex(storage.Redis(), "EntityListMutex")

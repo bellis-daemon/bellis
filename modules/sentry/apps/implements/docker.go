@@ -3,17 +3,17 @@ package implements
 import (
 	"context"
 	"github.com/moby/moby/api/types"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
 
 type Docker struct {
-	Options dockerOptions
+	options dockerOptions
 }
 
 func (this *Docker) Fetch(ctx context.Context) (any, error) {
-	req, err := http.NewRequest("GET", this.Options.URL, nil)
+	req, err := http.NewRequest("GET", this.options.URL, nil)
 	if err != nil {
 		return &dockerStatus{}, err
 	}
@@ -24,7 +24,7 @@ func (this *Docker) Fetch(ctx context.Context) (any, error) {
 	if err != nil {
 		return &dockerStatus{}, err
 	}
-	_, err = ioutil.ReadAll(resp.Body)
+	_, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return &dockerStatus{}, err
 	}
@@ -33,7 +33,7 @@ func (this *Docker) Fetch(ctx context.Context) (any, error) {
 }
 
 func (this *Docker) Init(setOptions func(options any) error) error {
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 type dockerStatus struct {

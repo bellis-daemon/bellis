@@ -12,12 +12,12 @@ import (
 )
 
 type VPS struct {
-	Options vpsOptions
+	options vpsOptions
 	client  *http.Client
 }
 
 func (this *VPS) Fetch(ctx context.Context) (any, error) {
-	resp, err := this.client.Get(this.Options.URL)
+	resp, err := this.client.Get(this.options.URL)
 	if err != nil {
 		return &vpsStatus{}, err
 	}
@@ -45,7 +45,7 @@ func (this *VPS) Fetch(ctx context.Context) (any, error) {
 func (this *VPS) Init(setOptions func(options any) error) error {
 	this.client = http.DefaultClient
 	this.client.Timeout = 5 * time.Second
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 type vpsOptions struct {

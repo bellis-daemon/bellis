@@ -6,7 +6,7 @@ import (
 )
 
 type Pterodactyl struct {
-	Options pterodactylOptions
+	options pterodactylOptions
 	client  *PterodactylGoApi.Client
 }
 
@@ -26,11 +26,11 @@ func (this *Pterodactyl) Fetch(ctx context.Context) (any, error) {
 }
 
 func (this *Pterodactyl) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.Options)
+	err := setOptions(&this.options)
 	if err != nil {
 		return err
 	}
-	this.client = PterodactylGoApi.NewClient(this.Options.Address, this.Options.Token)
+	this.client = PterodactylGoApi.NewClient(this.options.Address, this.options.Token)
 	return nil
 }
 

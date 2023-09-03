@@ -8,15 +8,15 @@ import (
 )
 
 type HTTP struct {
-	Options httpOptions
+	options httpOptions
 }
 
 func (this *HTTP) Fetch(ctx context.Context) (any, error) {
 	method := "GET"
-	if this.Options.Method != "" {
-		method = this.Options.Method
+	if this.options.Method != "" {
+		method = this.options.Method
 	}
-	req, err := http.NewRequest(method, this.Options.URL, nil)
+	req, err := http.NewRequest(method, this.options.URL, nil)
 	if err != nil {
 		return &httpStatus{}, err
 	}
@@ -37,7 +37,7 @@ func (this *HTTP) Fetch(ctx context.Context) (any, error) {
 }
 
 func (this *HTTP) Init(setOptions func(options any) error) error {
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 type httpStatus struct {

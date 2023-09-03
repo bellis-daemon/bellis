@@ -6,7 +6,7 @@ import (
 )
 
 type Source struct {
-	Options sourceOptions
+	options sourceOptions
 	client  *a2s.Client
 }
 
@@ -28,11 +28,11 @@ func (this *Source) Fetch(ctx context.Context) (any, error) {
 }
 
 func (this *Source) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.Options)
+	err := setOptions(&this.options)
 	if err != nil {
 		return err
 	}
-	this.client, err = a2s.NewClient(this.Options.Address)
+	this.client, err = a2s.NewClient(this.options.Address)
 	return err
 }
 

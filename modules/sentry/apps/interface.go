@@ -44,9 +44,10 @@ type Application struct {
 	Handler     Implement
 	measurement string
 	deadline    time.Time
-	failedCount uint
+	failedCount int
 	once        sync.Once
 	startTime   time.Time
+	threshold   int
 }
 
 func (this *Application) Run() {
@@ -66,8 +67,6 @@ func (this *Application) Run() {
 		}()
 	})
 }
-
-const THRESHOLD = 3
 
 func (this *Application) refresh() {
 	sentryTime := time.Now()
@@ -90,20 +89,20 @@ func (this *Application) refresh() {
 		point.AddField("c_err", err.Error())
 		point.AddField("c_live", false)
 		point.AddField("c_start_time", time.Now())
-		this.failedCount = min(this.failedCount+1, THRESHOLD+1)
-		if this.failedCount < THRESHOLD && (this.failedCount&1 == 0) {
+		this.failedCount = min(this.failedCount+1, this.threshold+1)
+		if this.failedCount < this.threshold && (this.failedCount&1 == 0) {
 			defer this.reclaim()
-		} else if this.failedCount == THRESHOLD {
+		} else if this.failedCount == this.threshold {
 			this.alert(err.Error())
 		}
 	} else {
 		// 状态正常时
 		// 防抖
 		if this.failedCount != 0 {
-			if this.failedCount >= THRESHOLD {
-				this.failedCount = THRESHOLD
+			if this.failedCount >= this.threshold {
+				this.failedCount = this.threshold
 			}
-			this.failedCount -= THRESHOLD / 3
+			this.failedCount -= this.threshold / 3
 			if this.failedCount < 0 {
 				this.failedCount = 0
 			}
@@ -117,9 +116,14 @@ func (this *Application) refresh() {
 		point.AddField("c_live", true)
 		point.AddField("c_start_time", this.startTime)
 	}
-	point.AddField("c_failed_count", this.failedCount)
+	point.AddField("c_failed_count", cast.ToUint32(this.failedCount))
 	point.AddField("c_sentry", common.Hostname())
 	storage.WriteInfluxDB.WritePoint(point)
+	//glgf.Debugf("Writing point %+v %+v", point, point.FieldList())
+	//err = storage.WriteInfluxDBBlocking.WritePoint(this.ctx, point)
+	//if err != nil {
+	//	glgf.Error(err)
+	//}
 }
 
 func (this *Application) reclaim() {
@@ -167,6 +171,7 @@ func (this *Application) UpdateOptions(option *models.Application) error {
 	if err != nil {
 		return err
 	}
+	this.threshold = option.Public.Threshold
 	query, err := storage.QueryInfluxDB.Query(
 		this.ctx,
 		fmt.Sprintf(
@@ -187,11 +192,8 @@ from(bucket: "backend")
 	for query.Next() {
 		if query.Record().Field() == "c_start_time" {
 			this.startTime = cast.ToTime(query.Record().Value())
-			glgf.Debug("entity start time:", this.startTime)
 		} else if query.Record().Field() == "c_failed_count" {
-			this.failedCount = cast.ToUint(query.Record().Value())
-
-			glgf.Debug("entity failed count:", this.failedCount)
+			this.failedCount = cast.ToInt(query.Record().Value())
 		}
 	}
 	if this.startTime.IsZero() {

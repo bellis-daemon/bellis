@@ -7,14 +7,14 @@ import (
 )
 
 type V2ray struct {
-	Options v2rayOptions
+	options v2rayOptions
 	host    string
 }
 
 func (this *V2ray) Fetch(ctx context.Context) (any, error) {
 	var err error
 	status := &v2rayStatus{}
-	status.TagTraffic, err = v2api.NodeTagTraffic(this.host, this.Options.Tag)
+	status.TagTraffic, err = v2api.NodeTagTraffic(this.host, this.options.Tag)
 	if err != nil {
 		return &v2rayStatus{}, err
 	}
@@ -36,11 +36,11 @@ func (this *V2ray) Fetch(ctx context.Context) (any, error) {
 }
 
 func (this *V2ray) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.Options)
+	err := setOptions(&this.options)
 	if err != nil {
 		return err
 	}
-	this.host = fmt.Sprintf("%s:%d", this.Options.Address, this.Options.Port)
+	this.host = fmt.Sprintf("%s:%d", this.options.Address, this.options.Port)
 	return nil
 }
 

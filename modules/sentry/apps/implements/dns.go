@@ -8,14 +8,14 @@ import (
 )
 
 type DNS struct {
-	Options dnsOptions
+	options dnsOptions
 }
 
 func (this *DNS) Fetch(ctx context.Context) (any, error) {
 	var buf bytes.Buffer
-	switch this.Options.Method {
+	switch this.options.Method {
 	case "IP":
-		ips, err := net.LookupIP(this.Options.DomainName)
+		ips, err := net.LookupIP(this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -27,7 +27,7 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	case "NS":
-		nss, err := net.LookupNS(this.Options.DomainName)
+		nss, err := net.LookupNS(this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -39,7 +39,7 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	case "MX":
-		mxs, err := net.LookupMX(this.Options.DomainName)
+		mxs, err := net.LookupMX(this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -51,7 +51,7 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	case "TXT":
-		texts, err := net.LookupTXT(this.Options.DomainName)
+		texts, err := net.LookupTXT(this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -63,7 +63,7 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	case "CNAME":
-		cname, err := net.LookupCNAME(this.Options.DomainName)
+		cname, err := net.LookupCNAME(this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -72,7 +72,7 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	case "ADDR":
-		names, err := net.LookupAddr(this.Options.DomainName)
+		names, err := net.LookupAddr(this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -84,7 +84,7 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	case "SRV":
-		cname, srvs, err := net.LookupSRV(this.Options.SRVService, this.Options.SRVProtocol, this.Options.DomainName)
+		cname, srvs, err := net.LookupSRV(this.options.SRVService, this.options.SRVProtocol, this.options.DomainName)
 		if err != nil {
 			return &dnsStatus{}, err
 		} else {
@@ -97,12 +97,12 @@ func (this *DNS) Fetch(ctx context.Context) (any, error) {
 			}, nil
 		}
 	default:
-		return &dnsStatus{}, errors.New("错误的解析模式：" + this.Options.Method)
+		return &dnsStatus{}, errors.New("错误的解析模式：" + this.options.Method)
 	}
 }
 
 func (this *DNS) Init(setOptions func(options any) error) error {
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 type dnsStatus struct {

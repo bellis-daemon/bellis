@@ -6,23 +6,23 @@ import (
 )
 
 type BT struct {
-	Options btOptions
-	Client  btgosdk.Client
+	options btOptions
+	client  btgosdk.Client
 }
 
 func (this *BT) Init(setOptions func(options any) error) error {
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 func (this *BT) Fetch(ctx context.Context) (any, error) {
-	this.Client.BTAddress = this.Options.Address
-	this.Client.BTKey = this.Options.Token
-	ret, err := this.Client.GetNetWork()
+	this.client.BTAddress = this.options.Address
+	this.client.BTKey = this.options.Token
+	ret, err := this.client.GetNetWork()
 	if err != nil {
 		return &btStatus{}, err
 	} else {
 		ret.CPU = append(ret.CPU, 0, 0)
-		return btStatus{
+		return &btStatus{
 			MemFree:   ret.Mem.MemFree,
 			MemTotal:  ret.Mem.MemTotal,
 			Up:        ret.Up,

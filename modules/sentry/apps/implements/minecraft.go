@@ -6,11 +6,11 @@ import (
 )
 
 type Minecraft struct {
-	Options minecraftOptions
+	options minecraftOptions
 }
 
 func (this *Minecraft) Fetch(ctx context.Context) (any, error) {
-	pong, err := mc.Ping(this.Options.Address)
+	pong, err := mc.Ping(this.options.Address)
 	if err != nil {
 		return &minecraftStatus{}, err
 	}
@@ -25,7 +25,7 @@ func (this *Minecraft) Fetch(ctx context.Context) (any, error) {
 }
 
 func (this *Minecraft) Init(setOptions func(options any) error) error {
-	return setOptions(&this.Options)
+	return setOptions(&this.options)
 }
 
 type minecraftStatus struct {
