@@ -2,6 +2,7 @@ package implements
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	btgosdk "github.com/minoic/bt-go-sdk"
 )
 
@@ -14,7 +15,7 @@ func (this *BT) Init(setOptions func(options any) error) error {
 	return setOptions(&this.options)
 }
 
-func (this *BT) Fetch(ctx context.Context) (any, error) {
+func (this *BT) Fetch(ctx context.Context) (status.Status, error) {
 	this.client.BTAddress = this.options.Address
 	this.client.BTKey = this.options.Token
 	ret, err := this.client.GetNetWork()
@@ -47,4 +48,11 @@ type btStatus struct {
 	Down      float64
 	UpTotal   int64
 	DownTotal int64
+}
+
+func (this *btStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }

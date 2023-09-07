@@ -4,13 +4,14 @@ import (
 	"context"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 )
 
 // Implement 必须在每个子类中实现的实际方法
 type Implement interface {
 	// Fetch must return non nil status value, or it will panic
 	// return error if entity is offline
-	Fetch(ctx context.Context) (any, error)
+	Fetch(ctx context.Context) (status.Status, error)
 	Init(setOptions func(options any) error) error
 }
 

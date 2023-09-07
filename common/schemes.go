@@ -87,3 +87,11 @@ const (
 	EntityDelete       = "EntityDelete"
 	CaptchaToEmail     = "CaptchaToEmail"
 )
+
+type PriorityLevel int32
+
+const (
+	Predicting = 4000 + iota
+	Warning
+	Critical
+)

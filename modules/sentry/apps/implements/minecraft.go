@@ -1,6 +1,7 @@
 package implements
 
 import (
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	mc "github.com/bellis-daemon/bellis/modules/sentry/pkg/minecraft"
 	"golang.org/x/net/context"
 )
@@ -9,7 +10,7 @@ type Minecraft struct {
 	options minecraftOptions
 }
 
-func (this *Minecraft) Fetch(ctx context.Context) (any, error) {
+func (this *Minecraft) Fetch(ctx context.Context) (status.Status, error) {
 	pong, err := mc.Ping(this.options.Address)
 	if err != nil {
 		return &minecraftStatus{}, err
@@ -35,6 +36,13 @@ type minecraftStatus struct {
 	Description  string `json:"description"`
 	FavIcon      string `json:"fav_icon"`
 	ModType      string `json:"mod_type"`
+}
+
+func (this *minecraftStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type minecraftOptions struct {

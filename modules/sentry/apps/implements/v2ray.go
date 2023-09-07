@@ -2,6 +2,7 @@ package implements
 
 import (
 	"fmt"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/bellis-daemon/bellis/modules/sentry/pkg/v2api"
 	"golang.org/x/net/context"
 )
@@ -11,7 +12,7 @@ type V2ray struct {
 	host    string
 }
 
-func (this *V2ray) Fetch(ctx context.Context) (any, error) {
+func (this *V2ray) Fetch(ctx context.Context) (status.Status, error) {
 	var err error
 	status := &v2rayStatus{}
 	status.TagTraffic, err = v2api.NodeTagTraffic(this.host, this.options.Tag)
@@ -56,6 +57,13 @@ type v2rayStatus struct {
 	PauseTotalNs uint64
 	Uptime       uint32
 	TagTraffic   int64
+}
+
+func (this *v2rayStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type v2rayOptions struct {

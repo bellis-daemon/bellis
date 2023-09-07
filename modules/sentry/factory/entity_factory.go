@@ -12,7 +12,7 @@ import (
 var entities sync.Map
 
 func RunEntity(entityID string, deadline time.Time, entity *models.Application) error {
-	app, err := apps.NewApplication(context.Background(), deadline, entity)
+	app, err := apps.NewEntity(context.Background(), deadline, entity)
 	if err != nil {
 		return err
 	}
@@ -24,18 +24,18 @@ func RunEntity(entityID string, deadline time.Time, entity *models.Application) 
 	return nil
 }
 
-func GetEntity(entityID string) (*apps.Application, error) {
+func GetEntity(entityID string) (*apps.Entity, error) {
 	entity, ok := entities.Load(entityID)
 	if !ok {
 		return nil, errors.New("cant find this entity:" + entityID)
 	}
-	return entity.(*apps.Application), nil
+	return entity.(*apps.Entity), nil
 }
 
 func DeleteEntity(entityID string) {
 	entity, ok := entities.Load(entityID)
 	if ok {
-		entity.(*apps.Application).Cancel()
+		entity.(*apps.Entity).Cancel()
 		entities.Delete(entityID)
 	}
 }

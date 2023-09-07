@@ -8,6 +8,7 @@ import (
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/bellis-daemon/bellis/modules/sentry/producer"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/minoic/glgf"
@@ -17,13 +18,13 @@ import (
 	"time"
 )
 
-func NewApplication(ctx context.Context, deadline time.Time, entity *models.Application) (*Application, error) {
+func NewEntity(ctx context.Context, deadline time.Time, entity *models.Application) (*Entity, error) {
 	handler := parseImplements(ctx, entity)
 	if handler == nil {
 		return nil, errors.New("cant find this application type")
 	}
 	ctx2, cancel := context.WithDeadline(ctx, deadline)
-	app := &Application{
+	app := &Entity{
 		ctx:         ctx2,
 		Cancel:      cancel,
 		deadline:    deadline,
@@ -37,7 +38,7 @@ func NewApplication(ctx context.Context, deadline time.Time, entity *models.Appl
 	return app, nil
 }
 
-type Application struct {
+type Entity struct {
 	ctx         context.Context
 	Cancel      func()
 	Options     models.Application
@@ -50,11 +51,11 @@ type Application struct {
 	threshold   int
 }
 
-func (this *Application) Run() {
+func (this *Entity) Run() {
 	this.once.Do(func() {
 		go func() {
-			glgf.Info("Application started:", this.Options.Name, this.Options.ID, "till", this.deadline, "rest time:", fmt.Sprintf("%.2f", this.deadline.Sub(time.Now()).Seconds()), "(s)")
-			defer glgf.Warn("Application stopped:", this.Options.Name, this.Options.ID)
+			glgf.Info("Entity started:", this.Options.Name, this.Options.ID, "till", this.deadline, "rest time:", fmt.Sprintf("%.2f", this.deadline.Sub(time.Now()).Seconds()), "(s)")
+			defer glgf.Warn("Entity stopped:", this.Options.Name, this.Options.ID)
 			t1 := time.NewTicker(5 * time.Second)
 			for {
 				select {
@@ -68,12 +69,9 @@ func (this *Application) Run() {
 	})
 }
 
-func (this *Application) refresh() {
+func (this *Entity) refresh() {
 	sentryTime := time.Now()
 	status, err := this.Handler.Fetch(this.ctx)
-	if status == nil {
-		panic(err)
-	}
 	fields := map[string]any{}
 	_ = mapstructure.Decode(status, &fields)
 	point := write.NewPoint(
@@ -115,6 +113,13 @@ func (this *Application) refresh() {
 		point.AddField("c_err", "")
 		point.AddField("c_live", true)
 		point.AddField("c_start_time", this.startTime)
+		// 测试触发器
+		for i := range this.Options.Public.TriggerList {
+			result := status.PullTrigger(this.Options.Public.TriggerList[i])
+			if result != nil {
+				this.triggerAlert(result)
+			}
+		}
 	}
 	point.AddField("c_failed_count", cast.ToUint32(this.failedCount))
 	point.AddField("c_sentry", common.Hostname())
@@ -126,7 +131,7 @@ func (this *Application) refresh() {
 	//}
 }
 
-func (this *Application) reclaim() {
+func (this *Entity) reclaim() {
 	storage.WriteInfluxDB.Flush()
 	glgf.Debug("reclaiming", this.Options.Name)
 	err := producer.EntityClaim(this.ctx, this.Options.ID.Hex(), this.deadline, &this.Options)
@@ -137,7 +142,7 @@ func (this *Application) reclaim() {
 	this.Cancel()
 }
 
-func (this *Application) onlineLog() {
+func (this *Entity) onlineLog() {
 	storage.WriteInfluxDB.Flush()
 	time.Sleep(2 * time.Second)
 	onlineTime := time.Now()
@@ -150,7 +155,7 @@ func (this *Application) onlineLog() {
 	}
 }
 
-func (this *Application) alert(msg string) {
+func (this *Entity) alert(msg string) {
 	storage.WriteInfluxDB.Flush()
 	time.Sleep(2 * time.Second)
 	offlineTime := time.Now()
@@ -163,7 +168,11 @@ func (this *Application) alert(msg string) {
 	}
 }
 
-func (this *Application) UpdateOptions(option *models.Application) error {
+func (this *Entity) triggerAlert(info *status.TriggerInfo) {
+
+}
+
+func (this *Entity) UpdateOptions(option *models.Application) error {
 	this.Options = *option
 	err := this.Handler.Init(func(options any) error {
 		return mapstructure.Decode(this.Options.Options, options)

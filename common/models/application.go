@@ -19,5 +19,6 @@ type Application struct {
 }
 
 type ApplicationPublicOptions struct {
-	Threshold int `json:"Threshold" bson:"Threshold"`
+	Threshold   int      `json:"Threshold" bson:"Threshold"`
+	TriggerList []string `json:"TriggerList" bson:"TriggerList"`
 }

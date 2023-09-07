@@ -5,6 +5,7 @@ package implements
 import (
 	"context"
 	"errors"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/go-ping/ping"
 	"github.com/spf13/cast"
 	"time"
@@ -31,7 +32,14 @@ type pingStatus struct {
 	IP         string
 }
 
-func (this *Ping) Fetch(ctx context.Context) (any, error) {
+func (this *pingStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
+}
+
+func (this *Ping) Fetch(ctx context.Context) (status.Status, error) {
 	client, err := ping.NewPinger(this.options.Address)
 	defer client.Stop()
 	if err != nil {

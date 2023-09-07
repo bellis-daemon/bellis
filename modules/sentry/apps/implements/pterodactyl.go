@@ -2,6 +2,7 @@ package implements
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/minoic/PterodactylGoApi"
 )
 
@@ -10,7 +11,7 @@ type Pterodactyl struct {
 	client  *PterodactylGoApi.Client
 }
 
-func (this *Pterodactyl) Fetch(ctx context.Context) (any, error) {
+func (this *Pterodactyl) Fetch(ctx context.Context) (status.Status, error) {
 	servers, err := this.client.GetAllServers()
 	if err != nil {
 		return &pterodactylStatus{}, err
@@ -37,6 +38,13 @@ func (this *Pterodactyl) Init(setOptions func(options any) error) error {
 type pterodactylStatus struct {
 	UserAmount   int
 	ServerAmount int
+}
+
+func (this *pterodactylStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type pterodactylOptions struct {

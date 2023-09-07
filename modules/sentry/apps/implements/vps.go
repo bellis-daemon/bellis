@@ -3,6 +3,7 @@ package implements
 import (
 	"context"
 	"encoding/json"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
@@ -16,7 +17,7 @@ type VPS struct {
 	client  *http.Client
 }
 
-func (this *VPS) Fetch(ctx context.Context) (any, error) {
+func (this *VPS) Fetch(ctx context.Context) (status.Status, error) {
 	resp, err := this.client.Get(this.options.URL)
 	if err != nil {
 		return &vpsStatus{}, err
@@ -64,6 +65,13 @@ type vpsStatus struct {
 	Uptime      uint64  `json:"uptime"`
 	Platform    string  `json:"platform"`
 	Process     uint64  `json:"process"`
+}
+
+func (this *vpsStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type vpsMetrics struct {

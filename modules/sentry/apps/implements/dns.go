@@ -3,6 +3,7 @@ package implements
 import (
 	"bytes"
 	"errors"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"golang.org/x/net/context"
 	"net"
 )
@@ -11,7 +12,7 @@ type DNS struct {
 	options dnsOptions
 }
 
-func (this *DNS) Fetch(ctx context.Context) (any, error) {
+func (this *DNS) Fetch(ctx context.Context) (status.Status, error) {
 	var buf bytes.Buffer
 	switch this.options.Method {
 	case "IP":
@@ -107,6 +108,13 @@ func (this *DNS) Init(setOptions func(options any) error) error {
 
 type dnsStatus struct {
 	Results string `json:"results"`
+}
+
+func (this *dnsStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type dnsOptions struct {

@@ -3,6 +3,7 @@ package implements
 import (
 	"context"
 	"errors"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"net/http"
 	"time"
 )
@@ -11,7 +12,7 @@ type HTTP struct {
 	options httpOptions
 }
 
-func (this *HTTP) Fetch(ctx context.Context) (any, error) {
+func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	method := "GET"
 	if this.options.Method != "" {
 		method = this.options.Method
@@ -43,6 +44,13 @@ func (this *HTTP) Init(setOptions func(options any) error) error {
 type httpStatus struct {
 	IP     string `json:"ip"`
 	Status string `json:"status"`
+}
+
+func (h httpStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type httpOptions struct {

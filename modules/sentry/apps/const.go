@@ -14,8 +14,16 @@ const (
 	HTML
 	CloudFlare
 	Pterodactyl
-	qiniu
-	upyun
+	Qiniu
+	Upyun
 	Docker
 	Source
+	InfluxDB
+	Jenkins
+	JMX
+	Redis
+	ElasticSearch
+	Oracle
+	Postgresql
+	Mssql
 )

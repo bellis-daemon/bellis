@@ -2,6 +2,7 @@ package implements
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/rumblefrog/go-a2s"
 )
 
@@ -10,7 +11,7 @@ type Source struct {
 	client  *a2s.Client
 }
 
-func (this *Source) Fetch(ctx context.Context) (any, error) {
+func (this *Source) Fetch(ctx context.Context) (status.Status, error) {
 	info, err := this.client.QueryInfo()
 	if err != nil {
 		return &sourceStatus{}, err
@@ -49,4 +50,11 @@ type sourceStatus struct {
 	Bots       int
 	ServerOS   string
 	Version    string
+}
+
+func (this *sourceStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }

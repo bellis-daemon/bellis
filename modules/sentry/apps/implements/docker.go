@@ -2,6 +2,7 @@ package implements
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/moby/moby/api/types"
 	"io"
 	"net/http"
@@ -12,7 +13,7 @@ type Docker struct {
 	options dockerOptions
 }
 
-func (this *Docker) Fetch(ctx context.Context) (any, error) {
+func (this *Docker) Fetch(ctx context.Context) (status.Status, error) {
 	req, err := http.NewRequest("GET", this.options.URL, nil)
 	if err != nil {
 		return &dockerStatus{}, err
@@ -42,6 +43,13 @@ type dockerStatus struct {
 	Images     []types.ImageSummary
 	Networks   []types.NetworkResource
 	Plugins    types.PluginsListResponse
+}
+
+func (this *dockerStatus) PullTrigger(triggerName string) *status.TriggerInfo {
+	switch triggerName {
+
+	}
+	return nil
 }
 
 type dockerOptions struct {
