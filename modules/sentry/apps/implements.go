@@ -3,7 +3,14 @@ package apps
 import (
 	"context"
 	"github.com/bellis-daemon/bellis/common/models"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/bt"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/dns"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/docker"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/http"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/minecraft"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/ping"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/source"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements/vps"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 )
 
@@ -18,23 +25,23 @@ type Implement interface {
 func parseImplements(ctx context.Context, entity *models.Application) (handler Implement) {
 	switch entity.SchemeID {
 	case BT:
-		handler = &implements.BT{}
+		handler = &bt.BT{}
 	case Ping:
-		handler = &implements.Ping{}
+		handler = &ping.Ping{}
 	case HTTP:
-		handler = &implements.HTTP{}
+		handler = &http.HTTP{}
 	case Minecraft:
-		handler = &implements.Minecraft{}
+		handler = &minecraft.Minecraft{}
 	case V2Ray:
-		handler = &implements.Minecraft{}
+		handler = &minecraft.Minecraft{}
 	case DNS:
-		handler = &implements.DNS{}
+		handler = &dns.DNS{}
 	case VPS:
-		handler = &implements.VPS{}
+		handler = &vps.VPS{}
 	case Docker:
-		handler = &implements.Docker{}
+		handler = &docker.Docker{}
 	case Source:
-		handler = &implements.Source{}
+		handler = &source.Source{}
 	}
 	return
 }

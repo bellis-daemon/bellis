@@ -9,8 +9,10 @@ import (
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/redistream"
 	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/bellis-daemon/bellis/modules/envoy/drivers"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/email"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/gotify"
+	"github.com/bellis-daemon/bellis/modules/envoy/drivers/telegram"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers/webhook"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
@@ -48,28 +50,27 @@ func entityOfflineAlert() {
 			return nil
 		}
 		envoyType := ""
+		var envoyDriver drivers.EnvoyDriver
 		switch user.Envoy.PolicyType {
 		case models.IsEnvoyGotify:
 			envoyType = "Gotify"
-			err = gotify.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
-			if err != nil {
-				return fmt.Errorf("cant find gotify policy using policy id: %s: %w", user.Envoy.PolicyID.Hex(), err)
-			}
+			envoyDriver = gotify.New(ctx).WithPolicyId(user.Envoy.PolicyID)
 		case models.IsEnvoyEmail:
 			envoyType = "Email"
-			err = email.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
-			if err != nil {
-				return fmt.Errorf("cant find email policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
-			}
+			envoyDriver = email.New(ctx).WithPolicyId(user.Envoy.PolicyID)
 		case models.IsEnvoyWebhook:
 			envoyType = "Webhook"
-			err = webhook.New(ctx).WithPolicyId(user.Envoy.PolicyID).AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
-			if err != nil {
-				return fmt.Errorf("cant find webhook policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
-			}
+			envoyDriver = webhook.New(ctx).WithPolicyId(user.Envoy.PolicyID)
+		case models.IsEnvoyTelegram:
+			envoyType = "Telegram"
+			envoyDriver = telegram.New(ctx).WithPolicyId(user.Envoy.PolicyID)
 		default:
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
 			return nil
+		}
+		err = envoyDriver.AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
+		if err != nil {
+			return fmt.Errorf("cant find policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
 		}
 		err = retry.Do(func() error {
 			err := writeOfflineLog(ctx, &entity, offlineTime, envoyType)

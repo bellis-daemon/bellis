@@ -1,4 +1,4 @@
-package implements
+package ping
 
 // You must use pinger.SetPrivileged(true), otherwise you will receive an error
 

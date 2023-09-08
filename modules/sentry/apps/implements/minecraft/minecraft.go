@@ -1,4 +1,4 @@
-package implements
+package minecraft
 
 import (
 	"fmt"

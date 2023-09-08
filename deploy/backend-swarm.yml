@@ -49,6 +49,7 @@ services:
       - bellis
     secrets:
       - influxdb_token
+      - telegram_bot_token
   sentry:
     hostname: sentry
     image: registry.cn-shanghai.aliyuncs.com/bellis/sentry
@@ -195,6 +196,8 @@ services:
 
 secrets:
   influxdb_token:
+    external: true
+  telegram_bot_token:
     external: true
 
 networks:

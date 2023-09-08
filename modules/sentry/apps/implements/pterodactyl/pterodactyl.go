@@ -1,4 +1,4 @@
-package implements
+package pterodactyl
 
 import (
 	"context"

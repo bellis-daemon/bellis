@@ -1,4 +1,4 @@
-package implements
+package v2ray
 
 import (
 	"fmt"
