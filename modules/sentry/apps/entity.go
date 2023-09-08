@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
@@ -14,8 +17,6 @@ import (
 	"github.com/minoic/glgf"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cast"
-	"sync"
-	"time"
 )
 
 func NewEntity(ctx context.Context, deadline time.Time, entity *models.Application) (*Entity, error) {
@@ -82,6 +83,9 @@ func (this *Entity) refresh() {
 		fields,
 		sentryTime,
 	)
+	c_err := ""
+	c_live := true
+	c_start_time := this.startTime
 	if err != nil {
 		// 状态不正常时
 		point.AddField("c_err", err.Error())
@@ -110,9 +114,6 @@ func (this *Entity) refresh() {
 				this.onlineLog()
 			}
 		}
-		point.AddField("c_err", "")
-		point.AddField("c_live", true)
-		point.AddField("c_start_time", this.startTime)
 		// 测试触发器
 		for i := range this.Options.Public.TriggerList {
 			result := status.PullTrigger(this.Options.Public.TriggerList[i])
@@ -121,6 +122,9 @@ func (this *Entity) refresh() {
 			}
 		}
 	}
+	point.AddField("c_err", c_err)
+	point.AddField("c_live", c_live)
+	point.AddField("c_start_time", c_start_time)
 	point.AddField("c_failed_count", cast.ToUint32(this.failedCount))
 	point.AddField("c_sentry", common.Hostname())
 	storage.WriteInfluxDB.WritePoint(point)

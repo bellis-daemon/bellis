@@ -1,6 +1,9 @@
 package implements
 
 import (
+	"fmt"
+
+	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	mc "github.com/bellis-daemon/bellis/modules/sentry/pkg/minecraft"
 	"golang.org/x/net/context"
@@ -40,6 +43,15 @@ type minecraftStatus struct {
 
 func (this *minecraftStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 	switch triggerName {
+	case "OnlinePlayersThreshold":
+		if (float32(this.OnlinePlayer) / float32(this.MaxPlayer)) >= 0.9 {
+			return &status.TriggerInfo{
+				Name:     "OnlinePlayersThreshold",
+				Message:  fmt.Sprintf("Your server`s number of online players exceeds 90%%, now is (%d/%d)", this.OnlinePlayer, this.MaxPlayer),
+				Priority: common.Warning,
+			}
+		}
+		return nil
 
 	}
 	return nil

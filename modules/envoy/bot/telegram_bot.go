@@ -1,13 +1,15 @@
 package bot
 
 import (
+	"log"
+
+	"github.com/bellis-daemon/bellis/common/storage"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/minoic/glgf"
-	"log"
 )
 
 func RunTelegramBot() {
-	bot, err := tgbotapi.NewBotAPI("6404196763:AAG31pmj7P6BFD4RlrIRti6DbzneJkroO1o")
+	bot, err := tgbotapi.NewBotAPI(storage.Secret("telegram_bot_token"))
 	if err != nil {
 		glgf.Error(err)
 		return
