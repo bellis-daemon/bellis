@@ -128,16 +128,18 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty
 		glgf.Warn(err)
 		return &empty.Empty{}, status.Error(codes.InvalidArgument, "invalid entity id")
 	}
-	// todo: loadPublicOptions(entity, e)
-	_, err = storage.CEntity.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{
-		"$set": bson.M{
-			"_id":         oid,
-			"Name":        entity.Name,
-			"Description": entity.Description,
-			"Active":      entity.Active,
-			"options":     entity.Options.AsMap(),
-		},
-	})
+	e := &models.Application{}
+	err = storage.CEntity.FindOne(ctx, bson.M{"_id": oid}).Decode(e)
+	if err != nil {
+		glgf.Warn(err)
+		return &empty.Empty{}, status.Error(codes.InvalidArgument, "cant find entity by id")
+	}
+	e.Name = entity.GetName()
+	e.Description = entity.GetDescription()
+	e.Active = entity.GetActive()
+	e.Options = entity.GetOptions().AsMap()
+	loadPublicOptions(entity, e)
+	_, err = storage.CEntity.ReplaceOne(ctx, bson.M{"_id": oid}, e)
 	if err != nil {
 		glgf.Error(err)
 		return &empty.Empty{}, status.Error(codes.Internal, err.Error())
@@ -234,12 +236,15 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		ID:         id.GetID(),
 		LiveSeries: []bool{},
 	}
-	query, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(
-		`from(bucket: "backend")
+	query, err := storage.QueryInfluxDB.Query(ctx,
+		fmt.Sprintf(`
+from(bucket: "backend")
   |> range(start: -10m)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["id"] == "%s")`, id.GetScheme(), id.GetID()))
+  |> filter(fn: (r) => r["id"] == "%s")`,
+			id.GetScheme(),
+			id.GetID()))
 	if err != nil {
 		glgf.Error(err)
 		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
@@ -252,8 +257,6 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 			entityStatus.Live = cast.ToBool(query.Record().Value())
 		case "c_err":
 			entityStatus.ErrMessage = cast.ToString(query.Record().Value())
-		case "c_start_time":
-			entityStatus.UpTime = cryptoo.FormatDuration(time.Now().Sub(cast.ToTime(query.Record().Value())))
 		default:
 			fields[query.Record().Field()] = query.Record().Value()
 		}
@@ -263,9 +266,10 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		glgf.Error(err)
 		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
 	}
+	entityStatus.UpTime = getEntityUptime(ctx, id.GetID())
 	query, err = storage.QueryInfluxDB.Query(ctx,
 		fmt.Sprintf(`
-from(bucket: "backend")
+from(bucket: "backend") 
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")

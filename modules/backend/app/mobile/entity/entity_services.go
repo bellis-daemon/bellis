@@ -3,12 +3,17 @@ package entity
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/assertion"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 var errEntityOwnership = errors.New("No permission to this entity! ")
@@ -63,4 +68,35 @@ func loadPublicOptions(src *Entity, dst *models.Application) {
 			dst.Public.TriggerList = src.Public.TriggerList
 		}
 	}
+}
+
+func getEntityUptime(ctx context.Context, entityID string) string {
+	s, err := storage.QuickRCSearch(ctx, "Uptime"+entityID, func() (string, error) {
+		id, err := primitive.ObjectIDFromHex(entityID)
+		if err != nil {
+			return cryptoo.FormatDuration(0), err
+		}
+		var offlineLog models.OfflineLog
+		err = storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": id}, options.FindOne().SetSort(bson.M{"_id": -1})).Err()
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				var entity models.Application
+				errF := storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
+				if errF != nil {
+					return cryptoo.FormatDuration(0), fmt.Errorf("cant find entity by id %s: %w", entityID, errF)
+				}
+				return cryptoo.FormatDuration(time.Now().Sub(entity.CreatedAt)), nil
+			}
+			return cryptoo.FormatDuration(0), fmt.Errorf("cant find offline log by EntityID %s: %w", entityID, err)
+		}
+		if offlineLog.OnlineTime.IsZero() {
+			return cryptoo.FormatDuration(0), nil
+		}
+		return cryptoo.FormatDuration(time.Now().Sub(offlineLog.OnlineTime)), nil
+	})
+	if err != nil {
+		glgf.Error(err)
+		return cryptoo.FormatDuration(0)
+	}
+	return *s
 }

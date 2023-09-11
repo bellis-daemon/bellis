@@ -48,7 +48,6 @@ type Entity struct {
 	deadline    time.Time
 	failedCount int
 	once        sync.Once
-	startTime   time.Time
 	threshold   int
 }
 
@@ -91,12 +90,10 @@ func (this *Entity) refresh() {
 	)
 	cErr := ""
 	cLive := true
-	cStartTime := this.startTime
 	if err != nil {
 		// 状态不正常时
 		cErr = err.Error()
 		cLive = false
-		cStartTime = time.Now()
 		this.failedCount = min(this.failedCount+1, this.threshold+1)
 		if this.failedCount < this.threshold && (this.failedCount&1 == 0) {
 			defer this.reclaim()
@@ -116,7 +113,7 @@ func (this *Entity) refresh() {
 			}
 			if this.failedCount == 0 {
 				// 确认恢复
-				this.startTime = time.Now()
+				// todo: 对于之前是否已确认离线无保证
 				this.onlineLog()
 			}
 		}
@@ -130,7 +127,6 @@ func (this *Entity) refresh() {
 	}
 	point.AddField("c_err", cErr)
 	point.AddField("c_live", cLive)
-	point.AddField("c_start_time", cStartTime)
 	point.AddField("c_failed_count", cast.ToUint32(this.failedCount))
 	point.AddField("c_sentry", common.Hostname())
 	storage.WriteInfluxDB.WritePoint(point)
@@ -199,7 +195,7 @@ from(bucket: "backend")
   |> range(start: -1h)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["_field"] == "c_failed_count" or r["_field"] == "c_start_time")
+  |> filter(fn: (r) => r["_field"] == "c_failed_count")
   |> filter(fn: (r) => r["id"] == "%s")`,
 			this.measurement,
 			this.Options.ID.Hex(),
@@ -209,14 +205,9 @@ from(bucket: "backend")
 		return err
 	}
 	for query.Next() {
-		if query.Record().Field() == "c_start_time" {
-			this.startTime = cast.ToTime(query.Record().Value())
-		} else if query.Record().Field() == "c_failed_count" {
+		if query.Record().Field() == "c_failed_count" {
 			this.failedCount = cast.ToInt(query.Record().Value())
 		}
-	}
-	if this.startTime.IsZero() {
-		this.startTime = time.Now()
 	}
 	return nil
 }
