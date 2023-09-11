@@ -3,6 +3,7 @@ package dns
 import (
 	"bytes"
 	"errors"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"golang.org/x/net/context"
 	"net"
@@ -122,4 +123,10 @@ type dnsOptions struct {
 	Method      string `json:"method"`
 	SRVService  string `json:"srv_service"`
 	SRVProtocol string `json:"srv_protocol"`
+}
+
+func init() {
+	implements.Add("dns", func() implements.Implement {
+		return &DNS{}
+	})
 }

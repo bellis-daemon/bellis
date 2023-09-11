@@ -2,9 +2,9 @@ package profile
 
 import (
 	"context"
-	"github.com/bellis-daemon/bellis/common/midwares"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

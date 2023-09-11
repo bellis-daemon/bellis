@@ -10,7 +10,7 @@ option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/
 
 message EntityID{
   string ID =1;
-  optional int32 scheme_id = 2;
+  optional string scheme = 2;
 }
 
 message EntityStatus{
@@ -38,14 +38,15 @@ message Entity{
   string description = 3;
   string userID  =4;
   string createdAt = 5;
-  int32 schemeID = 6;
+  string scheme = 6;
   bool active = 7;
   EntityPublicOptions public = 8;
   google.protobuf.Struct options = 9;
 }
 
 message EntityPublicOptions{
-  int32 threshold = 1;
+  optional int32 threshold = 1;
+  repeated string triggerList = 2;
 }
 
 message AllEntities{

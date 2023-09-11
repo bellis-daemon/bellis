@@ -101,7 +101,7 @@ from(bucket: "backend")
   |> limit(n: 3)
   |> sort(columns: ["_time"], desc: false)
   |> group(columns: ["_time"])
-`, offlineTime.Format(time.RFC3339), common.Measurements[entity.SchemeID], entity.ID.Hex()))
+`, offlineTime.Format(time.RFC3339), entity.Scheme, entity.ID.Hex()))
 	if err != nil {
 		return fmt.Errorf("error querying influxdb: %w", err)
 	}

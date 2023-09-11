@@ -12,7 +12,7 @@ type Application struct {
 	Description string                   `json:"Description" bson:"Description"`
 	UserID      primitive.ObjectID       `json:"UserID" bson:"UserID"`
 	CreatedAt   time.Time                `json:"CreatedAt" bson:"CreatedAt"`
-	SchemeID    int                      `json:"SchemeID" bson:"SchemeID"`
+	Scheme      string                   `json:"Scheme" bson:"Scheme"`
 	Active      bool                     `json:"Active" bson:"Active"`
 	Public      ApplicationPublicOptions `json:"Public" bson:"Public"`
 	Options     bson.M                   `json:"options" bson:"options"`

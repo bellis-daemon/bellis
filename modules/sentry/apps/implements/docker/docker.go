@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/moby/moby/api/types"
 	"io"
@@ -54,4 +55,10 @@ func (this *dockerStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 
 type dockerOptions struct {
 	URL string
+}
+
+func init() {
+	implements.Add("docker", func() implements.Implement {
+		return &Docker{}
+	})
 }

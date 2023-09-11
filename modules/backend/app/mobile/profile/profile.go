@@ -2,10 +2,10 @@ package profile
 
 import (
 	"context"
-	"github.com/bellis-daemon/bellis/common/midwares"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
+	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/grpc"

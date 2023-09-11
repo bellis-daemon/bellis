@@ -2,6 +2,7 @@ package pterodactyl
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/minoic/PterodactylGoApi"
 )
@@ -50,4 +51,10 @@ func (this *pterodactylStatus) PullTrigger(triggerName string) *status.TriggerIn
 type pterodactylOptions struct {
 	Address string `json:"address"`
 	Token   string `gorm:"type:blob" json:"token"`
+}
+
+func init() {
+	implements.Add("pterodactyl", func() implements.Implement {
+		return &Pterodactyl{}
+	})
 }

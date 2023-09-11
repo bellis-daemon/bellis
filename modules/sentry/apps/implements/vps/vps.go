@@ -3,6 +3,7 @@ package vps
 import (
 	"context"
 	"encoding/json"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
@@ -80,4 +81,10 @@ type vpsMetrics struct {
 	Memory *mem.VirtualMemoryStat `json:"memory"`
 	Disks  *disk.UsageStat        `json:"disks"`
 	Host   *host.InfoStat         `json:"host"`
+}
+
+func init() {
+	implements.Add("vps", func() implements.Implement {
+		return &VPS{}
+	})
 }

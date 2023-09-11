@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"errors"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"net/http"
 	"time"
@@ -56,4 +57,10 @@ func (h httpStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 type httpOptions struct {
 	URL    string `json:"url"`
 	Method string `json:"method"`
+}
+
+func init() {
+	implements.Add("http", func() implements.Implement {
+		return &HTTP{}
+	})
 }

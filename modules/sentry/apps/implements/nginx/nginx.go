@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"net/http"
 	"net/url"
@@ -126,4 +127,10 @@ func (this *nginxStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 
 	}
 	return nil
+}
+
+func init() {
+	implements.Add("nginx", func() implements.Implement {
+		return &Nginx{}
+	})
 }

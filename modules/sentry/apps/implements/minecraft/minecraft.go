@@ -2,6 +2,7 @@ package minecraft
 
 import (
 	"fmt"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
@@ -59,4 +60,10 @@ func (this *minecraftStatus) PullTrigger(triggerName string) *status.TriggerInfo
 
 type minecraftOptions struct {
 	Address string `json:"address"`
+}
+
+func init() {
+	implements.Add("minecraft", func() implements.Implement {
+		return &Minecraft{}
+	})
 }

@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"fmt"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/bellis-daemon/bellis/modules/sentry/pkg/v2api"
 	"golang.org/x/net/context"
@@ -14,8 +15,8 @@ type V2ray struct {
 
 func (this *V2ray) Fetch(ctx context.Context) (status.Status, error) {
 	var err error
-	status := &v2rayStatus{}
-	status.TagTraffic, err = v2api.NodeTagTraffic(this.host, this.options.Tag)
+	s := &v2rayStatus{}
+	s.TagTraffic, err = v2api.NodeTagTraffic(this.host, this.options.Tag)
 	if err != nil {
 		return &v2rayStatus{}, err
 	}
@@ -23,17 +24,17 @@ func (this *V2ray) Fetch(ctx context.Context) (status.Status, error) {
 	if err != nil {
 		return &v2rayStatus{}, err
 	}
-	status.NumGoroutine = stats.NumGoroutine
-	status.NumGC = stats.NumGC
-	status.Alloc = stats.Alloc
-	status.TotalAlloc = stats.TotalAlloc
-	status.Sys = stats.Sys
-	status.Mallocs = stats.Mallocs
-	status.Frees = stats.Frees
-	status.LiveObjects = stats.LiveObjects
-	status.PauseTotalNs = stats.PauseTotalNs
-	status.Uptime = stats.Uptime
-	return status, nil
+	s.NumGoroutine = stats.NumGoroutine
+	s.NumGC = stats.NumGC
+	s.Alloc = stats.Alloc
+	s.TotalAlloc = stats.TotalAlloc
+	s.Sys = stats.Sys
+	s.Mallocs = stats.Mallocs
+	s.Frees = stats.Frees
+	s.LiveObjects = stats.LiveObjects
+	s.PauseTotalNs = stats.PauseTotalNs
+	s.Uptime = stats.Uptime
+	return s, nil
 }
 
 func (this *V2ray) Init(setOptions func(options any) error) error {
@@ -70,4 +71,10 @@ type v2rayOptions struct {
 	Address string
 	Port    int
 	Tag     string
+}
+
+func init() {
+	implements.Add("v2ray", func() implements.Implement {
+		return &V2ray{}
+	})
 }

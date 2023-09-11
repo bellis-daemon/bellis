@@ -2,8 +2,8 @@ package apps
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"sync"
 	"time"
 
@@ -20,19 +20,19 @@ import (
 )
 
 func NewEntity(ctx context.Context, deadline time.Time, entity *models.Application) (*Entity, error) {
-	handler := parseImplements(ctx, entity)
-	if handler == nil {
-		return nil, errors.New("cant find this application type")
+	handler, err := implements.Create(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 	ctx2, cancel := context.WithDeadline(ctx, deadline)
 	app := &Entity{
 		ctx:         ctx2,
-		Cancel:      cancel,
+		cancel:      cancel,
 		deadline:    deadline,
 		Handler:     handler,
-		measurement: common.Measurements[entity.SchemeID],
+		measurement: entity.Scheme,
 	}
-	err := app.UpdateOptions(entity)
+	err = app.UpdateOptions(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -41,15 +41,21 @@ func NewEntity(ctx context.Context, deadline time.Time, entity *models.Applicati
 
 type Entity struct {
 	ctx         context.Context
-	Cancel      func()
+	cancel      func()
 	Options     models.Application
-	Handler     Implement
+	Handler     implements.Implement
 	measurement string
 	deadline    time.Time
 	failedCount int
 	once        sync.Once
 	startTime   time.Time
 	threshold   int
+}
+
+func (this *Entity) Cancel() {
+	if this.cancel != nil {
+		this.cancel()
+	}
 }
 
 func (this *Entity) Run() {
@@ -72,9 +78,9 @@ func (this *Entity) Run() {
 
 func (this *Entity) refresh() {
 	sentryTime := time.Now()
-	status, err := this.Handler.Fetch(this.ctx)
+	s, err := this.Handler.Fetch(this.ctx)
 	fields := map[string]any{}
-	_ = mapstructure.Decode(status, &fields)
+	_ = mapstructure.Decode(s, &fields)
 	point := write.NewPoint(
 		this.measurement,
 		map[string]string{
@@ -83,14 +89,14 @@ func (this *Entity) refresh() {
 		fields,
 		sentryTime,
 	)
-	c_err := ""
-	c_live := true
-	c_start_time := this.startTime
+	cErr := ""
+	cLive := true
+	cStartTime := this.startTime
 	if err != nil {
 		// 状态不正常时
-		point.AddField("c_err", err.Error())
-		point.AddField("c_live", false)
-		point.AddField("c_start_time", time.Now())
+		cErr = err.Error()
+		cLive = false
+		cStartTime = time.Now()
 		this.failedCount = min(this.failedCount+1, this.threshold+1)
 		if this.failedCount < this.threshold && (this.failedCount&1 == 0) {
 			defer this.reclaim()
@@ -116,15 +122,15 @@ func (this *Entity) refresh() {
 		}
 		// 测试触发器
 		for i := range this.Options.Public.TriggerList {
-			result := status.PullTrigger(this.Options.Public.TriggerList[i])
+			result := s.PullTrigger(this.Options.Public.TriggerList[i])
 			if result != nil {
 				this.triggerAlert(result)
 			}
 		}
 	}
-	point.AddField("c_err", c_err)
-	point.AddField("c_live", c_live)
-	point.AddField("c_start_time", c_start_time)
+	point.AddField("c_err", cErr)
+	point.AddField("c_live", cLive)
+	point.AddField("c_start_time", cStartTime)
 	point.AddField("c_failed_count", cast.ToUint32(this.failedCount))
 	point.AddField("c_sentry", common.Hostname())
 	storage.WriteInfluxDB.WritePoint(point)

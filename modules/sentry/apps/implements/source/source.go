@@ -2,6 +2,7 @@ package source
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/rumblefrog/go-a2s"
 )
@@ -57,4 +58,10 @@ func (this *sourceStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 
 	}
 	return nil
+}
+
+func init() {
+	implements.Add("source", func() implements.Implement {
+		return &Source{}
+	})
 }

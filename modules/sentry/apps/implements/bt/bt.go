@@ -2,6 +2,7 @@ package bt
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	btgosdk "github.com/minoic/bt-go-sdk"
 )
@@ -55,4 +56,10 @@ func (this *btStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 
 	}
 	return nil
+}
+
+func init() {
+	implements.Add("bt", func() implements.Implement {
+		return &BT{}
+	})
 }

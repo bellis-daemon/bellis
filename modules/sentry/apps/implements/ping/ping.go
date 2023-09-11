@@ -5,6 +5,7 @@ package ping
 import (
 	"context"
 	"errors"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/go-ping/ping"
 	"github.com/spf13/cast"
@@ -66,4 +67,10 @@ func (this *Ping) Fetch(ctx context.Context) (status.Status, error) {
 		AvgRtt:     statistics.AvgRtt.Milliseconds(),
 		IP:         statistics.IPAddr.IP.String(),
 	}, nil
+}
+
+func init() {
+	implements.Add("ping", func() implements.Implement {
+		return &Ping{}
+	})
 }

@@ -3,14 +3,13 @@ package entity
 import (
 	"context"
 	"fmt"
-	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/generic"
-	"github.com/bellis-daemon/bellis/common/midwares"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
 	"github.com/bellis-daemon/bellis/modules/backend/assertion"
+	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/bellis-daemon/bellis/modules/backend/producer"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/minoic/glgf"
@@ -99,13 +98,11 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 		Description: entity.Description,
 		UserID:      midwares.GetUserFromCtx(ctx).ID,
 		CreatedAt:   time.Now(),
-		SchemeID:    int(entity.SchemeID),
+		Scheme:      entity.Scheme,
 		Active:      true,
-		Public: models.ApplicationPublicOptions{
-			Threshold: int(entity.Public.Threshold),
-		},
-		Options: entity.Options.AsMap(),
+		Options:     entity.Options.AsMap(),
 	}
+	loadPublicOptions(entity, e)
 	_, err := storage.CEntity.InsertOne(ctx, e)
 	if err != nil {
 		glgf.Error(err)
@@ -131,6 +128,7 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty
 		glgf.Warn(err)
 		return &empty.Empty{}, status.Error(codes.InvalidArgument, "invalid entity id")
 	}
+	// todo: loadPublicOptions(entity, e)
 	_, err = storage.CEntity.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{
 		"$set": bson.M{
 			"_id":         oid,
@@ -185,7 +183,7 @@ func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
 		Description: entity.Description,
 		UserID:      entity.UserID.Hex(),
 		CreatedAt:   entity.CreatedAt.Format(time.RFC3339),
-		SchemeID:    int32(entity.SchemeID),
+		Scheme:      entity.Scheme,
 		Active:      entity.Active,
 		Options:     options,
 	}, nil
@@ -217,7 +215,7 @@ func (h handler) GetAllEntities(ctx context.Context, e *empty.Empty) (*AllEntiti
 			Description: entities[i].Description,
 			UserID:      entities[i].UserID.Hex(),
 			CreatedAt:   entities[i].CreatedAt.Format(time.RFC3339),
-			SchemeID:    int32(entities[i].SchemeID),
+			Scheme:      entities[i].Scheme,
 			Active:      entities[i].Active,
 			Options:     options,
 		})
@@ -233,7 +231,7 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		return &EntityStatus{}, status.Error(codes.FailedPrecondition, err.Error())
 	}
 	entityStatus := &EntityStatus{
-		ID:         id.ID,
+		ID:         id.GetID(),
 		LiveSeries: []bool{},
 	}
 	query, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(
@@ -241,7 +239,7 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
   |> range(start: -10m)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["id"] == "%s")`, common.Measurements[int(id.GetSchemeId())], id.GetID()))
+  |> filter(fn: (r) => r["id"] == "%s")`, id.GetScheme(), id.GetID()))
 	if err != nil {
 		glgf.Error(err)
 		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
@@ -265,15 +263,18 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		glgf.Error(err)
 		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
 	}
-	query, err = storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(
-		`from(bucket: "backend")
+	query, err = storage.QueryInfluxDB.Query(ctx,
+		fmt.Sprintf(`
+from(bucket: "backend")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
   |> filter(fn: (r) => r["id"] == "%s")
   |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> fill(column: "_value", value: true)
-  |> yield(name: "first")`, common.Measurements[int(id.GetSchemeId())], id.GetID()))
+  |> yield(name: "first")`,
+			id.GetScheme(),
+			id.GetID()))
 	if err != nil {
 		glgf.Error(err)
 		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
@@ -300,7 +301,9 @@ func (h handler) GetSeries(ctx context.Context, id *EntityID) (*EntitySeries, er
 		ID: id.GetID(),
 	}
 	series := map[string]interface{}{}
-	query, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(`import "types"
+	query, err := storage.QueryInfluxDB.Query(ctx,
+		fmt.Sprintf(`
+import "types"
 import "strings"
 from(bucket: "backend")
   |> range(start: -10m)
@@ -310,7 +313,9 @@ from(bucket: "backend")
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => types.isNumeric(v: r["_value"]))
-  |> filter(fn: (r) => not strings.hasPrefix(v: r["_field"], prefix: "c_"))`, common.Measurements[int(id.GetSchemeId())], id.GetID()))
+  |> filter(fn: (r) => not strings.hasPrefix(v: r["_field"], prefix: "c_"))`,
+			id.GetScheme(),
+			id.GetID()))
 	if err != nil {
 		glgf.Error(err)
 		return ret, status.Error(codes.Internal, err.Error())
