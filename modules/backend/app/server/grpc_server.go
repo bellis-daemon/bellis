@@ -1,12 +1,13 @@
 package server
 
 import (
+	"net"
+	"time"
+
 	midwares2 "github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"net"
-	"time"
 )
 
 var (
@@ -29,14 +30,9 @@ func Register(reg func(server *grpc.Server) string) {
 	glgf.Infof("Registering service to grpc server: %s", reg(server))
 }
 
-func ServeGrpc() {
-	addr := "0.0.0.0:7001"
-	listen, err := net.Listen("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	glgf.Success("GRPC server now listening:", addr)
-	err = server.Serve(listen)
+func ServeGrpc(lis net.Listener) {
+	glgf.Success("GRPC server now listening:", lis.Addr())
+	err := server.Serve(lis)
 	if err != nil {
 		panic(err)
 	}

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"net"
+
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/storage"
 	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/auth"
 	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/entity"
 	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile"
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
+	"github.com/bellis-daemon/bellis/modules/backend/app/web"
+	"github.com/soheilhy/cmux"
 )
 
 var (
@@ -21,5 +25,15 @@ func init() {
 
 func main() {
 	storage.ConnectMongo()
-	server.ServeGrpc()
+
+	l, err := net.Listen("tcp", "0.0.0.0:7001")
+	if err != nil {
+		panic(err)
+	}
+	m := cmux.New(l)
+	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+	webL := m.Match(cmux.HTTP1Fast())
+	go server.ServeGrpc(grpcL)
+	go web.ServeWeb(webL)
+	m.Serve()
 }
