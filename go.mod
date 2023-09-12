@@ -7,6 +7,7 @@ require (
 	github.com/go-ping/ping v1.1.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/golang/protobuf v1.5.3
+	github.com/google/go-github/v32 v32.1.0
 	github.com/gotify/go-api-client/v2 v2.0.4
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/minoic/PterodactylGoApi v0.2.4
@@ -24,6 +25,7 @@ require (
 	github.com/v2fly/v2ray-core/v5 v5.4.1
 	go.mongodb.org/mongo-driver v1.11.4
 	golang.org/x/net v0.10.0
+	golang.org/x/oauth2 v0.4.0
 	golang.org/x/time v0.3.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
@@ -38,6 +40,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
@@ -45,6 +48,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

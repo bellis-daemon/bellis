@@ -175,7 +175,7 @@ func (this *Entity) alert(msg string) {
 }
 
 func (this *Entity) triggerAlert(info *status.TriggerInfo) {
-
+	// todo: implement function
 }
 
 func (this *Entity) UpdateOptions(option *models.Application) error {
