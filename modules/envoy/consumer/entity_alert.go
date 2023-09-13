@@ -166,7 +166,7 @@ func isOnlineState(ctx context.Context, entity *models.Application) (bool, error
 	var log models.OfflineLog
 	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
 	if err != nil {
-		if !errors.Is(err, mongo.ErrNilDocument) {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return false, fmt.Errorf("internal mongodb err: %w", err)
 		} else {
 			return true, nil

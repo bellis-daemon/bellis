@@ -12,9 +12,9 @@ func BasicLogger() grpc.UnaryServerInterceptor {
 		p, _ := peer.FromContext(ctx)
 		resp, err = handler(ctx, req)
 		if err != nil {
-			glgf.Warnf("| %s |<%s> ERR:%s", p.Addr.String(), info.FullMethod, req, err.Error())
+			glgf.Warnf("| %s |<%s> ERR:%s", p.Addr.String(), info.FullMethod, err.Error())
 		} else {
-			glgf.Infof("| %s |<%s> => %v", p.Addr.String(), info.FullMethod, resp)
+			glgf.Infof("| %s |<%s>", p.Addr.String(), info.FullMethod)
 		}
 		return
 	}

@@ -58,11 +58,13 @@ func checkEntityOwnership(user *models.User, entity *models.Application) asserti
 }
 
 func loadPublicOptions(src *Entity, dst *models.Application) {
+	dst.Public = models.ApplicationPublicOptions{
+		Threshold:   5,
+		TriggerList: nil,
+	}
 	if src.Public != nil {
 		if src.Public.Threshold != nil {
 			dst.Public.Threshold = int(*src.Public.Threshold)
-		} else {
-			dst.Public.Threshold = 5
 		}
 		if src.Public.TriggerList != nil {
 			dst.Public.TriggerList = src.Public.TriggerList

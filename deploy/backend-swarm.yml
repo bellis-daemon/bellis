@@ -138,7 +138,7 @@ services:
       - mongo1
       - mongo2
       - mongo3
-    restart: on-failure
+    restart: no
     command:
       - mongosh
       - mongodb://mongo1:27017/admin

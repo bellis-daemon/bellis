@@ -103,6 +103,7 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 		Options:     entity.Options.AsMap(),
 	}
 	loadPublicOptions(entity, e)
+	glgf.Debugf("creating entity: %+v => %+v", entity, e)
 	_, err := storage.CEntity.InsertOne(ctx, e)
 	if err != nil {
 		glgf.Error(err)

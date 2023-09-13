@@ -188,6 +188,9 @@ func (this *Entity) UpdateOptions(option *models.Application) error {
 		return err
 	}
 	this.threshold = option.Public.Threshold
+	if this.threshold == 0 {
+		this.threshold = 5
+	}
 	query, err := storage.QueryInfluxDB.Query(
 		this.ctx,
 		fmt.Sprintf(
