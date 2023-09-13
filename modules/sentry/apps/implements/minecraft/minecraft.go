@@ -2,6 +2,8 @@ package minecraft
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 
 	"github.com/bellis-daemon/bellis/common"
@@ -30,7 +32,14 @@ func (this *Minecraft) Fetch(ctx context.Context) (status.Status, error) {
 }
 
 func (this *Minecraft) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
+	err := setOptions(&this.options)
+	if err != nil {
+		return err
+	}
+	if !strings.Contains(this.options.Address, ":") {
+		this.options.Address += ":25565"
+	}
+	return nil
 }
 
 type minecraftStatus struct {

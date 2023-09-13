@@ -94,6 +94,7 @@ func (this *Entity) refresh() {
 		// 状态不正常时
 		cErr = err.Error()
 		cLive = false
+		// todo: fix offline judge method
 		this.failedCount = min(this.failedCount+1, this.threshold+1)
 		if this.failedCount < this.threshold && (this.failedCount&1 == 0) {
 			defer this.reclaim()
