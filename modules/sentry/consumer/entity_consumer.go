@@ -3,11 +3,9 @@ package consumer
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/redistream"
-	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/sentry/factory"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
@@ -60,6 +58,6 @@ func entityDelete() {
 	stream.Register(common.EntityDelete, func(ctx context.Context, message *redistream.Message) error {
 		id := cast.ToString(message.Values["EntityID"])
 		factory.DeleteEntity(id)
-		return storage.DeleteInfluxDB.DeleteWithName(ctx, "bellis", "backend", time.UnixMilli(0), time.Now().Add(time.Hour), fmt.Sprintf(`id="%s"`, id))
+		return nil
 	})
 }

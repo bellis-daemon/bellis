@@ -8,6 +8,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/assertion"
+	"github.com/bellis-daemon/bellis/modules/backend/producer"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -101,4 +102,28 @@ func getEntityUptime(ctx context.Context, entityID string) string {
 		return cryptoo.FormatDuration(0)
 	}
 	return *s
+}
+
+func afterDeleteEntity(entityID string) {
+	ctx := context.Background()
+	id, err := primitive.ObjectIDFromHex(entityID)
+	if err != nil {
+		return
+	}
+	err = storage.DeleteInfluxDB.DeleteWithName(ctx, "bellis", "backend", time.UnixMilli(0), time.Now().Add(time.Hour), fmt.Sprintf(`id="%s"`, entityID))
+	if err != nil {
+		glgf.Error("error deleting in influxdb", err)
+	}
+	_, _ = storage.COfflineLog.DeleteMany(ctx, bson.M{"EntityID": id})
+	_ = producer.NoticeEntityDelete(ctx, entityID)
+}
+
+func afterCreateEntity(entity *models.Application) {
+	ctx := context.Background()
+	_ = producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
+}
+
+func afterUpdateEntity(entity *models.Application) {
+	ctx := context.Background()
+	_ = producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
 }

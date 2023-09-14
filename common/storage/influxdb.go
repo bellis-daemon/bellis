@@ -10,7 +10,7 @@ var WriteInfluxDBBlocking api.WriteAPIBlocking
 var QueryInfluxDB api.QueryAPI
 var DeleteInfluxDB api.DeleteAPI
 
-func init() {
+func ConnectInfluxDB() {
 	client := influxdb2.NewClientWithOptions(
 		"http://influxdb:8086",
 		Secret("influxdb_token"),

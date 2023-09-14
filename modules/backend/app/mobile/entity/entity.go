@@ -10,7 +10,6 @@ import (
 	"github.com/bellis-daemon/bellis/modules/backend/app/server"
 	"github.com/bellis-daemon/bellis/modules/backend/assertion"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
-	"github.com/bellis-daemon/bellis/modules/backend/producer"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
@@ -85,9 +84,7 @@ func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*empty.Empty, 
 		glgf.Error(err)
 		return &empty.Empty{}, status.Error(codes.Internal, err.Error())
 	}
-	go func() {
-		_ = producer.NoticeEntityDelete(ctx, id.ID)
-	}()
+	go afterDeleteEntity(id.GetID())
 	return &empty.Empty{}, nil
 }
 
@@ -109,9 +106,7 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 		glgf.Error(err)
 		return &EntityID{}, status.Error(codes.Internal, err.Error())
 	}
-	go func() {
-		_ = producer.NoticeEntityUpdate(ctx, e.ID.Hex(), e)
-	}()
+	go afterCreateEntity(e)
 	return &EntityID{
 		ID: e.ID.Hex(),
 	}, nil
@@ -145,15 +140,7 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty
 		glgf.Error(err)
 		return &empty.Empty{}, status.Error(codes.Internal, err.Error())
 	}
-	go func() {
-		var entity models.Application
-		err := storage.CEntity.FindOne(ctx, bson.M{"_id": oid}).Decode(&entity)
-		if err != nil {
-			glgf.Error(err)
-			return
-		}
-		_ = producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), &entity)
-	}()
+	go afterUpdateEntity(e)
 	return &empty.Empty{}, nil
 }
 

@@ -25,7 +25,7 @@ func init() {
 
 func main() {
 	storage.ConnectMongo()
-
+	storage.ConnectInfluxDB()
 	l, err := net.Listen("tcp", "0.0.0.0:7001")
 	if err != nil {
 		panic(err)

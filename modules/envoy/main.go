@@ -18,5 +18,6 @@ func init() {
 
 func main() {
 	storage.ConnectMongo()
+	storage.ConnectInfluxDB()
 	consumer.Serve()
 }
