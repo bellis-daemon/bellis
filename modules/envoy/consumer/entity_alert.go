@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/models"
@@ -20,7 +22,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 func entityOfflineAlert() {
@@ -33,7 +34,11 @@ func entityOfflineAlert() {
 		var entity models.Application
 		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
 		if err != nil {
-			return fmt.Errorf("cant find entity using entity id: %s: %w", id.Hex(), err)
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				glgf.Errorf("cant find entity using entity id: %s: %s", id.Hex(), err.Error())
+				return nil
+			}
+			return fmt.Errorf("finding entity mongo inernal error: %w", err)
 		}
 		var user models.User
 		err = storage.CUser.FindOne(ctx, bson.M{"_id": entity.UserID}).Decode(&user)
@@ -79,6 +84,7 @@ func entityOfflineAlert() {
 		if err != nil {
 			return err
 		}
+		glgf.Debug("Offline alert sent: ", entity.Name)
 		return nil
 	})
 }
@@ -93,7 +99,7 @@ func writeOfflineLog(ctx context.Context, entity *models.Application, offlineTim
 	}
 	query, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(`
 from(bucket: "backend")
-  |> range(start: -5m, stop: %s)
+  |> range(start: %s, stop: %s)
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_err" or r["_field"] == "c_sentry")
@@ -101,7 +107,7 @@ from(bucket: "backend")
   |> limit(n: 3)
   |> sort(columns: ["_time"], desc: false)
   |> group(columns: ["_time"])
-`, offlineTime.Format(time.RFC3339), entity.Scheme, entity.ID.Hex()))
+`, offlineTime.Add(-5*time.Minute).Format(time.RFC3339), offlineTime.Format(time.RFC3339), entity.Scheme, entity.ID.Hex()))
 	if err != nil {
 		return fmt.Errorf("error querying influxdb: %w", err)
 	}
@@ -126,7 +132,10 @@ from(bucket: "backend")
 	}
 	glgf.Debug(log)
 	_, err = storage.COfflineLog.InsertOne(ctx, log)
-	return fmt.Errorf("error inserting offline log: %w", err)
+	if err != nil {
+		return fmt.Errorf("error inserting offline log: %w", err)
+	}
+	return nil
 }
 
 func entityOnlineAlert() {
@@ -140,7 +149,11 @@ func entityOnlineAlert() {
 		var entity models.Application
 		err = storage.CEntity.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
 		if err != nil {
-			return fmt.Errorf("cant find entity using id: %s: %w ", id.Hex(), err)
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				glgf.Errorf("cant find entity using entity id: %s: %s", id.Hex(), err.Error())
+				return nil
+			}
+			return fmt.Errorf("finding entity mongo inernal error: %w", err)
 		}
 		err = retry.Do(func() error {
 			return writeOnlineLog(ctx, &entity, onlineTime)
@@ -156,10 +169,17 @@ func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme 
 	var log models.OfflineLog
 	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
 	if err != nil {
-		return fmt.Errorf("error finding entity in mongodb: %w", err)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			glgf.Errorf("cant find offline log using entity id: %s: %s", entity.ID.Hex(), err.Error())
+			return nil
+		}
+		return fmt.Errorf("finding entity offline log inernal error: %w", err)
 	}
 	_, err = storage.COfflineLog.UpdateOne(ctx, bson.M{"_id": log.ID}, bson.M{"$set": bson.M{"OnlineTime": onlineTIme}})
-	return fmt.Errorf("error updating offline log in mongodb: %w", err)
+	if err != nil {
+		return fmt.Errorf("error updating offline log in mongodb: %w", err)
+	}
+	return nil
 }
 
 func isOnlineState(ctx context.Context, entity *models.Application) (bool, error) {
