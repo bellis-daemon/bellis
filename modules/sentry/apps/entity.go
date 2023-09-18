@@ -2,6 +2,7 @@ package apps
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"sync"
@@ -75,9 +76,19 @@ func (this *Entity) Run() {
 	})
 }
 
+func (this *Entity) saveFetch() (s status.Status, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s = nil
+			err = errors.New(fmt.Sprint(r))
+		}
+	}()
+	return this.Handler.Fetch(this.ctx)
+}
+
 func (this *Entity) refresh() {
 	sentryTime := time.Now()
-	s, err := this.Handler.Fetch(this.ctx)
+	s, err := this.saveFetch()
 	fields := map[string]any{}
 	_ = mapstructure.Decode(s, &fields)
 	point := write.NewPoint(

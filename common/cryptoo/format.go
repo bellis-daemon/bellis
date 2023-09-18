@@ -44,5 +44,9 @@ func FormatDuration(duration time.Duration) string {
 		}
 	}
 
+	if len(result) == 0 {
+		result = "0m"
+	}
+
 	return result
 }

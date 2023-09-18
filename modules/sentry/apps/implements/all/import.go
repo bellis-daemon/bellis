@@ -7,6 +7,7 @@ import (
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/docker"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/github"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/http"
+	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/influxdb"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/minecraft"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/nginx"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/ping"

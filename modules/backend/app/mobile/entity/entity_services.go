@@ -80,7 +80,7 @@ func getEntityUptime(ctx context.Context, entityID string) string {
 			return cryptoo.FormatDuration(0), err
 		}
 		var offlineLog models.OfflineLog
-		err = storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": id}, options.FindOne().SetSort(bson.M{"_id": -1})).Err()
+		err = storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": id}, options.FindOne().SetSort(bson.M{"_id": -1})).Decode(&offlineLog)
 		if err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				var entity models.Application
