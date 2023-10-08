@@ -1,60 +1,68 @@
 package email
 
-//
-//import (
-//	"fmt"
-//	"github.com/minoic/glgf"
-//	"strconv"
-//)
-//
-//func getProd() hermes.Hermes {
-//	return hermes.Hermes{
-//		Theme: new(hermes.Default),
-//		Product: hermes.Product{
-//			Name:        "Mail",
-//			Copyright:   "Copyright © 2020 - 2023 minoic. All rights reserved.",
-//			TroubleText: "如果点击链接无效，请复制下列链接并在浏览器中打开：",
-//		},
-//	}
-//}
-//
-//func genOfflineEmail(username string, entityUuid int64, entityName string, introduction string, offlineTime string) (string, error) {
-//	h := getProd()
-//	email := hermes.Email{
-//		Body: hermes.Body{
-//			Name: username,
-//			Intros: []string{
-//				introduction,
-//				"我们在您的应用再次上线或邮件冷却之前不会发送更多的提醒",
-//			},
-//			Title: "您的应用 <" + entityName + "> 刚刚离线了",
-//			Table: hermes.Table{
-//				Data: [][]hermes.Entry{
-//					{
-//						{
-//							Key:   "应用名称",
-//							Value: entityName,
-//						},
-//						{
-//							Key:   "应用 UUID",
-//							Value: strconv.FormatInt(entityUuid, 10),
-//						},
-//						{
-//							Key:   "离线时间",
-//							Value: offlineTime,
-//						},
-//					},
-//				},
-//			},
-//			Outros: []string{
-//				"这应该是一条值得注意和验证的消息，如果有错误请联系 " + configure.GetConf().SMTP.Receiver,
-//			},
-//		},
-//	}
-//	mailBody, err := h.GenerateHTML(email)
-//	return mailBody, err
-//}
-//
+import (
+	"time"
+
+	"github.com/bellis-daemon/bellis/common/models"
+	"github.com/matcornic/hermes"
+)
+
+func base() hermes.Hermes {
+	return hermes.Hermes{
+		Theme: new(hermes.Default),
+		Product: hermes.Product{
+			Name:      "Bellis Envoy",
+			Link:      "https://github.com/bellis-daemon/bellis",
+			Copyright: "Copyright © 2020 - 2023 minoic. All rights reserved.",
+		},
+	}
+}
+
+func genOfflineEmail(user *models.User, offlineLog *models.OfflineLog) hermes.Email {
+	email := hermes.Email{
+		Body: hermes.Body{
+			Name: user.Email,
+			Intros: []string{
+				"We won't send further reminders until your app is back online or the email cools down",
+			},
+			Title: "Your Entity <" + offlineLog.EntityName + "> just went offline!",
+			Dictionary: []hermes.Entry{
+				{
+					Key:   "Entity Name",
+					Value: offlineLog.EntityName,
+				},
+				{
+					Key:   "Offline Time",
+					Value: offlineLog.EnvoyTime.Format(time.RFC3339),
+				},
+			},
+			Table: hermes.Table{
+				Data: [][]hermes.Entry{},
+			},
+			Outros: []string{
+				"This should be a noteworthy and validating message.",
+			},
+		},
+	}
+	for _, log := range offlineLog.SentryLogs {
+		email.Body.Table.Data = append(email.Body.Table.Data, []hermes.Entry{
+			{
+				Key: "Time",
+				Value: log.SentryTime.Format(time.RFC3339),
+			},
+			{
+				Key: "Sentry",	
+				Value: log.SentryName,
+			},
+			{
+				Key:"Error",
+				Value: log.ErrorMessage,
+			},
+		})
+	}
+	return email
+}
+
 //func genForgetPasswordEmail(userName string, key string) (string, error) {
 //	h := getProd()
 //	email := hermes.Email{
