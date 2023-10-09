@@ -24,6 +24,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cast v1.5.1
 	github.com/v2fly/v2ray-core/v5 v5.4.1
+	github.com/xhit/go-simple-mail/v2 v2.16.0
 	go.mongodb.org/mongo-driver v1.12.1
 	golang.org/x/net v0.14.0
 	golang.org/x/oauth2 v0.11.0
@@ -45,6 +46,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
+	github.com/go-test/deep v1.1.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
@@ -65,6 +67,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
+	github.com/toorop/go-dkim v0.0.0-20201103131630-e1cd1a0a5208 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect

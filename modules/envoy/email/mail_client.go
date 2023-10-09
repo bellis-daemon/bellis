@@ -1,26 +1,24 @@
 package email
 
+import (
+	"time"
 
-// func getSTMPClient() (*mail.SMTPClient, error) {
-// 	conf := configure.GetConf()
-// 	temp := conf.SMTP.Encryption
-// 	encryption := mail.EncryptionTLS
-// 	if temp == "SSL" {
-// 		encryption = mail.EncryptionSSL
-// 	} else if temp != "TLS" && temp != "SSL" {
-// 		glgf.Error("wrong SMTP encryption")
-// 	}
-// 	sv := &mail.SMTPServer{
-// 		// Authentication: mail.AuthPlain,
-// 		Encryption:     encryption,
-// 		Username:       conf.SMTP.Username,
-// 		Password:       conf.SMTP.UserPassword,
-// 		ConnectTimeout: 10 * time.Second,
-// 		SendTimeout:    20 * time.Second,
-// 		Host:           conf.SMTP.Host,
-// 		Port:           conf.SMTP.Port,
-// 		KeepAlive:      false,
-// 	}
-// 	cl, err := sv.Connect()
-// 	return cl, err
-// }
+	"github.com/bellis-daemon/bellis/common/storage"
+	mail "github.com/xhit/go-simple-mail/v2"
+)
+
+func tencentSmtpClient() (*mail.SMTPClient, error) {
+	sv := &mail.SMTPServer{
+		Authentication: mail.AuthPlain,
+		Encryption:     mail.EncryptionTLS,
+		Username:       "envoy@bellis.minoic.top",
+		Password:       storage.Secret("tencent_smtp_password"),
+		ConnectTimeout: 3 * time.Second,
+		SendTimeout:    3 * time.Second,
+		Host:           "gz-smtp.qcloudmail.com",
+		Port:           465,
+		KeepAlive:      false,
+	}
+	cl, err := sv.Connect()
+	return cl, err
+}
