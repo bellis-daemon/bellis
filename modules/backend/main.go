@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
 	"net"
 
 	"github.com/bellis-daemon/bellis/common"
@@ -8,7 +9,6 @@ import (
 	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/auth"
 	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/entity"
 	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile"
-	"github.com/bellis-daemon/bellis/modules/backend/app/server"
 	"github.com/bellis-daemon/bellis/modules/backend/app/web"
 	"github.com/soheilhy/cmux"
 )
@@ -33,7 +33,7 @@ func main() {
 	m := cmux.New(l)
 	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
 	webL := m.Match(cmux.HTTP1Fast())
-	go server.ServeGrpc(grpcL)
+	go mobile.ServeGrpc(grpcL)
 	go web.ServeWeb(webL)
 	m.Serve()
 }

@@ -64,7 +64,7 @@ message OfflineLogPage{
 }
 
 message OfflineLog{
-  string envoyTime = 1;
+  string offlineTime = 1;
   string envoyType = 2;
   string duration = 3;
   repeated SentryLog sentryLogs = 4;

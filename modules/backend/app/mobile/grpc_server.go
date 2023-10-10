@@ -1,4 +1,4 @@
-package server
+package mobile
 
 import (
 	"net"

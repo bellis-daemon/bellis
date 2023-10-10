@@ -9,7 +9,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/generic"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
-	"github.com/bellis-daemon/bellis/modules/backend/app/server"
+	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
 	"github.com/bellis-daemon/bellis/modules/backend/assertion"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -52,10 +52,9 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 		Length: int32(len(logs)),
 		OfflineLogs: generic.SliceConvert(logs, func(log models.OfflineLog) *OfflineLog {
 			return &OfflineLog{
-				// todo: rename to OfflineTime
-				EnvoyTime: log.OfflineTime.Local().Format(time.DateTime),
-				EnvoyType: log.EnvoyType,
-				Duration:  cryptoo.FormatDuration(log.OnlineTime.Sub(log.OfflineTime)),
+				OfflineTime: log.OfflineTime.Local().Format(time.DateTime),
+				EnvoyType:   log.EnvoyType,
+				Duration:    cryptoo.FormatDuration(log.OnlineTime.Sub(log.OfflineTime)),
 				SentryLogs: generic.SliceConvert(log.SentryLogs, func(log models.SentryLog) *SentryLog {
 					return &SentryLog{
 						SentryName:   log.SentryName,
@@ -333,7 +332,7 @@ func (h handler) NeedAuth() bool {
 }
 
 func init() {
-	server.Register(func(server *grpc.Server) string {
+	mobile.Register(func(server *grpc.Server) string {
 		RegisterEntityServiceServer(server, &handler{})
 		return "Entity"
 	})

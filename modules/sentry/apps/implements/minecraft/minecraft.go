@@ -62,7 +62,6 @@ func (this *minecraftStatus) PullTrigger(triggerName string) *status.TriggerInfo
 			}
 		}
 		return nil
-
 	}
 	return nil
 }

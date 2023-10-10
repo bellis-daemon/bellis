@@ -8,5 +8,8 @@ import (
 
 func ServeWeb(lis net.Listener) {
 	router := gin.Default()
-	router.RunListener(lis)
+	err := router.RunListener(lis)
+	if err != nil {
+		panic(err)
+	}
 }

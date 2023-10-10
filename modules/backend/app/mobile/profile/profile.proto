@@ -57,7 +57,7 @@ message EnvoyPolicyContent{
 }
 
 message Sensitive{
-  int32 level  = 1;
+  int32 level = 1;
 }
 
 service ProfileService{
@@ -70,4 +70,6 @@ service ProfileService{
   rpc UseEmail(Email) returns(EnvoyPolicy);
   rpc UseWebhook(Webhook) returns(EnvoyPolicy);
 }
+
+
 

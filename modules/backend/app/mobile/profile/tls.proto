@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package bellis.backend.mobile.profile;
+
+import "google/protobuf/empty.proto";
+import "public/public.proto";
+
+option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile';
+
+message TLS{
+  string id = 1;
+  string userId = 2;
+  string name = 3;
+  string tlsCA = 4;
+  string tlsCert = 5;
+  string tlsKey = 6;
+  string tlsKeyPwd = 7;
+  string tlsMinVersion = 8;
+  bool insecure = 9;
+}
+
+message TLSList{
+  repeated TLS list = 1;
+}
+
+service TLSService{
+  rpc GetUserTLS(google.protobuf.Empty) returns (TLSList);
+  rpc CreateTLS(TLS) returns (TLS);
+  rpc UpdateTLS(TLS) returns (TLS);
+  rpc DeleteTLS(public.PrimitiveID) returns (google.protobuf.Empty);
+}

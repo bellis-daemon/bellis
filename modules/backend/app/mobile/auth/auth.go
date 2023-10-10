@@ -5,7 +5,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
-	"github.com/bellis-daemon/bellis/modules/backend/app/server"
+	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
 	"github.com/bellis-daemon/bellis/modules/backend/producer"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/minoic/glgf"
@@ -166,7 +166,7 @@ func (handler) ForgetChangePassword(ctx context.Context, request *ForgetChangePa
 }
 
 func init() {
-	server.Register(func(server *grpc.Server) string {
+	mobile.Register(func(server *grpc.Server) string {
 		RegisterAuthServiceServer(server, &handler{})
 		return "Auth"
 	})
