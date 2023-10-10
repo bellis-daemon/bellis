@@ -7,13 +7,13 @@ import (
 )
 
 type OfflineLog struct {
-	ID         primitive.ObjectID `bson:"_id"`
-	EntityID   primitive.ObjectID `bson:"EntityID"`
-	EntityName string             `bson:"EntityName"`
-	EnvoyTime  time.Time          `bson:"EnvoyTime"`
-	EnvoyType  string             `bson:"EnvoyType"`
-	OnlineTime time.Time          `bson:"OnlineTime"`
-	SentryLogs []SentryLog        `bson:"SentryLogs"`
+	ID             primitive.ObjectID `bson:"_id"`
+	EntityID       primitive.ObjectID `bson:"EntityID"`
+	EnvoyType      string             `bson:"EnvoyType"`
+	OfflineTime    time.Time          `bson:"OfflineTime"`
+	OfflineMessage string             `bson:"OfflineMessage"`
+	OnlineTime     time.Time          `bson:"OnlineTime"`
+	SentryLogs     []SentryLog        `bson:"SentryLogs"`
 }
 
 type SentryLog struct {

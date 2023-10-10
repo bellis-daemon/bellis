@@ -1,39 +1,44 @@
 package email
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/matcornic/hermes"
 )
 
-func base() hermes.Hermes {
-	return hermes.Hermes{
+func base() *hermes.Hermes {
+	return &hermes.Hermes{
 		Theme: new(hermes.Default),
 		Product: hermes.Product{
 			Name:      "Bellis Envoy",
 			Link:      "https://github.com/bellis-daemon/bellis",
-			Copyright: "Copyright © 2020 - 2023 minoic. All rights reserved.",
+			Copyright: fmt.Sprintf("Copyright © 2020 - %d minoic. All rights reserved.", time.Now().Year()),
 		},
 	}
 }
 
-func genOfflineEmail(user *models.User, offlineLog *models.OfflineLog) hermes.Email {
+func offlineEmail(user *models.User, entity *models.Application, offlineLog *models.OfflineLog) hermes.Email {
 	email := hermes.Email{
 		Body: hermes.Body{
 			Name: user.Email,
 			Intros: []string{
 				"We won't send further reminders until your app is back online or the email cools down",
 			},
-			Title: "Your Entity <" + offlineLog.EntityName + "> just went offline!",
+			Title: fmt.Sprintf("Your Entity <%s> (%s) just went offline!", entity.Name, entity.Description),
 			Dictionary: []hermes.Entry{
 				{
-					Key:   "Entity Name",
-					Value: offlineLog.EntityName,
+					Key:   "Entity name",
+					Value: entity.Name,
 				},
 				{
-					Key:   "Offline Time",
-					Value: offlineLog.EnvoyTime.Format(time.RFC3339),
+					Key:   "Entity create time",
+					Value: entity.CreatedAt.Format(time.RFC3339),
+				},
+				{
+					Key:   "Offline time",
+					Value: offlineLog.OfflineTime.Format(time.RFC3339),
 				},
 			},
 			Table: hermes.Table{
@@ -47,15 +52,15 @@ func genOfflineEmail(user *models.User, offlineLog *models.OfflineLog) hermes.Em
 	for _, log := range offlineLog.SentryLogs {
 		email.Body.Table.Data = append(email.Body.Table.Data, []hermes.Entry{
 			{
-				Key: "Time",
+				Key:   "Time",
 				Value: log.SentryTime.Format(time.RFC3339),
 			},
 			{
-				Key: "Sentry",	
+				Key:   "Sentry",
 				Value: log.SentryName,
 			},
 			{
-				Key:"Error",
+				Key:   "Error",
 				Value: log.ErrorMessage,
 			},
 		})

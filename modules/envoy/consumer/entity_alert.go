@@ -73,29 +73,27 @@ func entityOfflineAlert() {
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
 			return nil
 		}
-		err = envoyDriver.AlertOffline(&entity, message.Values["Message"].(string), offlineTime)
+		log, err := writeOfflineLog(ctx, &entity, message.Values["Message"].(string), offlineTime, envoyType)
+		if err != nil {
+			return fmt.Errorf("cant write offline log: %w", err)
+		}
+		err = envoyDriver.AlertOffline(&entity, log)
 		if err != nil {
 			return fmt.Errorf("cant find policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
-		}
-		err = retry.Do(func() error {
-			err := writeOfflineLog(ctx, &entity, offlineTime, envoyType)
-			return err
-		}, retry.Context(ctx), retry.Attempts(3))
-		if err != nil {
-			return err
 		}
 		glgf.Debug("Offline alert sent: ", entity.Name)
 		return nil
 	})
 }
 
-func writeOfflineLog(ctx context.Context, entity *models.Application, offlineTime time.Time, envoyType string) error {
-	log := models.OfflineLog{
-		ID:         primitive.NewObjectID(),
-		EntityID:   entity.ID,
-		EnvoyTime:  time.Now(),
-		EnvoyType:  envoyType,
-		SentryLogs: []models.SentryLog{},
+func writeOfflineLog(ctx context.Context, entity *models.Application, envoyMessage string, offlineTime time.Time, envoyType string) (*models.OfflineLog, error) {
+	log := &models.OfflineLog{
+		ID:             primitive.NewObjectID(),
+		EntityID:       entity.ID,
+		EnvoyType:      envoyType,
+		OfflineTime:    time.Now(),
+		OfflineMessage: envoyMessage,
+		SentryLogs:     []models.SentryLog{},
 	}
 	query, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(`
 from(bucket: "backend")
@@ -109,7 +107,7 @@ from(bucket: "backend")
   |> group(columns: ["_time"])
 `, offlineTime.Add(-5*time.Minute).Format(time.RFC3339), offlineTime.Format(time.RFC3339), entity.Scheme, entity.ID.Hex()))
 	if err != nil {
-		return fmt.Errorf("error querying influxdb: %w", err)
+		return nil, fmt.Errorf("error querying influxdb: %w", err)
 	}
 	for query.Next() {
 		sl := models.SentryLog{
@@ -133,9 +131,9 @@ from(bucket: "backend")
 	glgf.Debug(log)
 	_, err = storage.COfflineLog.InsertOne(ctx, log)
 	if err != nil {
-		return fmt.Errorf("error inserting offline log: %w", err)
+		return nil, fmt.Errorf("error inserting offline log: %w", err)
 	}
-	return nil
+	return log, nil
 }
 
 func entityOnlineAlert() {

@@ -7,15 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 type handler struct {
@@ -23,14 +24,14 @@ type handler struct {
 	ctx    context.Context
 }
 
-func (this *handler) AlertOffline(entity *models.Application, msg string, offlineTime time.Time) error {
+func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
 	parsedUrl, err := url.Parse(this.policy.URL)
 	if err != nil {
 		return err
 	}
 	if !this.policy.Insecure {
 		if parsedUrl.Scheme != "https" {
-			return errors.New("Cant send alert to none https server without insecure option ")
+			return errors.New("cant send alert to none https server without insecure option ")
 		}
 		dial, err := tls.Dial("tcp", fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port()), nil)
 		if err != nil {
@@ -42,7 +43,7 @@ func (this *handler) AlertOffline(entity *models.Application, msg string, offlin
 		}
 		expire := dial.ConnectionState().PeerCertificates[0].NotAfter
 		if expire.Before(time.Now()) {
-			return errors.New("Cant send alert to server with ssl certification without insecure option ")
+			return errors.New("cant send alert to server with ssl certification without insecure option ")
 		}
 	}
 	body := map[string]any{
@@ -50,8 +51,8 @@ func (this *handler) AlertOffline(entity *models.Application, msg string, offlin
 		"EntityName":        entity.Name,
 		"EntityDescription": entity.Description,
 		"EntityCreatedAt":   entity.CreatedAt,
-		"OfflineTime":       offlineTime.Format(time.RFC3339),
-		"OfflineMessage":    msg,
+		"OfflineTime":       log.OfflineTime.Format(time.RFC3339),
+		"OfflineMessage":    log.OfflineMessage,
 	}
 	var buf bytes.Buffer
 	err = json.NewEncoder(&buf).Encode(body)

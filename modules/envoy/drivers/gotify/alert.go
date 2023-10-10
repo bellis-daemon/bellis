@@ -37,7 +37,7 @@ func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriv
 	return this
 }
 
-func (this *handler) AlertOffline(entity *models.Application, msg string, offlineTime time.Time) error {
+func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
 	gotifyURL, err := url.Parse(this.policy.URL)
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (this *handler) AlertOffline(entity *models.Application, msg string, offlin
 	params := message.NewCreateMessageParams()
 	params.Body = &gmodels.MessageExternal{
 		Title:    "Offline alert - " + entity.Name,
-		Message:  fmt.Sprintf("Your application <%s> just went offline at %s, error message: %s", entity.Name, offlineTime.Local().Format(time.DateTime), msg),
+		Message:  fmt.Sprintf("Your application <%s> just went offline at %s, error message: %s", entity.Name, log.OfflineTime.Local().Format(time.DateTime), log.OfflineMessage),
 		Priority: 7,
 	}
 	_, err = client.Message.CreateMessage(params, auth.TokenAuth(this.policy.Token))

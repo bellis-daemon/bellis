@@ -3,6 +3,8 @@ package entity
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/generic"
 	"github.com/bellis-daemon/bellis/common/models"
@@ -19,7 +21,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
-	"time"
 )
 
 // implements EntityServiceServer
@@ -51,9 +52,10 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 		Length: int32(len(logs)),
 		OfflineLogs: generic.SliceConvert(logs, func(log models.OfflineLog) *OfflineLog {
 			return &OfflineLog{
-				EnvoyTime: log.EnvoyTime.Local().Format(time.DateTime),
+				// todo: rename to OfflineTime
+				EnvoyTime: log.OfflineTime.Local().Format(time.DateTime),
 				EnvoyType: log.EnvoyType,
-				Duration:  cryptoo.FormatDuration(log.OnlineTime.Sub(log.EnvoyTime)),
+				Duration:  cryptoo.FormatDuration(log.OnlineTime.Sub(log.OfflineTime)),
 				SentryLogs: generic.SliceConvert(log.SentryLogs, func(log models.SentryLog) *SentryLog {
 					return &SentryLog{
 						SentryName:   log.SentryName,

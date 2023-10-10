@@ -2,14 +2,14 @@ package telegram
 
 import (
 	"context"
+
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers"
-	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 type handler struct {
@@ -17,12 +17,12 @@ type handler struct {
 	policy *models.EnvoyTelegram
 }
 
-func (this *handler) AlertOffline(entity *models.Application, msg string, offlineTime time.Time) error {
+func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
 	api, err := tgbotapi.NewBotAPI(storage.Secret("telegram_bot_token"))
 	if err != nil {
 		return err
 	}
-	message := tgbotapi.NewMessage(this.policy.ChatId, msg)
+	message := tgbotapi.NewMessage(this.policy.ChatId, log.OfflineMessage)
 	_, err = api.Send(message)
 	if err != nil {
 		return err
