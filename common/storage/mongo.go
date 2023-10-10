@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -36,7 +37,11 @@ func ConnectMongo() {
 
 func MongoUseSession(ctx context.Context, f func(sessionContext mongo.SessionContext) error) error {
 	return client.UseSession(ctx, func(sessionContext mongo.SessionContext) error {
-		err := f(sessionContext)
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		err = f(sessionContext)
 		if err != nil {
 			sessionContext.AbortTransaction(sessionContext)
 			return err

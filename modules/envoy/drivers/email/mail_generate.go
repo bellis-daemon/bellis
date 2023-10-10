@@ -26,11 +26,15 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 			Intros: []string{
 				"We won't send further reminders until your app is back online or the email cools down",
 			},
-			Title: fmt.Sprintf("Your Entity <%s> (%s) just went offline!", entity.Name, entity.Description),
+			Title: fmt.Sprintf("Your Entity <%s> just went offline!", entity.Name),
 			Dictionary: []hermes.Entry{
 				{
 					Key:   "Entity name",
 					Value: entity.Name,
+				},
+				{
+					Key:   "Entity Description",
+					Value: entity.Description,
 				},
 				{
 					Key:   "Entity create time",
@@ -45,7 +49,7 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 				Data: [][]hermes.Entry{},
 			},
 			Outros: []string{
-				"This should be a noteworthy and validating message.",
+				"This should be a note worthy and validating message.",
 			},
 		},
 	}

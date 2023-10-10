@@ -20,7 +20,7 @@ type ConsumerOptions struct {
 	GroupName       string        // default: redistream
 	PendingTimeout  time.Duration // default: 4 seconds
 	BlockTimeout    time.Duration // XRead timeout, default: 1 seconds
-	ReclaimInterval time.Duration // default: 1 seconds
+	ReclaimInterval time.Duration // default: 3 seconds
 	// concurrency workers, default: 0
 	// 0: temporary worker for every single message
 	// >=1: fix workers that can limit consume speed
@@ -62,7 +62,7 @@ func NewConsumer(r redis.UniversalClient, options ...*ConsumerOptions) *Consumer
 		c.options.BlockTimeout = 1 * time.Second
 	}
 	if c.options.ReclaimInterval == 0 {
-		c.options.ReclaimInterval = 1 * time.Second
+		c.options.ReclaimInterval = 3 * time.Second
 	}
 	if c.options.Workers < 0 {
 		panic("Redistream workers cant be negative number")

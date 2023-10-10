@@ -34,7 +34,8 @@ func (this *handler) AlertOffline(entity *models.Application, log *models.Offlin
 		return fmt.Errorf("cant generate email html: %w", err)
 	}
 	err = mail.NewMSG().
-		SetFrom("bellis@email.minoic.top").
+		SetFrom("Bellis Envoy <envoy@bellis.minoic.top>").
+		SetReplyTo("minoic2020@gmail.com").
 		AddTo(user.Email).
 		SetSubject("Bellis entity offline alert").
 		SetBody(mail.TextHTML, html).

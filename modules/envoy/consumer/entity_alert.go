@@ -73,13 +73,19 @@ func entityOfflineAlert() {
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
 			return nil
 		}
-		log, err := writeOfflineLog(ctx, &entity, message.Values["Message"].(string), offlineTime, envoyType)
+		err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+			log, err := writeOfflineLog(sessionContext, &entity, message.Values["Message"].(string), offlineTime, envoyType)
+			if err != nil {
+				return fmt.Errorf("cant write offline log: %w", err)
+			}
+			err = envoyDriver.AlertOffline(&entity, log)
+			if err != nil {
+				return fmt.Errorf("send offline alert failed: %w", err)
+			}
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("cant write offline log: %w", err)
-		}
-		err = envoyDriver.AlertOffline(&entity, log)
-		if err != nil {
-			return fmt.Errorf("cant find policy using policy id: %s, %w", user.Envoy.PolicyID.Hex(), err)
+			return err
 		}
 		glgf.Debug("Offline alert sent: ", entity.Name)
 		return nil

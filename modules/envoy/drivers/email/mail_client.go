@@ -9,8 +9,8 @@ import (
 
 func tencentSmtpClient() (*mail.SMTPClient, error) {
 	sv := &mail.SMTPServer{
-		Authentication: mail.AuthPlain,
-		Encryption:     mail.EncryptionTLS,
+		Authentication: mail.AuthAuto,
+		Encryption:     mail.EncryptionSSL,
 		Username:       "envoy@bellis.minoic.top",
 		Password:       storage.Secret("tencent_smtp_password"),
 		ConnectTimeout: 3 * time.Second,
