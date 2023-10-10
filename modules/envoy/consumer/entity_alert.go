@@ -168,7 +168,6 @@ func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme 
 	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			glgf.Errorf("cant find offline log using entity id: %s: %s", entity.ID.Hex(), err.Error())
 			return nil
 		}
 		return fmt.Errorf("finding entity offline log inernal error: %w", err)
