@@ -14,7 +14,7 @@ var (
 	CEnvoyEmail   *mongo.Collection
 	CEnvoyWebhook *mongo.Collection
 	COfflineLog   *mongo.Collection
-	CTLS          *mongo.Collectio
+	CTLS          *mongo.Collection
 	client        *mongo.Client
 	bellisBackend *mongo.Database
 )

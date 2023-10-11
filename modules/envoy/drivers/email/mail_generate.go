@@ -33,10 +33,6 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 					Value: entity.Name,
 				},
 				{
-					Key:   "Entity Description",
-					Value: entity.Description,
-				},
-				{
 					Key:   "Entity create time",
 					Value: entity.CreatedAt.Format(time.RFC3339),
 				},

@@ -59,12 +59,33 @@ func (this *tlsHandler) GetUserTLS(ctx context.Context, empty *emptypb.Empty) (*
 	return ret, nil
 }
 
-func (this *tlsHandler) CreateTLS(ctx context.Context, tls *TLS) (*TLS, error) {
-	//TODO implement me
-	panic("implement me")
+func (this *tlsHandler) CreateTLS(ctx context.Context, cert *TLS) (*TLS, error) {
+	user := midwares.GetUserFromCtx(ctx)
+	tls := &models.TLS{
+		ID:            primitive.NewObjectID(),
+		UserID:        user.ID,
+		Name:          cert.Name,
+		TLSCA:         cert.TlsCA,
+		TLSCert:       cert.TlsCert,
+		TLSKey:        cert.TlsKey,
+		TLSKeyPwd:     cert.TlsKeyPwd,
+		TLSMinVersion: cert.TlsMinVersion,
+		Insecure:      cert.Insecure,
+	}
+	_, err := tls.TLSConfig()
+	if err != nil {
+		return cert, status.Errorf(codes.InvalidArgument, "cant parse tls cert: %w", err)
+	}
+	result, err := storage.CTLS.InsertOne(ctx, tls)
+	if err != nil {
+		return cert, status.Errorf(codes.Internal, "database error: %w", err)
+	}
+	cert.Id = result.InsertedID.(primitive.ObjectID).Hex()
+	cert.UserId = user.ID.Hex()
+	return cert, nil
 }
 
-func (this *tlsHandler) UpdateTLS(ctx context.Context, tls *TLS) (*TLS, error) {
+func (this *tlsHandler) UpdateTLS(ctx context.Context, cert *TLS) (*TLS, error) {
 	//TODO implement me
 	panic("implement me")
 }
