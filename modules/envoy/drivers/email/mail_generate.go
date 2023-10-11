@@ -42,7 +42,7 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 				},
 				{
 					Key:   "Offline time",
-					Value: offlineLog.OfflineTime.Format(time.RFC3339),
+					Value: offlineLog.OfflineTime.Location().String() + " " + offlineLog.OfflineTime.Format(time.DateTime),
 				},
 			},
 			Table: hermes.Table{
@@ -52,6 +52,12 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 				"This should be a note worthy and validating message.",
 			},
 		},
+	}
+	if entity.Description != "" {
+		email.Body.Dictionary = append(email.Body.Dictionary, hermes.Entry{
+			Key:   "Entity Description",
+			Value: entity.Description,
+		})
 	}
 	for _, log := range offlineLog.SentryLogs {
 		email.Body.Table.Data = append(email.Body.Table.Data, []hermes.Entry{
