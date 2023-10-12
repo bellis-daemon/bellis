@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"errors"
+
 	"github.com/bellis-daemon/bellis/common/generic"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
@@ -74,20 +75,44 @@ func (this *tlsHandler) CreateTLS(ctx context.Context, cert *TLS) (*TLS, error) 
 	}
 	_, err := tls.TLSConfig()
 	if err != nil {
-		return cert, status.Errorf(codes.InvalidArgument, "cant parse tls cert: %w", err)
+		return cert, status.Errorf(codes.InvalidArgument, "cant parse tls cert: %s", err.Error())
 	}
 	result, err := storage.CTLS.InsertOne(ctx, tls)
 	if err != nil {
-		return cert, status.Errorf(codes.Internal, "database error: %w", err)
+		return cert, status.Errorf(codes.Internal, "database error: %s", err.Error())
 	}
 	cert.Id = result.InsertedID.(primitive.ObjectID).Hex()
 	cert.UserId = user.ID.Hex()
 	return cert, nil
 }
 
+// todo: set return type to empty
 func (this *tlsHandler) UpdateTLS(ctx context.Context, cert *TLS) (*TLS, error) {
-	//TODO implement me
-	panic("implement me")
+	id, err := primitive.ObjectIDFromHex(cert.Id)
+	if err != nil {
+		return cert, status.Errorf(codes.InvalidArgument, "invalid cert id: %s", err.Error())
+	}
+	user := midwares.GetUserFromCtx(ctx)
+	var tls models.TLS
+	err = storage.CTLS.FindOne(ctx, bson.M{"_id": id}).Decode(&tls)
+	if err != nil {
+		return cert, status.Errorf(codes.Internal, "cant find cert in database: %s", err.Error())
+	}
+	if user.ID.Hex() != tls.UserID.Hex() {
+		return cert, status.Errorf(codes.PermissionDenied, "you have no permission to update this cert")
+	}
+	tls.TLSCA = cert.TlsCA
+	tls.TLSCert = cert.TlsCert
+	tls.TLSKey = cert.TlsKey
+	tls.TLSKeyPwd = cert.TlsKeyPwd
+	tls.TLSMinVersion = cert.TlsMinVersion
+	tls.Insecure = cert.Insecure
+	tls.Name = cert.Name
+	_, err = storage.CTLS.ReplaceOne(ctx, bson.M{"_id": id}, tls)
+	if err != nil {
+		return cert, status.Errorf(codes.Internal, "database update method error: %s", err.Error())
+	}
+	return cert, nil
 }
 
 func (this *tlsHandler) DeleteTLS(ctx context.Context, id *public.PrimitiveID) (*emptypb.Empty, error) {
@@ -97,7 +122,7 @@ func (this *tlsHandler) DeleteTLS(ctx context.Context, id *public.PrimitiveID) (
 	}
 	_, err = storage.CTLS.DeleteOne(ctx, bson.M{"_id": oid})
 	if err != nil {
-		return &emptypb.Empty{}, status.Errorf(codes.Internal, "database error: %w", err)
+		return &emptypb.Empty{}, status.Errorf(codes.Internal, "database error: %s", err.Error())
 	}
 	return &emptypb.Empty{}, nil
 }
