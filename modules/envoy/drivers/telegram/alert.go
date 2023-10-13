@@ -18,7 +18,7 @@ type handler struct {
 }
 
 func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
-	api, err := tgbotapi.NewBotAPI(storage.Secret("telegram_bot_token"))
+	api, err := tgbotapi.NewBotAPI(storage.Firebase().ConfigGetString("telegram_bot_token"))
 	if err != nil {
 		return err
 	}

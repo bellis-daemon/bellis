@@ -13,8 +13,9 @@ var DeleteInfluxDB api.DeleteAPI
 func ConnectInfluxDB() {
 	client := influxdb2.NewClientWithOptions(
 		"http://influxdb:8086",
-		Secret("influxdb_token"),
-		influxdb2.DefaultOptions().SetBatchSize(50).
+		Firebase().ConfigGetString("influxdb_token"),
+		influxdb2.DefaultOptions().
+			SetBatchSize(50).
 			SetFlushInterval(200).
 			SetUseGZip(true).
 			SetRetryInterval(200).

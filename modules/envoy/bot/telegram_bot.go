@@ -9,7 +9,7 @@ import (
 )
 
 func RunTelegramBot() {
-	bot, err := tgbotapi.NewBotAPI(storage.Secret("telegram_bot_token"))
+	bot, err := tgbotapi.NewBotAPI(storage.Firebase().ConfigGetString("telegram_bot_token"))
 	if err != nil {
 		glgf.Error(err)
 		return
