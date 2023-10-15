@@ -18,6 +18,24 @@ type User struct {
 	CreatedAt time.Time          `json:"CreatedAt" bson:"CreatedAt"`
 	IsVip     bool               `json:"IsVip" bson:"IsVip"`
 	Envoy     EnvoyPolicy        `json:"Envoy" bson:"Envoy"`
+	Timezone  Timezone           `json:"Timezone" bson:"Timezone"`
+}
+
+func NewUser() *User {
+	ret := &User{
+		ID:        primitive.NewObjectID(),
+		Email:     "",
+		Password:  "",
+		CreatedAt: time.Now(),
+		IsVip:     false,
+		Envoy: EnvoyPolicy{
+			OfflineAlert: false,
+			PredictAlert: false,
+			Sensitive:    3,
+		},
+		Timezone: DefaultTimezone,
+	}
+	return ret
 }
 
 func hashPassword(pwd string) string {

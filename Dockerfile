@@ -7,7 +7,6 @@ RUN apk update && apk add --no-cache upx && rm -rf /var/cache/apk/*
 
 # 启用go module
 ENV GO111MODULE=on GOPROXY=https://goproxy.cn,direct
-
 # RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 ARG MODULE=backend
@@ -18,9 +17,8 @@ COPY go.sum go.sum
 RUN go mod download
 
 COPY . .
-
 # CGO_ENABLED禁用cgo 然后指定OS等，并go build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GO_VERSION=$(go version)' -X 'main.BUILD_TIME=`TZ=Asia/Shanghai date "+%F %T"`'" -o entry modules/$MODULE/main.go \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GoVersion=$(go version)' -X 'main.BuildTime=`date "+%F %T"`'" -o entry modules/$MODULE/main.go \
     && upx -9 entry
 
 FROM alpine

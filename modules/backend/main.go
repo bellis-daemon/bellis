@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
+	"github.com/minoic/glgf"
 	"net"
 
 	"github.com/bellis-daemon/bellis/common"
@@ -21,6 +22,7 @@ var (
 func init() {
 	common.BuildTime = BuildTime
 	common.GoVersion = GoVersion
+	glgf.Infof("BuildTime: %s, GoVersion: %s", BuildTime, GoVersion)
 }
 
 func main() {
@@ -35,5 +37,8 @@ func main() {
 	webL := m.Match(cmux.HTTP1Fast())
 	go mobile.ServeGrpc(grpcL)
 	go web.ServeWeb(webL)
-	m.Serve()
+	err = m.Serve()
+	if err != nil {
+		panic(err)
+	}
 }

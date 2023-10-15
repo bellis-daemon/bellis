@@ -12,7 +12,7 @@ func tencentSmtpClient() (*mail.SMTPClient, error) {
 		Authentication: mail.AuthAuto,
 		Encryption:     mail.EncryptionSSL,
 		Username:       "envoy@bellis.minoic.top",
-		Password:       storage.Firebase().ConfigGetString("tencent_smtp_password"),
+		Password:       storage.Config().GetString("tencent_smtp_password"),
 		ConnectTimeout: 3 * time.Second,
 		SendTimeout:    3 * time.Second,
 		Host:           "gz-smtp.qcloudmail.com",

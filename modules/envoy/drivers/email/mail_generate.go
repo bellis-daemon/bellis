@@ -33,12 +33,16 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 					Value: entity.Name,
 				},
 				{
+					Key:   "Timezone",
+					Value: user.Timezone.Location().String(),
+				},
+				{
 					Key:   "Entity create time",
-					Value: entity.CreatedAt.Format(time.RFC3339),
+					Value: entity.CreatedAt.In(user.Timezone.Location()).Format(time.DateTime),
 				},
 				{
 					Key:   "Offline time",
-					Value: offlineLog.OfflineTime.Location().String() + " " + offlineLog.OfflineTime.Format(time.DateTime),
+					Value: offlineLog.OfflineTime.In(user.Timezone.Location()).Format(time.DateTime),
 				},
 			},
 			Table: hermes.Table{
@@ -59,7 +63,7 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 		email.Body.Table.Data = append(email.Body.Table.Data, []hermes.Entry{
 			{
 				Key:   "Time",
-				Value: log.SentryTime.Format(time.RFC3339),
+				Value: log.SentryTime.In(user.Timezone.Location()).Format(time.DateTime),
 			},
 			{
 				Key:   "Sentry",

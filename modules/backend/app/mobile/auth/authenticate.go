@@ -11,7 +11,7 @@ import (
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -66,28 +66,17 @@ func (handler) Register(ctx context.Context, request *RegisterRequest) (*empty.E
 	//if request.Captcha != result {
 	//	return &empty.Empty{}, status.Error(codes.InvalidArgument, "Wrong captcha")
 	//}
-	user := models.User{
-		ID:        primitive.NewObjectID(),
-		Email:     request.Email,
-		Password:  "",
-		CreatedAt: time.Now(),
-		IsVip:     false,
-		Envoy: models.EnvoyPolicy{
-			OfflineAlert: false,
-			PredictAlert: false,
-			Sensitive:    3,
-		},
-	}
-	_, err := storage.CUser.InsertOne(ctx, user)
+	user := models.NewUser()
+	user.Email = request.Email
+	err := storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		_, err := storage.CUser.InsertOne(ctx, user)
+		if err != nil {
+			return err
+		}
+		return user.SetPassword(ctx, request.Password)
+	})
 	if err != nil {
-		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, "DB Error")
-	}
-	err = user.SetPassword(ctx, request.Password)
-	glgf.Debug(user.Password)
-	if err != nil {
-		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, "DB Error")
+		return &empty.Empty{}, status.Errorf(codes.Internal, "DB Error %s", err.Error())
 	}
 	return &empty.Empty{}, nil
 }

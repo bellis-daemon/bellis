@@ -86,7 +86,6 @@ func (this *tlsHandler) CreateTLS(ctx context.Context, cert *TLS) (*TLS, error) 
 	return cert, nil
 }
 
-// todo: set return type to empty
 func (this *tlsHandler) UpdateTLS(ctx context.Context, cert *TLS) (*TLS, error) {
 	id, err := primitive.ObjectIDFromHex(cert.Id)
 	if err != nil {

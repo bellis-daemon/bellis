@@ -21,7 +21,7 @@ var (
 
 func ConnectMongo() {
 	ctx := context.Background()
-	clientOptions := options.Client().ApplyURI("mongodb://mongo1,mongo2,mongo3/?replicaSet=rs0")
+	clientOptions := options.Client().ApplyURI("mongodb://mongo1,mongo2/?replicaSet=rs0")
 	var err error
 	client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {

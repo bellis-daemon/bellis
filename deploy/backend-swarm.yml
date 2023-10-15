@@ -19,8 +19,6 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 2
-    secrets:
-      - influxdb_token
   dispatcher:
     hostname: dispatcher
     image: registry.cn-shanghai.aliyuncs.com/bellis/dispatcher
@@ -35,8 +33,6 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 2
-    secrets:
-      - influxdb_token
   envoy:
     hostname: envoy
     image: registry.cn-shanghai.aliyuncs.com/bellis/envoy
@@ -47,9 +43,6 @@ services:
         MODULE: envoy
     networks:
       - bellis
-    secrets:
-      - influxdb_token
-      - telegram_bot_token
   sentry:
     hostname: sentry
     image: registry.cn-shanghai.aliyuncs.com/bellis/sentry
@@ -64,10 +57,39 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 3
-    secrets:
-      - influxdb_token
 
   # database containers
+
+  etcd:
+    hostname: etcd
+    networks:
+      - bellis
+    image: docker.io/bitnami/etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    volumes:
+      - '/bellis/dist/database/etcd:/bitnami/etcd'
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+
+  etcd-keeper:
+    image: evildecay/etcdkeeper
+    networks:
+      - bellis
+    environment:
+      HOST: "0.0.0.0"
+    ports:
+      - 8500:8080
+    depends_on:
+      - etcd
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+
   influxdb:
     hostname: influxdb
     image: influxdb
@@ -76,8 +98,8 @@ services:
     environment:
       - DOCKER_INFLUXDB_INIT_ORG=bellis
       - DOCKER_INFLUXDB_INIT_BUCKET=backend
-      - DOCKER_INFLUXDB_INIT_USERNAME=minoic
-      - DOCKER_INFLUXDB_INIT_PASSWORD=Nightgod_
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin
       - TZ=Asia/Shanghai
     ports:
       - "8086:8086"
@@ -116,20 +138,6 @@ services:
         condition: on-failure
       replicas: 1
 
-  mongo3:
-    hostname: mongo3
-    image: mongo
-    networks:
-      - bellis
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
-    volumes:
-      - /bellis/dist/database/mongo3/configdb:/data/configdb
-      - /bellis/dist/database/mongo3/db:/data/db'
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 1
-
   mongo-init:
     image: mongo
     networks:
@@ -137,12 +145,11 @@ services:
     depends_on:
       - mongo1
       - mongo2
-      - mongo3
     command:
       - mongosh
       - mongodb://mongo1:27017/admin
       - --eval
-      - 'rs.initiate({ _id: "rs0", members: [{_id:1,host:"mongo1:27017"},{_id:2,host:"mongo2:27017"},{_id:3,host:"mongo3:27017"}]})'
+      - 'rs.initiate({ _id: "rs0", members: [{_id:1,host:"mongo1:27017"},{_id:2,host:"mongo2:27017"}]})'
 
   mongo-express:
     image: mongo-express:1.0.0-alpha.4
@@ -154,11 +161,9 @@ services:
     depends_on:
       - mongo1
       - mongo2
-      - mongo3
-
     environment:
       - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
-      - ME_CONFIG_MONGODB_URL=mongodb://mongo1,mongo2,mongo3?replicaSet=rs0
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo1,mongo2?replicaSet=rs0
     deploy:
       restart_policy:
         condition: on-failure
@@ -192,12 +197,6 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 1
-
-secrets:
-  influxdb_token:
-    external: true
-  telegram_bot_token:
-    external: true
 
 networks:
   bellis:

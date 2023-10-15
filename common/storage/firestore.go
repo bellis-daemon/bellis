@@ -2,11 +2,12 @@ package storage
 
 import (
 	"context"
+	"github.com/minoic/glgf"
+	"google.golang.org/api/option"
 	"sync"
 
 	firebase "firebase.google.com/go"
 	"github.com/spf13/cast"
-	"google.golang.org/api/option"
 )
 
 type FirebaseInterface interface {
@@ -26,10 +27,14 @@ var firebaseInitOnce sync.Once
 
 func Firebase() FirebaseInterface {
 	firebaseInitOnce.Do(func() {
+		glgf.Debug("Initialing firebase config")
 		firebaseInstance.ctx = context.Background()
-		opt := option.WithCredentialsJSON([]byte(Secret("firebase_config")))
 		var err error
-		firebaseInstance.app, err = firebase.NewApp(firebaseInstance.ctx, nil, opt)
+		firebaseInstance.app, err = firebase.NewApp(
+			firebaseInstance.ctx,
+			nil,
+			option.WithCredentialsJSON([]byte(Secret("firebase_config"))),
+		)
 		if err != nil {
 			panic(err)
 		}
@@ -42,6 +47,7 @@ func Firebase() FirebaseInterface {
 			panic(err)
 		}
 		firebaseInstance.conf = doc.Data()
+		glgf.Debug(firebaseInstance.conf)
 	})
 	return &firebaseInstance
 }
