@@ -21,7 +21,6 @@ func Config() *viper.Viper {
 		if err != nil {
 			panic(err)
 		}
-		etcdConfig.Debug()
 	})
 	return etcdConfig
 }
