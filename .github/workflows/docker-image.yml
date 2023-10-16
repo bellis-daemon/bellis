@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker-compose -f ./deploy/backend-swarm.yml build --push
+      run: docker-compose -f ./deploy/backend-swarm.yml build && docker-compose -f ./deploy/backend-swarm.yml push
