@@ -6,8 +6,7 @@ WORKDIR /workspace
 RUN apk update && apk add --no-cache upx && rm -rf /var/cache/apk/*
 
 # 启用go module
-ENV GO111MODULE=on GOPROXY=https://goproxy.cn,direct
-# RUN go install github.com/go-delve/delve/cmd/dlv@latest
+ENV GO111MODULE=on 
 
 ARG MODULE=backend
 ARG PORT=7001
