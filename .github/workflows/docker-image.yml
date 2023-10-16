@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Login to Docker registry
-      run: docker login registry.cn-shanghai.aliyuncs.com -u cytus_d -p ${{ secrets.REGISTRYPASSWORD }}
+      run: docker login registry.cn-shanghai.aliyuncs.com -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASSWORD }}
       
     - name: Build the Docker image
       run: docker-compose -f ./deploy/backend-swarm.yml build && docker-compose -f ./deploy/backend-swarm.yml push
