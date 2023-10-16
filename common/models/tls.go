@@ -1,16 +1,20 @@
 package models
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/youmark/pkcs8"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sort"
 	"strings"
+
+	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/youmark/pkcs8"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const TLSMinVersionDefault = tls.VersionTLS12
@@ -26,6 +30,17 @@ type TLS struct {
 	TLSKeyPwd     string `json:"TLSKeyPwd" bson:"TLSKeyPwd"`
 	TLSMinVersion string `json:"TLSMinVersion" bson:"TLSMinVersion"` // "TLS10" "TLS11" "TLS12" "TLS13"
 	Insecure      bool   `json:"Insecure" bson:"Insecure"`
+}
+
+func (this *TLS) User() (*User, error) {
+	var user User
+	err := storage.CUser.FindOne(context.Background(), bson.M{
+		"_id": this.UserID,
+	}).Decode(&user)
+	if err != nil {
+		return nil,err	
+	}
+	return &user,nil
 }
 
 func (this *TLS) TLSConfig() (*tls.Config, error) {

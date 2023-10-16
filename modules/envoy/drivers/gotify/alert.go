@@ -3,6 +3,10 @@ package gotify
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers"
@@ -13,9 +17,6 @@ import (
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 type handler struct {
@@ -46,8 +47,9 @@ func (this *handler) AlertOffline(entity *models.Application, log *models.Offlin
 	params := message.NewCreateMessageParams()
 	params.Body = &gmodels.MessageExternal{
 		Title:    "Offline alert - " + entity.Name,
-		Message:  fmt.Sprintf("Your application <%s> just went offline at %s, error message: %s", entity.Name, log.OfflineTime.Local().Format(time.DateTime), log.OfflineMessage),
+		Message:  fmt.Sprintf("Your application <%s> just went offline at %s (%s), error message: %s", entity.Name, log.OfflineTime.Local().Format(time.DateTime), log.OfflineMessage),
 		Priority: 7,
+		Date:     time.Now(),
 	}
 	_, err = client.Message.CreateMessage(params, auth.TokenAuth(this.policy.Token))
 	if err != nil {

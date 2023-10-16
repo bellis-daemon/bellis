@@ -2,11 +2,12 @@ package models
 
 import (
 	"context"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 const SALT = "MONGOUSERSALT"
@@ -76,4 +77,8 @@ type EnvoyPolicy struct {
 	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
 	PredictAlert bool               `json:"PredictAlert" bson:"PredictAlert"`
 	Sensitive    int                `json:"Sensitive" bson:"Sensitive"`
+}
+
+type UserGetter interface {
+	User() (*User, error)
 }
