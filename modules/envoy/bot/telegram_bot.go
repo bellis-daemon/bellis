@@ -18,7 +18,6 @@ func RunTelegramBot() {
 	u := tgbotapi.NewUpdate(0)
 
 	u.Timeout = 60
-	bot.GetUpdatesChan(u)
 	updates := bot.GetUpdatesChan(u)
 
 	for update := range updates {

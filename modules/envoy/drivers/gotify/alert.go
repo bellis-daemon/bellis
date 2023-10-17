@@ -43,11 +43,20 @@ func (this *handler) AlertOffline(entity *models.Application, log *models.Offlin
 	if err != nil {
 		return err
 	}
+	user, err := entity.User()
+	if err != nil {
+		return err
+	}
 	client := gotify.NewClient(gotifyURL, &http.Client{})
 	params := message.NewCreateMessageParams()
 	params.Body = &gmodels.MessageExternal{
-		Title:    "Offline alert - " + entity.Name,
-		Message:  fmt.Sprintf("Your application <%s> just went offline at %s (%s), error message: %s", entity.Name, log.OfflineTime.Local().Format(time.DateTime), log.OfflineMessage),
+		Title: "Offline alert - " + entity.Name,
+		Message: fmt.Sprintf(
+			"Your application <%s> just went offline at %s (%s), error message: %s",
+			entity.Name,
+			log.OfflineTime.In(user.Timezone.Location()).Format(time.DateTime),
+			user.Timezone.Location().String(),
+			log.OfflineMessage),
 		Priority: 7,
 		Date:     time.Now(),
 	}

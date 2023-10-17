@@ -1,9 +1,12 @@
 package models
 
 import (
+	"context"
+	"time"
+
+	"github.com/bellis-daemon/bellis/common/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 type Application struct {
@@ -21,4 +24,15 @@ type Application struct {
 type ApplicationPublicOptions struct {
 	Threshold   int      `json:"Threshold" bson:"Threshold"`
 	TriggerList []string `json:"TriggerList" bson:"TriggerList"`
+}
+
+func (this *Application) User() (*User, error) {
+	var user User
+	err := storage.CUser.FindOne(context.Background(), bson.M{
+		"_id": this.UserID,
+	}).Decode(&user)
+	if err != nil {
+		return nil,err	
+	}
+	return &user,nil
 }
