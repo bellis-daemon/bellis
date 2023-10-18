@@ -27,7 +27,7 @@ type SentryLog struct {
 }
 
 func init() {
-	index.RegistrerIndex(storage.COfflineLog, []mongo.IndexModel{
+	index.RegistrerIndex(&storage.COfflineLog, []mongo.IndexModel{
 		{
 			Keys: bson.D{
 				{Key: "EntityID", Value: 1},

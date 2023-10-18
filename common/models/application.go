@@ -40,7 +40,7 @@ func (this *Application) User() (*User, error) {
 }
 
 func init() {
-	index.RegistrerIndex(storage.CEntity, []mongo.IndexModel{
+	index.RegistrerIndex(&storage.CEntity, []mongo.IndexModel{
 		{
 			Keys: bson.D{
 				{Key: "UserID", Value: 1},

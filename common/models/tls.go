@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	index.RegistrerIndex(storage.CTLS, []mongo.IndexModel{
+	index.RegistrerIndex(&storage.CTLS, []mongo.IndexModel{
 		{
 			Keys: bson.D{
 				{Key: "UserID", Value: 1},

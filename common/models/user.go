@@ -86,7 +86,7 @@ type UserGetter interface {
 }
 
 func init() {
-	index.RegistrerIndex(storage.CUser, []mongo.IndexModel{
+	index.RegistrerIndex(&storage.CUser, []mongo.IndexModel{
 		{
 			Keys: bson.D{
 				{Key: "Email", Value: 1},
