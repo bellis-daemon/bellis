@@ -2,6 +2,7 @@ package index
 
 import (
 	"context"
+
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -15,10 +16,14 @@ func RegistrerIndex(col **mongo.Collection, idxs []mongo.IndexModel) {
 func InitIndexes() {
 	ctx := context.Background()
 	for col, idxs := range indexes {
-		glgf.Debug(*col,idxs)
-		_, err := (*col).Indexes().CreateMany(ctx, idxs)
-		if err != nil {
-			glgf.Error("create mongo indexes error: ", err)
-		}
+		glgf.Debug(*col, idxs)
+		c := col
+		i := idxs
+		go func() {
+			_, err := (*c).Indexes().CreateMany(ctx, i)
+			if err != nil {
+				glgf.Error("create mongo indexes error: ", err)
+			}
+		}()
 	}
 }
