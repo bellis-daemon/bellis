@@ -4,9 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/bellis-daemon/bellis/common/models/index"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Application struct {
@@ -32,7 +34,27 @@ func (this *Application) User() (*User, error) {
 		"_id": this.UserID,
 	}).Decode(&user)
 	if err != nil {
-		return nil,err	
+		return nil, err
 	}
-	return &user,nil
+	return &user, nil
+}
+
+func init() {
+	index.RegistrerIndex(storage.CEntity, []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "UserID", Value: 1},
+			},
+		},
+		{
+			Keys: bson.D{
+				{Key: "Name", Value: 1},
+			},
+		},
+		{
+			Keys: bson.D{
+				{Key: "CreatedAt", Value: 1},
+			},
+		},
+	})
 }

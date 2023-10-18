@@ -11,11 +11,28 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bellis-daemon/bellis/common/models/index"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/youmark/pkcs8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func init() {
+	index.RegistrerIndex(storage.CTLS, []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "UserID", Value: 1},
+			},
+		},
+		{
+			Keys: bson.D{
+				{Key: "Name", Value: 1},
+			},
+		},
+	})
+}
 
 const TLSMinVersionDefault = tls.VersionTLS12
 

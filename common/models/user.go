@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/cryptoo"
+	"github.com/bellis-daemon/bellis/common/models/index"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const SALT = "MONGOUSERSALT"
@@ -81,4 +83,14 @@ type EnvoyPolicy struct {
 
 type UserGetter interface {
 	User() (*User, error)
+}
+
+func init() {
+	index.RegistrerIndex(storage.CUser, []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "Email", Value: 1},
+			},
+		},
+	})
 }
