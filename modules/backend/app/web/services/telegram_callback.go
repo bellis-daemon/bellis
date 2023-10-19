@@ -21,7 +21,7 @@ func TelegramCallbackService() gin.HandlerFunc {
 		}
 		if update.Message.IsCommand() {
 			switch update.Message.Command() {
-			case "/start":
+			case "start":
 				api, err := tgbotapi.NewBotAPI(storage.Config().GetString("telegram_bot_token"))
 				if err != nil {
 					glgf.Error(err)
@@ -33,7 +33,7 @@ func TelegramCallbackService() gin.HandlerFunc {
 					break
 				}
 			default:
-				glgf.Warn("unknown command: ", update.Message.Command())
+				glgf.Warn("unknown command:", update.Message.Command())
 			}
 		}
 
