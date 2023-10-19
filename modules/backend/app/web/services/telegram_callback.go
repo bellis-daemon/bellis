@@ -22,7 +22,7 @@ func TelegramCallbackService() gin.HandlerFunc {
 		if update.Message.IsCommand() {
 			switch update.Message.Command() {
 			case "start":
-				api, err := tgbotapi.NewBotAPI(storage.Config().GetString("telegram_bot_token"))
+				api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().GetString("telegram_bot_token"), storage.Config().GetString("telegram_bot_api_endpoint")+"bot%s/%s")
 				if err != nil {
 					glgf.Error(err)
 					break
