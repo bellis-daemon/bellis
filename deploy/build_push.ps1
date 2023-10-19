@@ -1,1 +1,1 @@
-docker-compose -f backend-swarm.yml build --push
+docker-compose -f backend-build.yml build --progress=plain --push

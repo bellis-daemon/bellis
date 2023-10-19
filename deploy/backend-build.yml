@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  # bellis containers
+  backend:
+    image: registry.cn-shanghai.aliyuncs.com/bellis/backend
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: backend
+        PORT: 7001
+  dispatcher:
+    image: registry.cn-shanghai.aliyuncs.com/bellis/dispatcher
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: dispatcher
+  envoy:
+    image: registry.cn-shanghai.aliyuncs.com/bellis/envoy
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: envoy
+  sentry:
+    image: registry.cn-shanghai.aliyuncs.com/bellis/sentry
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: sentry
