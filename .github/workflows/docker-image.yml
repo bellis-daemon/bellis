@@ -18,4 +18,7 @@ jobs:
       run: docker login registry.cn-shanghai.aliyuncs.com -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASSWORD }}
       
     - name: Build the Docker image
-      run: docker-compose -f ./deploy/backend-swarm.yml build && docker-compose -f ./deploy/backend-swarm.yml push
+      run: DOCKER_BUILDKIT=1 docker-compose -f ./deploy/backend-build.yml build --progress=plain
+
+    - name: Push the Docker image
+      run: DOCKER_BUILDKIT=1 docker-compose -f ./deploy/backend-build.yml push --progress=plain
