@@ -86,4 +86,5 @@ service EntityService{
   rpc GetAllStatus(google.protobuf.Empty) returns(AllEntityStatus);
   rpc GetSeries(EntityID) returns(EntitySeries);
   rpc GetOfflineLog(OfflineLogRequest) returns (OfflineLogPage);
+  rpc GetStreamAllStatus(google.protobuf.Empty) returns(stream AllEntityStatus);
 }

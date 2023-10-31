@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"fmt"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/cryptoo"
@@ -25,6 +26,42 @@ import (
 
 // implements EntityServiceServer
 type handler struct{}
+
+func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetStreamAllStatusServer) error {
+	user := midwares.GetUserFromCtx(server.Context())
+	var entities []models.Application
+	find, err := storage.CEntity.Find(server.Context(), bson.M{"UserID": user.ID})
+	if err != nil {
+		glgf.Error(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+	err = find.All(server.Context(), &entities)
+	if err != nil {
+		glgf.Error(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			all := &AllEntityStatus{}
+			for i := range entities {
+				s, err := h.GetStatus(server.Context(), &EntityID{ID: entities[i].ID.Hex()})
+				if err != nil {
+					return status.Error(codes.Internal, err.Error())
+				}
+				all.Status = append(all.Status, s)
+			}
+			err := server.Send(all)
+			if err != nil {
+				return err
+			}
+		case <-server.Context().Done():
+			return nil
+		}
+	}
+}
 
 func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) (*OfflineLogPage, error) {
 	err := assertion.Assert(

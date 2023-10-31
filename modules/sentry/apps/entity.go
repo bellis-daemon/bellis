@@ -89,6 +89,7 @@ func (this *Entity) saveFetch() (s status.Status, err error) {
 func (this *Entity) refresh() {
 	sentryTime := time.Now()
 	s, err := this.saveFetch()
+	responseTime := time.Now().Sub(sentryTime)
 	fields := map[string]any{}
 	_ = mapstructure.Decode(s, &fields)
 	point := write.NewPoint(
@@ -141,12 +142,8 @@ func (this *Entity) refresh() {
 	point.AddField("c_live", cLive)
 	point.AddField("c_failed_count", cast.ToUint32(this.failedCount))
 	point.AddField("c_sentry", common.Hostname())
+	point.AddField("c_response_time", responseTime.Milliseconds())
 	storage.WriteInfluxDB.WritePoint(point)
-	//glgf.Debugf("Writing point %+v %+v", point, point.FieldList())
-	//err = storage.WriteInfluxDBBlocking.WritePoint(this.ctx, point)
-	//if err != nil {
-	//	glgf.Error(err)
-	//}
 }
 
 func (this *Entity) reclaim() {

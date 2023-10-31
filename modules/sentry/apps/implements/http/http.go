@@ -14,11 +14,7 @@ type HTTP struct {
 }
 
 func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
-	method := "GET"
-	if this.options.Method != "" {
-		method = this.options.Method
-	}
-	req, err := http.NewRequest(method, this.options.URL, nil)
+	req, err := http.NewRequest(this.options.Method, this.options.URL, nil)
 	if err != nil {
 		return &httpStatus{}, err
 	}

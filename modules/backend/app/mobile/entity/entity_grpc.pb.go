@@ -20,15 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EntityService_DeleteEntity_FullMethodName   = "/bellis.backend.mobile.entity.EntityService/DeleteEntity"
-	EntityService_NewEntity_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/NewEntity"
-	EntityService_UpdateEntity_FullMethodName   = "/bellis.backend.mobile.entity.EntityService/UpdateEntity"
-	EntityService_GetEntity_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetEntity"
-	EntityService_GetAllEntities_FullMethodName = "/bellis.backend.mobile.entity.EntityService/GetAllEntities"
-	EntityService_GetStatus_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetStatus"
-	EntityService_GetAllStatus_FullMethodName   = "/bellis.backend.mobile.entity.EntityService/GetAllStatus"
-	EntityService_GetSeries_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetSeries"
-	EntityService_GetOfflineLog_FullMethodName  = "/bellis.backend.mobile.entity.EntityService/GetOfflineLog"
+	EntityService_DeleteEntity_FullMethodName       = "/bellis.backend.mobile.entity.EntityService/DeleteEntity"
+	EntityService_NewEntity_FullMethodName          = "/bellis.backend.mobile.entity.EntityService/NewEntity"
+	EntityService_UpdateEntity_FullMethodName       = "/bellis.backend.mobile.entity.EntityService/UpdateEntity"
+	EntityService_GetEntity_FullMethodName          = "/bellis.backend.mobile.entity.EntityService/GetEntity"
+	EntityService_GetAllEntities_FullMethodName     = "/bellis.backend.mobile.entity.EntityService/GetAllEntities"
+	EntityService_GetStatus_FullMethodName          = "/bellis.backend.mobile.entity.EntityService/GetStatus"
+	EntityService_GetAllStatus_FullMethodName       = "/bellis.backend.mobile.entity.EntityService/GetAllStatus"
+	EntityService_GetSeries_FullMethodName          = "/bellis.backend.mobile.entity.EntityService/GetSeries"
+	EntityService_GetOfflineLog_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetOfflineLog"
+	EntityService_GetStreamAllStatus_FullMethodName = "/bellis.backend.mobile.entity.EntityService/GetStreamAllStatus"
 )
 
 // EntityServiceClient is the client API for EntityService service.
@@ -44,6 +45,7 @@ type EntityServiceClient interface {
 	GetAllStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AllEntityStatus, error)
 	GetSeries(ctx context.Context, in *EntityID, opts ...grpc.CallOption) (*EntitySeries, error)
 	GetOfflineLog(ctx context.Context, in *OfflineLogRequest, opts ...grpc.CallOption) (*OfflineLogPage, error)
+	GetStreamAllStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (EntityService_GetStreamAllStatusClient, error)
 }
 
 type entityServiceClient struct {
@@ -135,6 +137,38 @@ func (c *entityServiceClient) GetOfflineLog(ctx context.Context, in *OfflineLogR
 	return out, nil
 }
 
+func (c *entityServiceClient) GetStreamAllStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (EntityService_GetStreamAllStatusClient, error) {
+	stream, err := c.cc.NewStream(ctx, &EntityService_ServiceDesc.Streams[0], EntityService_GetStreamAllStatus_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &entityServiceGetStreamAllStatusClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type EntityService_GetStreamAllStatusClient interface {
+	Recv() (*AllEntityStatus, error)
+	grpc.ClientStream
+}
+
+type entityServiceGetStreamAllStatusClient struct {
+	grpc.ClientStream
+}
+
+func (x *entityServiceGetStreamAllStatusClient) Recv() (*AllEntityStatus, error) {
+	m := new(AllEntityStatus)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // EntityServiceServer is the server API for EntityService service.
 // All implementations should embed UnimplementedEntityServiceServer
 // for forward compatibility
@@ -148,6 +182,7 @@ type EntityServiceServer interface {
 	GetAllStatus(context.Context, *emptypb.Empty) (*AllEntityStatus, error)
 	GetSeries(context.Context, *EntityID) (*EntitySeries, error)
 	GetOfflineLog(context.Context, *OfflineLogRequest) (*OfflineLogPage, error)
+	GetStreamAllStatus(*emptypb.Empty, EntityService_GetStreamAllStatusServer) error
 }
 
 // UnimplementedEntityServiceServer should be embedded to have forward compatible implementations.
@@ -180,6 +215,9 @@ func (UnimplementedEntityServiceServer) GetSeries(context.Context, *EntityID) (*
 }
 func (UnimplementedEntityServiceServer) GetOfflineLog(context.Context, *OfflineLogRequest) (*OfflineLogPage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOfflineLog not implemented")
+}
+func (UnimplementedEntityServiceServer) GetStreamAllStatus(*emptypb.Empty, EntityService_GetStreamAllStatusServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetStreamAllStatus not implemented")
 }
 
 // UnsafeEntityServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -355,6 +393,27 @@ func _EntityService_GetOfflineLog_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EntityService_GetStreamAllStatus_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(emptypb.Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(EntityServiceServer).GetStreamAllStatus(m, &entityServiceGetStreamAllStatusServer{stream})
+}
+
+type EntityService_GetStreamAllStatusServer interface {
+	Send(*AllEntityStatus) error
+	grpc.ServerStream
+}
+
+type entityServiceGetStreamAllStatusServer struct {
+	grpc.ServerStream
+}
+
+func (x *entityServiceGetStreamAllStatusServer) Send(m *AllEntityStatus) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // EntityService_ServiceDesc is the grpc.ServiceDesc for EntityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -399,6 +458,12 @@ var EntityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EntityService_GetOfflineLog_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetStreamAllStatus",
+			Handler:       _EntityService_GetStreamAllStatus_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "entity/entity.proto",
 }

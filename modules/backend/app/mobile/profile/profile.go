@@ -105,7 +105,7 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 		}
 	case models.IsEnvoyEmail:
 		var policy models.EnvoyEmail
-		err := storage.CEnvoyGotify.FindOne(ctx, bson.M{
+		err := storage.CEnvoyEmail.FindOne(ctx, bson.M{
 			"_id": user.Envoy.PolicyID,
 		}).Decode(&policy)
 		if err != nil {
