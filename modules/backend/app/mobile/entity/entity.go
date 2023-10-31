@@ -279,8 +279,28 @@ from(bucket: "backend")
 }
 
 func (h handler) GetAllStatus(ctx context.Context, e *empty.Empty) (*AllEntityStatus, error) {
-	//TODO implement me
-	panic("implement me")
+	ret := &AllEntityStatus{}
+	user := midwares.GetUserFromCtx(ctx)
+	var entities []models.Application
+	find, err := storage.CEntity.Find(ctx, bson.M{"UserID": user.ID})
+	if err != nil {
+		glgf.Error(err)
+		return ret, status.Error(codes.Internal, err.Error())
+	}
+	err = find.All(ctx, &entities)
+	if err != nil {
+		glgf.Error(err)
+		return ret, status.Error(codes.Internal, err.Error())
+	}
+	for i := range entities {
+		s, err := h.GetStatus(ctx, &EntityID{ID: entities[i].ID.Hex()})
+		if err != nil {
+			glgf.Error(err)
+			return ret, status.Error(codes.Internal, err.Error())
+		}
+		ret.Status = append(ret.Status, s)
+	}
+	return ret, nil
 }
 
 func (h handler) GetSeries(ctx context.Context, id *EntityID) (*EntitySeries, error) {

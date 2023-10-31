@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	midwares2 "github.com/bellis-daemon/bellis/modules/backend/midwares"
+	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,9 +19,9 @@ func init() {
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ConnectionTimeout(3*time.Second),
 		grpc.ChainUnaryInterceptor(
-			midwares2.PanicRecover(),
-			midwares2.AuthChecker(),
-			midwares2.BasicLogger(),
+			midwares.PanicRecover(),
+			midwares.AuthChecker(),
+			midwares.BasicLogger(),
 		),
 	)
 }
