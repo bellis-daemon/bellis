@@ -37,6 +37,21 @@ func AuthChecker() grpc.UnaryServerInterceptor {
 	}
 }
 
+func AuthCheckerStream() grpc.StreamServerInterceptor {
+	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		if !srv.(NeedAuthChecker).NeedAuth() {
+			return handler(srv, ss)
+		}
+		user := check(ss.Context())
+		if user == nil {
+			return status.Error(codes.Unauthenticated, "Unauthenticated")
+		}
+		wrapped := WrapServerStream(ss)
+		wrapped.WrappedContext = context.WithValue(ss.Context(), UserIncomingCtx{}, user)
+		return handler(srv, wrapped)
+	}
+}
+
 func check(ctx context.Context) *models.User {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

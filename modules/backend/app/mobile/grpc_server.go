@@ -1,13 +1,11 @@
 package mobile
 
 import (
-	"net"
-	"time"
-
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"net"
 )
 
 var (
@@ -17,11 +15,14 @@ var (
 func init() {
 	server = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
-		grpc.ConnectionTimeout(3*time.Second),
 		grpc.ChainUnaryInterceptor(
 			midwares.PanicRecover(),
 			midwares.AuthChecker(),
 			midwares.BasicLogger(),
+		),
+		grpc.ChainStreamInterceptor(
+			midwares.AuthCheckerStream(),
+			midwares.PanicRecoverStream(),
 		),
 	)
 }

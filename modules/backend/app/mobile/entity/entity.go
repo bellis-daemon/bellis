@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"sync"
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/cryptoo"
@@ -28,7 +29,10 @@ import (
 type handler struct{}
 
 func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetStreamAllStatusServer) error {
+	ddl, ok := server.Context().Deadline()
+	glgf.Debug("starting streaming all status with deadline", ddl, ok)
 	user := midwares.GetUserFromCtx(server.Context())
+	glgf.Debug(user)
 	var entities []models.Application
 	find, err := storage.CEntity.Find(server.Context(), bson.M{"UserID": user.ID})
 	if err != nil {
@@ -41,21 +45,43 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 		return status.Error(codes.Internal, err.Error())
 	}
 	ticker := time.NewTicker(5 * time.Second)
+	trigger := make(chan struct{}, 1)
+	go func() {
+		trigger <- struct{}{}
+		for {
+			select {
+			case <-ticker.C:
+				trigger <- struct{}{}
+			case <-server.Context().Done():
+				return
+			}
+		}
+	}()
+	var wg sync.WaitGroup
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ticker.C:
+		case <-trigger:
+			start := time.Now()
 			all := &AllEntityStatus{}
+			wg.Add(len(entities))
 			for i := range entities {
-				s, err := h.GetStatus(server.Context(), &EntityID{ID: entities[i].ID.Hex()})
-				if err != nil {
-					return status.Error(codes.Internal, err.Error())
-				}
-				all.Status = append(all.Status, s)
+				entity := &entities[i]
+				go func() {
+					defer wg.Done()
+					s, err := h.GetStatus(server.Context(), &EntityID{ID: entity.ID.Hex(), Scheme: &entity.Scheme})
+					if err != nil {
+						glgf.Error(err)
+						return
+					}
+					all.Status = append(all.Status, s)
+				}()
 			}
+			wg.Wait()
+			glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Now().Sub(start).Milliseconds())
 			err := server.Send(all)
 			if err != nil {
-				return err
+				return status.Error(codes.Aborted, err.Error())
 			}
 		case <-server.Context().Done():
 			return nil
@@ -293,8 +319,9 @@ from(bucket: "backend")
 		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
 	}
 	entityStatus.UpTime = getEntityUptime(ctx, id.GetID())
-	query, err = storage.QueryInfluxDB.Query(ctx,
-		fmt.Sprintf(`
+	if id.Scheme != nil {
+		query, err = storage.QueryInfluxDB.Query(ctx,
+			fmt.Sprintf(`
 from(bucket: "backend") 
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "%s")
@@ -303,11 +330,27 @@ from(bucket: "backend")
   |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
-			id.GetScheme(),
-			id.GetID()))
-	if err != nil {
-		glgf.Error(err)
-		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
+				id.GetScheme(),
+				id.GetID()))
+		if err != nil {
+			glgf.Error(err)
+			return &EntityStatus{}, status.Error(codes.Internal, err.Error())
+		}
+	} else {
+		query, err = storage.QueryInfluxDB.Query(ctx,
+			fmt.Sprintf(`
+from(bucket: "backend") 
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_field"] == "c_live")
+  |> filter(fn: (r) => r["id"] == "%s")
+  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
+  |> fill(column: "_value", value: true)
+  |> yield(name: "first")`,
+				id.GetID()))
+		if err != nil {
+			glgf.Error(err)
+			return &EntityStatus{}, status.Error(codes.Internal, err.Error())
+		}
 	}
 	for query.Next() {
 		entityStatus.LiveSeries = append(entityStatus.LiveSeries, cast.ToBool(query.Record().Value()))
@@ -330,7 +373,7 @@ func (h handler) GetAllStatus(ctx context.Context, e *empty.Empty) (*AllEntitySt
 		return ret, status.Error(codes.Internal, err.Error())
 	}
 	for i := range entities {
-		s, err := h.GetStatus(ctx, &EntityID{ID: entities[i].ID.Hex()})
+		s, err := h.GetStatus(ctx, &EntityID{ID: entities[i].ID.Hex(), Scheme: &entities[i].Scheme})
 		if err != nil {
 			glgf.Error(err)
 			return ret, status.Error(codes.Internal, err.Error())
