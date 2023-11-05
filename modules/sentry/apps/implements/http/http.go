@@ -6,6 +6,8 @@ import (
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"net/http"
+	"net/http/httptrace"
+	"strings"
 	"time"
 )
 
@@ -18,8 +20,15 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	if err != nil {
 		return &httpStatus{}, err
 	}
+	var addr string
+	trace := &httptrace.ClientTrace{
+		GotConn: func(connInfo httptrace.GotConnInfo) {
+			addr = connInfo.Conn.RemoteAddr().String()
+		},
+	}
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 	client := http.Client{
-		Timeout: 3 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -28,10 +37,14 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	if resp.StatusCode >= 400 {
 		return &httpStatus{}, errors.New(resp.Status)
 	}
-	return &httpStatus{
-		IP:     resp.Request.Host,
+	ret := &httpStatus{
 		Status: resp.Status,
-	}, nil
+	}
+	splits := strings.Split(addr, ":")
+	if len(splits) > 0 {
+		ret.IP = splits[0]
+	}
+	return ret, nil
 }
 
 func (this *HTTP) Init(setOptions func(options any) error) error {

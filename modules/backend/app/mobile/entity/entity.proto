@@ -21,9 +21,10 @@ message EntityStatus{
   string err_message = 5;
   google.protobuf.Struct fields = 6;
   repeated bool live_series = 7;
+  int64 response_time = 8;
 }
 
-message AllEntityStatus{
+message AllEntityStatus{ 
   repeated EntityStatus status = 1;
 }
 

@@ -309,6 +309,8 @@ from(bucket: "backend")
 			entityStatus.Live = cast.ToBool(query.Record().Value())
 		case "c_err":
 			entityStatus.ErrMessage = cast.ToString(query.Record().Value())
+		case "c_response_time":
+			entityStatus.ResponseTime = cast.ToInt64(query.Record().Value())
 		default:
 			fields[query.Record().Field()] = query.Record().Value()
 		}
