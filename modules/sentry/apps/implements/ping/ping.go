@@ -48,8 +48,8 @@ func (this *Ping) Fetch(ctx context.Context) (status.Status, error) {
 	}
 	client.SetPrivileged(true)
 	client.Timeout = 3 * time.Second
-	client.Interval = 50 * time.Millisecond
-	client.Count = 20
+	client.Interval = time.Millisecond
+	client.Count = 10
 	err = client.Run()
 	if err != nil {
 		return &pingStatus{}, err
