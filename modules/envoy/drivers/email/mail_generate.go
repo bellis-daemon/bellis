@@ -78,6 +78,18 @@ func offlineEmail(user *models.User, entity *models.Application, offlineLog *mod
 	return email
 }
 
+func captchaEmail(captcha string) hermes.Email {
+	email := hermes.Email{
+		Body: hermes.Body{
+			Intros: []string{
+				"Bellis account manager",
+				"Your captcha is " + captcha,
+			},
+		},
+	}
+	return email
+}
+
 //func genForgetPasswordEmail(userName string, key string) (string, error) {
 //	h := getProd()
 //	email := hermes.Email{

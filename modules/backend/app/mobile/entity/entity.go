@@ -30,9 +30,9 @@ type handler struct{}
 
 func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetStreamAllStatusServer) error {
 	ddl, ok := server.Context().Deadline()
-	glgf.Debug("starting streaming all status with deadline", ddl, ok)
+	glgf.Success("starting streaming all status with deadline", ddl, ok)
+	defer glgf.Warn("stopping stream")
 	user := midwares.GetUserFromCtx(server.Context())
-	glgf.Debug(user)
 	var entities []models.Application
 	find, err := storage.CEntity.Find(server.Context(), bson.M{"UserID": user.ID})
 	if err != nil {
@@ -62,27 +62,29 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 	for {
 		select {
 		case <-trigger:
-			start := time.Now()
-			all := &AllEntityStatus{}
-			wg.Add(len(entities))
-			for i := range entities {
-				entity := &entities[i]
-				go func() {
-					defer wg.Done()
-					s, err := h.GetStatus(server.Context(), &EntityID{ID: entity.ID.Hex(), Scheme: &entity.Scheme})
-					if err != nil {
-						glgf.Error(err)
-						return
-					}
-					all.Status = append(all.Status, s)
-				}()
-			}
-			wg.Wait()
-			glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Now().Sub(start).Milliseconds())
-			err := server.Send(all)
-			if err != nil {
-				return status.Error(codes.Aborted, err.Error())
-			}
+			go func() {
+				start := time.Now()
+				all := &AllEntityStatus{}
+				wg.Add(len(entities))
+				for i := range entities {
+					entity := &entities[i]
+					go func() {
+						defer wg.Done()
+						s, err := h.GetStatus(server.Context(), &EntityID{ID: entity.ID.Hex(), Scheme: &entity.Scheme})
+						if err != nil {
+							glgf.Error(err)
+							return
+						}
+						all.Status = append(all.Status, s)
+					}()
+				}
+				wg.Wait()
+				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Now().Sub(start).Milliseconds())
+				err := server.Send(all)
+				if err != nil {
+					glgf.Error(err)
+				}
+			}()
 		case <-server.Context().Done():
 			return nil
 		}

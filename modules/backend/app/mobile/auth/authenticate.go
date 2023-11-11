@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/common/cache"
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
@@ -9,13 +10,11 @@ import (
 	"github.com/bellis-daemon/bellis/modules/backend/producer"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/minoic/glgf"
-	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"math/rand"
 	"time"
 )
 
@@ -57,18 +56,17 @@ func (handler) Register(ctx context.Context, request *RegisterRequest) (*empty.E
 			return &empty.Empty{}, status.Error(codes.InvalidArgument, "User already exist")
 		}
 	}
-	//// todo: implement email captcha
-	//result, err := storage.Redis().Get(ctx, "RCAPTCHA"+request.Email).Result()
-	//if err != nil {
-	//	glgf.Error(err)
-	//	return &empty.Empty{}, status.Error(codes.Internal, "Redis error")
-	//}
-	//if request.Captcha != result {
-	//	return &empty.Empty{}, status.Error(codes.InvalidArgument, "Wrong captcha")
-	//}
+
+	ok, err := cache.CaptchaCheck(request.Email, request.Captcha)
+	if err != nil {
+		return &empty.Empty{}, status.Error(codes.Internal, "Cant check captcha")
+	}
+	if !ok {
+		return &empty.Empty{}, status.Error(codes.InvalidArgument, "Wrong captcha")
+	}
 	user := models.NewUser()
 	user.Email = request.Email
-	err := storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+	err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
 		_, err := storage.CUser.InsertOne(ctx, user)
 		if err != nil {
 			return err
@@ -92,16 +90,10 @@ func (h handler) GetRegisterCaptcha(ctx context.Context, request *RegisterCaptch
 			return &empty.Empty{}, status.Error(codes.InvalidArgument, "Email already exist")
 		}
 	}
-	captcha := cast.ToString(rand.Int63() % 10000)
-	err := producer.EnvoyCaptchaToEmail(ctx, request.Email, captcha)
+	err := producer.EnvoyCaptchaToEmail(ctx, request.Email)
 	if err != nil {
 		glgf.Error(err)
 		return &empty.Empty{}, status.Error(codes.Internal, "Cant send captcha to email")
-	}
-	err = storage.Redis().Set(ctx, "RCAPTCHA"+request.Email, captcha, 10*time.Minute).Err()
-	if err != nil {
-		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, "Redis error")
 	}
 	return &empty.Empty{}, nil
 }
@@ -117,16 +109,10 @@ func (handler) GetForgetCaptcha(ctx context.Context, request *ForgetCaptchaReque
 			return &empty.Empty{}, status.Error(codes.InvalidArgument, "User does not exist")
 		}
 	}
-	captcha := cast.ToString(rand.Int63() % 10000)
-	err := producer.EnvoyCaptchaToEmail(ctx, request.Email, captcha)
+	err := producer.EnvoyCaptchaToEmail(ctx, request.Email)
 	if err != nil {
 		glgf.Error(err)
 		return &empty.Empty{}, status.Error(codes.Internal, "Cant send captcha to email")
-	}
-	err = storage.Redis().Set(ctx, "FCAPTCHA"+request.Email, captcha, 10*time.Minute).Err()
-	if err != nil {
-		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, "Redis error")
 	}
 	return &empty.Empty{}, nil
 }

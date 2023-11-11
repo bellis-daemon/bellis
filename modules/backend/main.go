@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bellis-daemon/bellis/modules/backend/jobs"
 	"net"
 
 	"github.com/bellis-daemon/bellis/common"
@@ -31,6 +32,7 @@ func main() {
 	storage.ConnectMongo()
 	index.InitIndexes()
 	storage.ConnectInfluxDB()
+	jobs.StartAsync()
 	l, err := net.Listen("tcp", "0.0.0.0:7001")
 	if err != nil {
 		panic(err)

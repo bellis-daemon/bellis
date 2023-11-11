@@ -1,12 +1,15 @@
 package cryptoo
 
 import (
+	"bytes"
 	"math/rand"
+	"strconv"
 	"time"
 	"unsafe"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 const (
 	letterIdxBits = 6                    // 6 bits to represent a letter index
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
@@ -29,10 +32,18 @@ func RandString(n int) string {
 		cache >>= letterIdxBits
 		remain--
 	}
-
 	return *(*string)(unsafe.Pointer(&b))
 }
 
 func RandToken() string {
 	return RandString(32)
+}
+
+func RandNum(n int) string {
+	var buf bytes.Buffer
+	for buf.Len() < n {
+		randomDigit := int(src.Int63() % 1000000)
+		buf.WriteString(strconv.Itoa(randomDigit))
+	}
+	return buf.String()[:n]
 }

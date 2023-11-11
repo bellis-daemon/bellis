@@ -62,9 +62,8 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	if resp.StatusCode >= 400 {
 		return ret, errors.New(resp.Status)
 	}
-	ret.Status = resp.Status
+	ret.StatusCode = resp.StatusCode
 	ret.ContentLength = resp.ContentLength
-
 	return ret, nil
 }
 
@@ -74,7 +73,7 @@ func (this *HTTP) Init(setOptions func(options any) error) error {
 
 type httpStatus struct {
 	IP            string
-	Status        string
+	StatusCode    int
 	ContentLength int64
 	TLSVersion    string
 	TLSStartTime  string

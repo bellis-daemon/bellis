@@ -5,7 +5,9 @@ import (
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"net"
+	"time"
 )
 
 var (
@@ -24,6 +26,13 @@ func init() {
 			midwares.AuthCheckerStream(),
 			midwares.PanicRecoverStream(),
 		),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle:     10 * time.Second,
+			MaxConnectionAge:      15 * time.Second,
+			MaxConnectionAgeGrace: 5 * time.Second,
+			Time:                  5 * time.Second,
+			Timeout:               3 * time.Second,
+		}),
 	)
 }
 

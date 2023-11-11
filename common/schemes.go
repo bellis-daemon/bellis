@@ -29,6 +29,7 @@ func Hostname() string {
 	return hostname
 }
 
+// Redis stream
 const (
 	EntityOfflineAlert = "EntityOfflineAlert"
 	EntityOnlineAlert  = "EntityOnlineAlert"

@@ -178,6 +178,9 @@ func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme 
 		}
 		return fmt.Errorf("finding entity offline log inernal error: %w", err)
 	}
+	if !log.OnlineTime.IsZero() {
+		return nil
+	}
 	_, err = storage.COfflineLog.UpdateOne(ctx, bson.M{"_id": log.ID}, bson.M{"$set": bson.M{"OnlineTime": onlineTIme}})
 	if err != nil {
 		return fmt.Errorf("error updating offline log in mongodb: %w", err)
