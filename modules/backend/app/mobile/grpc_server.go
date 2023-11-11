@@ -25,6 +25,7 @@ func init() {
 		grpc.ChainStreamInterceptor(
 			midwares.AuthCheckerStream(),
 			midwares.PanicRecoverStream(),
+			midwares.BasicLoggerStream(),
 		),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle:     10 * time.Second,
