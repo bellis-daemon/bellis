@@ -1,11 +1,9 @@
 package jobs
 
 import (
-	"context"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/go-co-op/gocron"
 	redislock "github.com/go-co-op/gocron-redis-lock"
-	"github.com/minoic/glgf"
 	"time"
 )
 
@@ -16,12 +14,7 @@ func StartAsync() {
 		panic(err)
 	}
 	s.WithDistributedLocker(locker)
-	s.Every("3h").StartImmediately().Do(func() {
-		glgf.Info("deleting data before one week in influxdb")
-		err := storage.DeleteInfluxDB.DeleteWithName(context.Background(), "bellis", "backend", time.UnixMilli(0), time.Now().AddDate(0, 0, -7), "")
-		if err != nil {
-			glgf.Error(err)
-		}
-	})
+	s.Every("3h").StartImmediately().Do(clearInfluxdbDataExpired)
+	s.Every("12h").StartImmediately().Do(setTelegramWebhook)
 	s.StartAsync()
 }

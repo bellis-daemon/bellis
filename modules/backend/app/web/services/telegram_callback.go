@@ -2,12 +2,11 @@ package services
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/gin-gonic/gin"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/minoic/glgf"
+	"net/http"
 )
 
 func TelegramCallbackService() gin.HandlerFunc {
@@ -22,7 +21,7 @@ func TelegramCallbackService() gin.HandlerFunc {
 		if update.Message.IsCommand() {
 			switch update.Message.Command() {
 			case "start":
-				api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().GetString("telegram_bot_token"), storage.Config().GetString("telegram_bot_api_endpoint")+"bot%s/%s")
+				api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().TelegramBotToken, storage.Config().TelegramBotApiEndpoint+"/bot%s/%s")
 				if err != nil {
 					glgf.Error(err)
 					break
