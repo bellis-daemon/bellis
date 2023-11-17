@@ -48,6 +48,7 @@ message Entity{
 message EntityPublicOptions{
   optional int32 threshold = 1;
   repeated string triggerList = 2;
+  optional uint32 multiplier = 3;
 }
 
 message AllEntities{

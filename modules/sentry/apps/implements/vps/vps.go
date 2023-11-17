@@ -15,6 +15,7 @@ import (
 )
 
 type VPS struct {
+	implements.Template
 	options vpsOptions
 	client  *http.Client
 }

@@ -15,6 +15,7 @@ import (
 )
 
 type Ping struct {
+	implements.Template
 	options pingOptions
 }
 

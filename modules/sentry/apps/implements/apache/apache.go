@@ -15,6 +15,7 @@ import (
 )
 
 type Apache struct {
+	implements.Template
 	options apacheOptions
 	client  *http.Client
 }

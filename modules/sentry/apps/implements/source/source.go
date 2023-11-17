@@ -10,6 +10,7 @@ import (
 )
 
 type Source struct {
+	implements.Template
 	options sourceOptions
 	client  *a2s.Client
 }

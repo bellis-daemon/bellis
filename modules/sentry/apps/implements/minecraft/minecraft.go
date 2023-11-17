@@ -13,6 +13,7 @@ import (
 )
 
 type Minecraft struct {
+	implements.Template
 	options minecraftOptions
 }
 

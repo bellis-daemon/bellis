@@ -13,6 +13,7 @@ import (
 )
 
 type Docker struct {
+	implements.Template
 	options dockerOptions
 }
 

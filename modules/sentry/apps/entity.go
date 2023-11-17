@@ -58,7 +58,8 @@ func (this *Entity) Run() {
 		go func() {
 			glgf.Info("Entity started:", this.Options.Name, this.Options.ID, "till", this.deadline, "rest time:", fmt.Sprintf("%.2f", this.deadline.Sub(time.Now()).Seconds()), "(s)")
 			defer glgf.Warn("Entity stopped:", this.Options.Name, this.Options.ID)
-			t1 := time.NewTicker(5 * time.Second)
+			go this.refresh()
+			t1 := time.NewTicker(time.Duration(5*this.Options.Public.Multiplier*this.Handler.Multiplier()) * time.Second)
 			for {
 				select {
 				case <-t1.C:

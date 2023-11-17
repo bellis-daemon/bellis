@@ -11,6 +11,7 @@ import (
 )
 
 type V2ray struct {
+	implements.Template
 	options v2rayOptions
 }
 

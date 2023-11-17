@@ -15,6 +15,7 @@ import (
 )
 
 type Nginx struct {
+	implements.Template
 	options nginxOptions
 	client  *http.Client
 }

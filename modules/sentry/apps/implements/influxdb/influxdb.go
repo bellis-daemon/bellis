@@ -9,6 +9,7 @@ import (
 )
 
 type InfluxDB struct {
+	implements.Template
 	options influxDBOptions
 }
 

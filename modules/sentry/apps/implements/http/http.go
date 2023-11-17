@@ -15,6 +15,7 @@ import (
 )
 
 type HTTP struct {
+	implements.Template
 	options httpOptions
 }
 

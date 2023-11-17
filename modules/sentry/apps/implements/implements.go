@@ -15,6 +15,7 @@ type Implement interface {
 	// Fetch must return non nil status value, or it will panic
 	// return error if entity is offline
 	Fetch(ctx context.Context) (status.Status, error)
+	Multiplier() uint
 }
 
 var spawners = make(map[string]Spawner)
@@ -32,4 +33,14 @@ func Spawn(entity *models.Application) (Implement, error) {
 		return nil, fmt.Errorf("cant find implement of scheme: %s", entity.Scheme)
 	}
 	return creator(entity.Options), nil
+}
+
+type Template struct{}
+
+func (t Template) Fetch(ctx context.Context) (status.Status, error) {
+	panic("Fetch function not implemented")
+}
+
+func (t Template) Multiplier() uint {
+	return 1
 }

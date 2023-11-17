@@ -10,6 +10,7 @@ import (
 )
 
 type Pterodactyl struct {
+	implements.Template
 	options pterodactylOptions
 	client  *PterodactylGoApi.Client
 }

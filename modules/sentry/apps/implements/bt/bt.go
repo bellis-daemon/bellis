@@ -10,6 +10,7 @@ import (
 )
 
 type BT struct {
+	implements.Template
 	options btOptions
 	client  btgosdk.Client
 }

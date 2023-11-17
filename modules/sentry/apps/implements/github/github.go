@@ -15,11 +15,16 @@ import (
 )
 
 type GitHub struct {
+	implements.Template
 	options         githubOptions
 	githubClient    *githubLib.Client
 	obfuscatedToken string
 	rateRemaining   int
 	rateReset       time.Time
+}
+
+func (this *GitHub) Multiplier() uint {
+	return 24
 }
 
 func (this *GitHub) Fetch(ctx context.Context) (status.Status, error) {

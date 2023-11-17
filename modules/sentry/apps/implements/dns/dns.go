@@ -12,6 +12,7 @@ import (
 )
 
 type DNS struct {
+	implements.Template
 	options dnsOptions
 }
 

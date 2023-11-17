@@ -62,6 +62,7 @@ func loadPublicOptions(src *Entity, dst *models.Application) {
 	dst.Public = models.ApplicationPublicOptions{
 		Threshold:   5,
 		TriggerList: nil,
+		Multiplier:  2,
 	}
 	if src.Public != nil {
 		if src.Public.Threshold != nil {
@@ -69,6 +70,9 @@ func loadPublicOptions(src *Entity, dst *models.Application) {
 		}
 		if src.Public.TriggerList != nil {
 			dst.Public.TriggerList = src.Public.TriggerList
+		}
+		if src.Public.Multiplier != nil {
+			dst.Public.Multiplier = uint(*src.Public.Multiplier)
 		}
 	}
 }
