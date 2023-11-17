@@ -2,7 +2,10 @@ package influxdb
 
 import (
 	"context"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type InfluxDB struct {
@@ -12,10 +15,6 @@ type InfluxDB struct {
 func (this *InfluxDB) Fetch(ctx context.Context) (status.Status, error) {
 	//TODO implement me
 	panic("implement me")
-}
-
-func (this *InfluxDB) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
 }
 
 type influxDBOptions struct {
@@ -29,4 +28,10 @@ func (this *influxDBStatus) PullTrigger(triggerName string) *status.TriggerInfo 
 
 	}
 	return nil
+}
+
+func init() {
+	implements.Register("influxdb", func(options bson.M) implements.Implement {
+		return &InfluxDB{options: option.ToOption[influxDBOptions](options)}
+	})
 }

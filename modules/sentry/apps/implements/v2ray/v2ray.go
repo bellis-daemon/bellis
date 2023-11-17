@@ -3,24 +3,26 @@ package v2ray
 import (
 	"fmt"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/bellis-daemon/bellis/modules/sentry/pkg/v2api"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/net/context"
 )
 
 type V2ray struct {
 	options v2rayOptions
-	host    string
 }
 
 func (this *V2ray) Fetch(ctx context.Context) (status.Status, error) {
+	host := fmt.Sprintf("%s:%d", this.options.Address, this.options.Port)
 	var err error
 	s := &v2rayStatus{}
-	s.TagTraffic, err = v2api.NodeTagTraffic(this.host, this.options.Tag)
+	s.TagTraffic, err = v2api.NodeTagTraffic(host, this.options.Tag)
 	if err != nil {
 		return &v2rayStatus{}, err
 	}
-	stats, err := v2api.NodeSysStatus(this.host)
+	stats, err := v2api.NodeSysStatus(host)
 	if err != nil {
 		return &v2rayStatus{}, err
 	}
@@ -35,15 +37,6 @@ func (this *V2ray) Fetch(ctx context.Context) (status.Status, error) {
 	s.PauseTotalNs = stats.PauseTotalNs
 	s.Uptime = stats.Uptime
 	return s, nil
-}
-
-func (this *V2ray) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.options)
-	if err != nil {
-		return err
-	}
-	this.host = fmt.Sprintf("%s:%d", this.options.Address, this.options.Port)
-	return nil
 }
 
 type v2rayStatus struct {
@@ -74,7 +67,7 @@ type v2rayOptions struct {
 }
 
 func init() {
-	implements.Add("v2ray", func() implements.Implement {
-		return &V2ray{}
+	implements.Register("v2ray", func(options bson.M) implements.Implement {
+		return &V2ray{options: option.ToOption[v2rayOptions](options)}
 	})
 }

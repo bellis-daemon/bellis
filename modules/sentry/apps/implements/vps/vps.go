@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
-	"time"
 )
 
 type VPS struct {
@@ -42,12 +43,6 @@ func (this *VPS) Fetch(ctx context.Context) (status.Status, error) {
 		Platform:    m.Host.Platform,
 		Process:     m.Host.Procs,
 	}, nil
-}
-
-func (this *VPS) Init(setOptions func(options any) error) error {
-	this.client = http.DefaultClient
-	this.client.Timeout = 5 * time.Second
-	return setOptions(&this.options)
 }
 
 type vpsOptions struct {
@@ -84,7 +79,10 @@ type vpsMetrics struct {
 }
 
 func init() {
-	implements.Add("vps", func() implements.Implement {
-		return &VPS{}
+	implements.Register("vps", func(options bson.M) implements.Implement {
+		return &VPS{
+			options: option.ToOption[vpsOptions](options),
+			client:  http.DefaultClient,
+		}
 	})
 }

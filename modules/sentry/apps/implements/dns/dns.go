@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/net/context"
 	"net"
 )
@@ -99,12 +101,8 @@ func (this *DNS) Fetch(ctx context.Context) (status.Status, error) {
 			}, nil
 		}
 	default:
-		return &dnsStatus{}, errors.New("错误的解析模式：" + this.options.Method)
+		return &dnsStatus{}, errors.New("Invalid lookup method:" + this.options.Method)
 	}
-}
-
-func (this *DNS) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
 }
 
 type dnsStatus struct {
@@ -126,7 +124,9 @@ type dnsOptions struct {
 }
 
 func init() {
-	implements.Add("dns", func() implements.Implement {
-		return &DNS{}
+	implements.Register("dns", func(options bson.M) implements.Implement {
+		return &DNS{
+			options: option.ToOption[dnsOptions](options),
+		}
 	})
 }

@@ -28,6 +28,10 @@ import (
 // implements EntityServiceServer
 type handler struct{}
 
+// GetStreamAllStatus streams all status for the user's entities using a periodic ticker.
+// It retrieves the user from the context, fetches the user's entities, and then streams the status of each entity periodically using a ticker.
+// The function uses goroutines to concurrently fetch the status of each entity and sends the aggregated status to the client using server streaming.
+// It also handles the deadline and cancellation of the stream.
 func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetStreamAllStatusServer) error {
 	ddl, ok := server.Context().Deadline()
 	glgf.Success("starting streaming all status with deadline", ddl, ok)
@@ -44,7 +48,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 		glgf.Error(err)
 		return status.Error(codes.Internal, err.Error())
 	}
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(4900 * time.Millisecond) // 4.9s
 	trigger := make(chan struct{}, 1)
 	go func() {
 		trigger <- struct{}{}

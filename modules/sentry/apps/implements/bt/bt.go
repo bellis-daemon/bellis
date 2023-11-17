@@ -3,17 +3,15 @@ package bt
 import (
 	"context"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	btgosdk "github.com/minoic/bt-go-sdk"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type BT struct {
 	options btOptions
 	client  btgosdk.Client
-}
-
-func (this *BT) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
 }
 
 func (this *BT) Fetch(ctx context.Context) (status.Status, error) {
@@ -59,7 +57,10 @@ func (this *btStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 }
 
 func init() {
-	implements.Add("bt", func() implements.Implement {
-		return &BT{}
+	implements.Register("bt", func(options bson.M) implements.Implement {
+		return &BT{
+			options: option.ToOption[btOptions](options),
+			client:  btgosdk.Client{},
+		}
 	})
 }

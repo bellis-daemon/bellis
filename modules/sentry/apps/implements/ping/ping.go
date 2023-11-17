@@ -6,18 +6,16 @@ import (
 	"context"
 	"errors"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/go-ping/ping"
 	"github.com/spf13/cast"
+	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
 
 type Ping struct {
 	options pingOptions
-}
-
-func (this *Ping) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
 }
 
 type pingOptions struct {
@@ -70,7 +68,7 @@ func (this *Ping) Fetch(ctx context.Context) (status.Status, error) {
 }
 
 func init() {
-	implements.Add("ping", func() implements.Implement {
-		return &Ping{}
+	implements.Register("ping", func(options bson.M) implements.Implement {
+		return &Ping{options: option.ToOption[pingOptions](options)}
 	})
 }

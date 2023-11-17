@@ -5,12 +5,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/spf13/cast"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type Apache struct {
@@ -74,13 +75,6 @@ func (this *Apache) Fetch(ctx context.Context) (status.Status, error) {
 	return ret, nil
 }
 
-func (this *Apache) Init(setOptions func(options any) error) error {
-	this.client = &http.Client{
-		Timeout: 3 * time.Second,
-	}
-	return setOptions(&this.options)
-}
-
 type apacheOptions struct {
 	// readable version of the mod_status page including the auto query string.
 	// Default is "http://localhost/server-status?auto".
@@ -110,7 +104,10 @@ func (this *apacheStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 }
 
 func init() {
-	implements.Add("apache", func() implements.Implement {
-		return &Apache{}
+	implements.Register("apache", func(options bson.M) implements.Implement {
+		return &Apache{
+			options: option.ToOption[apacheOptions](options),
+			client:  http.DefaultClient,
+		}
 	})
 }

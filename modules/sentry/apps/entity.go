@@ -21,19 +21,14 @@ import (
 )
 
 func NewEntity(ctx context.Context, deadline time.Time, entity *models.Application) (*Entity, error) {
-	handler, err := implements.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
 	ctx2, cancel := context.WithDeadline(ctx, deadline)
 	app := &Entity{
 		ctx:         ctx2,
 		cancel:      cancel,
 		deadline:    deadline,
-		Handler:     handler,
 		measurement: entity.Scheme,
 	}
-	err = app.UpdateOptions(entity)
+	err := app.UpdateOptions(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -187,11 +182,9 @@ func (this *Entity) triggerAlert(info *status.TriggerInfo) {
 	// todo: implement function
 }
 
-func (this *Entity) UpdateOptions(option *models.Application) error {
+func (this *Entity) UpdateOptions(option *models.Application) (err error) {
 	this.Options = *option
-	err := this.Handler.Init(func(options any) error {
-		return mapstructure.Decode(this.Options.Options, options)
-	})
+	this.Handler, err = implements.Spawn(&this.Options)
 	if err != nil {
 		return err
 	}

@@ -2,9 +2,9 @@ package minecraft
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
@@ -29,17 +29,6 @@ func (this *Minecraft) Fetch(ctx context.Context) (status.Status, error) {
 		FavIcon:      pong.FavIcon,
 		ModType:      pong.ModInfo.ModType,
 	}, nil
-}
-
-func (this *Minecraft) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.options)
-	if err != nil {
-		return err
-	}
-	if !strings.Contains(this.options.Address, ":") {
-		this.options.Address += ":25565"
-	}
-	return nil
 }
 
 type minecraftStatus struct {
@@ -71,7 +60,7 @@ type minecraftOptions struct {
 }
 
 func init() {
-	implements.Add("minecraft", func() implements.Implement {
-		return &Minecraft{}
+	implements.Register("minecraft", func(options bson.M) implements.Implement {
+		return &Minecraft{options: option.ToOption[minecraftOptions](options)}
 	})
 }

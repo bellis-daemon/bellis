@@ -3,8 +3,10 @@ package source
 import (
 	"context"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/rumblefrog/go-a2s"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Source struct {
@@ -27,15 +29,6 @@ func (this *Source) Fetch(ctx context.Context) (status.Status, error) {
 		ServerOS:   info.ServerOS.String(),
 		Version:    info.Version,
 	}, nil
-}
-
-func (this *Source) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.options)
-	if err != nil {
-		return err
-	}
-	this.client, err = a2s.NewClient(this.options.Address)
-	return err
 }
 
 type sourceOptions struct {
@@ -61,7 +54,13 @@ func (this *sourceStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 }
 
 func init() {
-	implements.Add("source", func() implements.Implement {
-		return &Source{}
+	implements.Register("source", func(options bson.M) implements.Implement {
+		ret := &Source{options: option.ToOption[sourceOptions](options)}
+		var err error
+		ret.client, err = a2s.NewClient(ret.options.Address)
+		if err != nil {
+			panic(err)
+		}
+		return ret
 	})
 }

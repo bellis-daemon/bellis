@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -44,6 +45,9 @@ type Pong struct {
 }
 
 func Ping(host string) (*Pong, error) {
+	if !strings.Contains(host, ":") {
+		host += ":25565"
+	}
 	conn, err := net.Dial("tcp", host)
 	if err != nil {
 		return nil, err

@@ -5,12 +5,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Nginx struct {
@@ -101,13 +102,6 @@ func (this *Nginx) Fetch(ctx context.Context) (status.Status, error) {
 	}, nil
 }
 
-func (this *Nginx) Init(setOptions func(options any) error) error {
-	this.client = &http.Client{
-		Timeout: 3 * time.Second,
-	}
-	return setOptions(&this.options)
-}
-
 type nginxOptions struct {
 	Url string `json:"Url"`
 }
@@ -130,7 +124,7 @@ func (this *nginxStatus) PullTrigger(triggerName string) *status.TriggerInfo {
 }
 
 func init() {
-	implements.Add("nginx", func() implements.Implement {
-		return &Nginx{}
+	implements.Register("nginx", func(options bson.M) implements.Implement {
+		return &Nginx{options: option.ToOption[nginxOptions](options), client: http.DefaultClient}
 	})
 }

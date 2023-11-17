@@ -3,8 +3,10 @@ package docker
 import (
 	"context"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/moby/moby/api/types"
+	"go.mongodb.org/mongo-driver/bson"
 	"io"
 	"net/http"
 	"time"
@@ -34,10 +36,6 @@ func (this *Docker) Fetch(ctx context.Context) (status.Status, error) {
 	return &dockerStatus{}, err
 }
 
-func (this *Docker) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
-}
-
 type dockerStatus struct {
 	Info       types.Info
 	Containers []types.Container
@@ -58,7 +56,7 @@ type dockerOptions struct {
 }
 
 func init() {
-	implements.Add("docker", func() implements.Implement {
-		return &Docker{}
+	implements.Register("docker", func(options bson.M) implements.Implement {
+		return &Docker{options: option.ToOption[dockerOptions](options)}
 	})
 }

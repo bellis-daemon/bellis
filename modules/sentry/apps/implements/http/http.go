@@ -5,7 +5,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"net/http/httptrace"
 	"strings"
@@ -67,10 +69,6 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	return ret, nil
 }
 
-func (this *HTTP) Init(setOptions func(options any) error) error {
-	return setOptions(&this.options)
-}
-
 type httpStatus struct {
 	IP            string
 	StatusCode    int
@@ -94,7 +92,7 @@ type httpOptions struct {
 }
 
 func init() {
-	implements.Add("http", func() implements.Implement {
-		return &HTTP{}
+	implements.Register("http", func(options bson.M) implements.Implement {
+		return &HTTP{options: option.ToOption[httpOptions](options)}
 	})
 }

@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	githubLib "github.com/google/go-github/v32/github"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/oauth2"
 	"net/http"
 	"strings"
@@ -77,17 +79,6 @@ func (this *GitHub) newGithubClient(httpClient *http.Client) (*githubLib.Client,
 	return githubLib.NewClient(httpClient), nil
 }
 
-func (this *GitHub) Init(setOptions func(options any) error) error {
-	err := setOptions(this.options)
-	if err != nil {
-		return err
-	}
-	this.rateRemaining = 5000
-	this.rateReset = time.Now()
-	this.githubClient, err = this.createGitHubClient()
-	return err
-}
-
 type githubOptions struct {
 	Repository        string
 	AccessToken       string
@@ -123,7 +114,18 @@ func splitRepositoryName(repositoryName string) (owner string, repository string
 }
 
 func init() {
-	implements.Add("github", func() implements.Implement {
-		return &GitHub{}
+	implements.Register("github", func(options bson.M) implements.Implement {
+		ret := &GitHub{
+			options:       option.ToOption[githubOptions](options),
+			githubClient:  nil,
+			rateRemaining: 5000,
+			rateReset:     time.Now(),
+		}
+		var err error
+		ret.githubClient, err = ret.createGitHubClient()
+		if err != nil {
+			panic(err)
+		}
+		return ret
 	})
 }

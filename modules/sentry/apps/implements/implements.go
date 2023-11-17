@@ -6,6 +6,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/minoic/glgf"
+	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 )
 
@@ -14,22 +15,21 @@ type Implement interface {
 	// Fetch must return non nil status value, or it will panic
 	// return error if entity is offline
 	Fetch(ctx context.Context) (status.Status, error)
-	Init(setOptions func(options any) error) error
 }
 
-var creators = make(map[string]Creator)
+var spawners = make(map[string]Spawner)
 
-type Creator func() Implement
+type Spawner func(options bson.M) Implement
 
-func Add(scheme string, creator Creator) {
+func Register(scheme string, creator Spawner) {
 	glgf.Infof("adding entity scheme: %s (%s)", scheme, reflect.TypeOf(creator).PkgPath())
-	creators[scheme] = creator
+	spawners[scheme] = creator
 }
 
-func Create(ctx context.Context, entity *models.Application) (Implement, error) {
-	creator, ok := creators[entity.Scheme]
+func Spawn(entity *models.Application) (Implement, error) {
+	creator, ok := spawners[entity.Scheme]
 	if !ok {
 		return nil, fmt.Errorf("cant find implement of scheme: %s", entity.Scheme)
 	}
-	return creator(), nil
+	return creator(entity.Options), nil
 }

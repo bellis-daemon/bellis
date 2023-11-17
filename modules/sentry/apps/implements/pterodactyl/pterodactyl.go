@@ -3,8 +3,10 @@ package pterodactyl
 import (
 	"context"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
 	"github.com/minoic/PterodactylGoApi"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Pterodactyl struct {
@@ -27,15 +29,6 @@ func (this *Pterodactyl) Fetch(ctx context.Context) (status.Status, error) {
 	}, nil
 }
 
-func (this *Pterodactyl) Init(setOptions func(options any) error) error {
-	err := setOptions(&this.options)
-	if err != nil {
-		return err
-	}
-	this.client = PterodactylGoApi.NewClient(this.options.Address, this.options.Token)
-	return nil
-}
-
 type pterodactylStatus struct {
 	UserAmount   int
 	ServerAmount int
@@ -54,7 +47,12 @@ type pterodactylOptions struct {
 }
 
 func init() {
-	implements.Add("pterodactyl", func() implements.Implement {
-		return &Pterodactyl{}
+	implements.Register("pterodactyl", func(options bson.M) implements.Implement {
+		ret := &Pterodactyl{
+			options: option.ToOption[pterodactylOptions](options),
+			client:  nil,
+		}
+		ret.client = PterodactylGoApi.NewClient(ret.options.Address, ret.options.Token)
+		return ret
 	})
 }
