@@ -3,6 +3,8 @@ package entity
 import (
 	"context"
 	"fmt"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"sync"
 	"time"
@@ -306,42 +308,63 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		ID:         id.GetID(),
 		LiveSeries: []bool{},
 	}
-	query, err := storage.QueryInfluxDB.Query(ctx,
-		fmt.Sprintf(`
+	var wg sync.WaitGroup
+	errC := make(chan error)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		query, err := storage.QueryInfluxDB.Query(ctx,
+			fmt.Sprintf(`
 from(bucket: "backend")
   |> range(start: -10m)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")`,
-			id.GetScheme(),
-			id.GetID()))
-	if err != nil {
-		glgf.Error(err)
-		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
-	}
-	fields := map[string]interface{}{}
-	for query.Next() {
-		switch query.Record().Field() {
-		case "c_live":
-			entityStatus.SentryTime = query.Record().Time().Local().Format(time.TimeOnly)
-			entityStatus.Live = cast.ToBool(query.Record().Value())
-		case "c_err":
-			entityStatus.ErrMessage = cast.ToString(query.Record().Value())
-		case "c_response_time":
-			entityStatus.ResponseTime = cast.ToInt64(query.Record().Value())
-		default:
-			fields[query.Record().Field()] = query.Record().Value()
+				id.GetScheme(),
+				id.GetID()))
+		if err != nil {
+			glgf.Error(err)
+			errC <- err
+			return
 		}
-	}
-	entityStatus.Fields, err = structpb.NewStruct(fields)
-	if err != nil {
-		glgf.Error(err)
-		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
-	}
-	entityStatus.UpTime = getEntityUptime(ctx, id.GetID())
-	if id.Scheme != nil {
-		query, err = storage.QueryInfluxDB.Query(ctx,
-			fmt.Sprintf(`
+		fields := map[string]interface{}{}
+		for query.Next() {
+			switch query.Record().Field() {
+			case "c_live":
+				entityStatus.SentryTime = query.Record().Time().Local().Format(time.TimeOnly)
+				entityStatus.Live = cast.ToBool(query.Record().Value())
+			case "c_err":
+				entityStatus.ErrMessage = cast.ToString(query.Record().Value())
+			case "c_response_time":
+				entityStatus.ResponseTime = cast.ToInt64(query.Record().Value())
+			default:
+				fields[query.Record().Field()] = query.Record().Value()
+			}
+		}
+		entityStatus.Fields, err = structpb.NewStruct(fields)
+		if err != nil {
+			glgf.Error(err)
+			errC <- err
+			return
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		entityStatus.UpTime = getEntityUptime(ctx, id.GetID())
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		series, err := storage.QuickRCSearch[[]bool](ctx, "EntityLiveSeries"+id.ID, func() ([]bool, error) {
+			var ret []bool
+			var query *api.QueryTableResult
+			if id.Scheme != nil {
+				query, err = storage.QueryInfluxDB.Query(ctx,
+					fmt.Sprintf(`
 from(bucket: "backend") 
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "%s")
@@ -350,15 +373,15 @@ from(bucket: "backend")
   |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
-				id.GetScheme(),
-				id.GetID()))
-		if err != nil {
-			glgf.Error(err)
-			return &EntityStatus{}, status.Error(codes.Internal, err.Error())
-		}
-	} else {
-		query, err = storage.QueryInfluxDB.Query(ctx,
-			fmt.Sprintf(`
+						id.GetScheme(),
+						id.GetID()))
+				if err != nil {
+					glgf.Error(err)
+					return nil, err
+				}
+			} else {
+				query, err = storage.QueryInfluxDB.Query(ctx,
+					fmt.Sprintf(`
 from(bucket: "backend") 
   |> range(start: -24h)
   |> filter(fn: (r) => r["_field"] == "c_live")
@@ -366,14 +389,35 @@ from(bucket: "backend")
   |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
-				id.GetID()))
+						id.GetID()))
+				if err != nil {
+					glgf.Error(err)
+					return nil, err
+				}
+			}
+			for query.Next() {
+				ret = append(ret, cast.ToBool(query.Record().Value()))
+			}
+			return ret, nil
+		}, 10*time.Minute)
 		if err != nil {
 			glgf.Error(err)
-			return &EntityStatus{}, status.Error(codes.Internal, err.Error())
+			errC <- err
+			return
 		}
+		entityStatus.LiveSeries = *series
+	}()
+
+	go func() {
+		wg.Wait()
+		close(errC)
+	}()
+
+	for e := range errC {
+		err = errors.Wrap(err, e.Error())
 	}
-	for query.Next() {
-		entityStatus.LiveSeries = append(entityStatus.LiveSeries, cast.ToBool(query.Record().Value()))
+	if err != nil {
+		return &EntityStatus{}, status.Error(codes.Internal, err.Error())
 	}
 	return entityStatus, nil
 }

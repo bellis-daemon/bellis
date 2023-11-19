@@ -22,7 +22,7 @@ func Redis() *redis.Client {
 	return rdb
 }
 
-func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, error)) (*T, error) {
+func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, error), exp ...time.Duration) (*T, error) {
 	const QUICK_RC = "QUICK_RC"
 	cmd := Redis().Get(ctx, QUICK_RC+key)
 	if cmd.Err() != nil {
@@ -31,6 +31,10 @@ func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, e
 			return nil, err
 		}
 		go func() {
+			dur := time.Minute
+			if len(exp) != 0 {
+				dur = exp[0]
+			}
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(map[string]any{
 				"t": reflect.TypeOf(value).String(),
@@ -40,7 +44,7 @@ func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, e
 				glgf.Warn(err)
 				return
 			}
-			Redis().Set(ctx, QUICK_RC+key, buf.String(), time.Minute)
+			Redis().Set(ctx, QUICK_RC+key, buf.String(), dur)
 		}()
 		return &value, nil
 	}
