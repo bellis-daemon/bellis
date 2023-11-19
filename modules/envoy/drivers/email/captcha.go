@@ -23,7 +23,7 @@ func SendCaptcha(email string) error {
 		SetFrom("Bellis Envoy <envoy@bellis.minoic.top>").
 		SetReplyTo("minoic2020@gmail.com").
 		AddTo(email).
-		SetSubject("Bellis register captcha").
+		SetSubject("Bellis captcha").
 		SetBody(mail.TextHTML, html).
 		Send(cl)
 	if err != nil {

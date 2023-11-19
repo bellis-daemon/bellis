@@ -24,7 +24,7 @@ type handler struct {
 	ctx    context.Context
 }
 
-func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
+func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
 	parsedUrl, err := url.Parse(this.policy.URL)
 	if err != nil {
 		return err

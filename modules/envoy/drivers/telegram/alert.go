@@ -2,6 +2,8 @@ package telegram
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
@@ -17,12 +19,28 @@ type handler struct {
 	policy *models.EnvoyTelegram
 }
 
-func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
-	api, err := tgbotapi.NewBotAPI(storage.Config().TelegramBotToken)
+func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
+	api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().TelegramBotApiEndpoint, storage.Config().TelegramBotToken)
 	if err != nil {
 		return err
 	}
-	message := tgbotapi.NewMessage(this.policy.ChatId, log.OfflineMessage)
+	message := tgbotapi.NewMessage(
+		this.policy.ChatId,
+		fmt.Sprintf(`Bellis entity offline alert
+Entity name: %s
+TimeZone: %s
+Entity create time: %s
+Offline time: %s
+Offline message: %s
+This should be a note worthy and validating message.
+`,
+			entity.Name,
+			user.Timezone,
+			entity.CreatedAt.In(user.Timezone.Location()).Format(time.DateTime),
+			log.OfflineTime.In(user.Timezone.Location()).Format(time.DateTime),
+			log.OfflineMessage,
+		),
+	)
 	_, err = api.Send(message)
 	if err != nil {
 		return err

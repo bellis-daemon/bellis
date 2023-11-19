@@ -3,13 +3,17 @@ FROM golang:1.21.0-alpine as builder
 
 WORKDIR /workspace
 
-RUN apk update && apk add --no-cache upx && rm -rf /var/cache/apk/*
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
+    &&  apk add --no-cache upx tzdata && rm -rf /var/cache/apk/*
 
 # 启用go module
 ENV GO111MODULE=on 
+ENV TZ=Asia/Shanghai
 
 ARG MODULE=backend
 ARG PORT=7001
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY go.mod go.mod
 COPY go.sum go.sum

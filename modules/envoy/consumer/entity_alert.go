@@ -40,8 +40,7 @@ func entityOfflineAlert() {
 			}
 			return fmt.Errorf("finding entity mongo inernal error: %w", err)
 		}
-		var user models.User
-		err = storage.CUser.FindOne(ctx, bson.M{"_id": entity.UserID}).Decode(&user)
+		user, err := entity.User()
 		if err != nil {
 			return fmt.Errorf("cant find user using user id: %s: %w", entity.UserID.Hex(), err)
 		}
@@ -78,7 +77,7 @@ func entityOfflineAlert() {
 			if err != nil {
 				return fmt.Errorf("cant write offline log: %w", err)
 			}
-			err = envoyDriver.AlertOffline(&entity, log)
+			err = envoyDriver.AlertOffline(user, &entity, log)
 			if err != nil {
 				return fmt.Errorf("send offline alert failed: %w", err)
 			}

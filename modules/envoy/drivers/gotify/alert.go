@@ -38,12 +38,8 @@ func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriv
 	return this
 }
 
-func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
+func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
 	gotifyURL, err := url.Parse(this.policy.URL)
-	if err != nil {
-		return err
-	}
-	user, err := entity.User()
 	if err != nil {
 		return err
 	}

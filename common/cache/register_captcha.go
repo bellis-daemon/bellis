@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
@@ -22,6 +23,9 @@ func CaptchaSet(email string) (string, error) {
 func CaptchaCheck(email string, captcha string) (bool, error) {
 	c, err := storage.Redis().Get(context.Background(), captchaPrefix+email).Result()
 	if err != nil {
+		if err == redis.Nil {
+			return false, nil
+		}
 		return false, err
 	}
 	return c == captcha, nil

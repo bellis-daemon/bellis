@@ -37,7 +37,7 @@ func setTelegramWebhook() {
 		}
 		req, err := http.NewRequest("POST", target, &buf)
 		req.Header.Set("Content-Type", "application/json")
-		glgf.Debug(target)
+		glgf.Debug(webhookEndpoint)
 		get, err := http.DefaultClient.Do(req)
 		if err != nil {
 			glgf.Error("err while setting telegram webhook", err)

@@ -118,12 +118,11 @@ func (handler) GetForgetCaptcha(ctx context.Context, request *ForgetCaptchaReque
 }
 
 func (handler) ForgetChangePassword(ctx context.Context, request *ForgetChangePasswordRequest) (*empty.Empty, error) {
-	result, err := storage.Redis().Get(ctx, "FCAPTCHA"+request.Email).Result()
+	ok, err := cache.CaptchaCheck(request.Email, request.Captcha)
 	if err != nil {
-		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, "Redis error")
+		return &empty.Empty{}, status.Error(codes.Internal, "Cant check captcha")
 	}
-	if request.Captcha != result {
+	if !ok {
 		return &empty.Empty{}, status.Error(codes.InvalidArgument, "Wrong captcha")
 	}
 	var user models.User

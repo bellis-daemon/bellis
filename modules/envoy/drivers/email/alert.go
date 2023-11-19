@@ -19,17 +19,12 @@ type handler struct {
 	ctx    context.Context
 }
 
-func (this *handler) AlertOffline(entity *models.Application, log *models.OfflineLog) error {
+func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
 	cl, err := tencentSmtpClient()
 	if err != nil {
 		return fmt.Errorf("cant connect to smtp server: %w", err)
 	}
-	var user models.User
-	err = storage.CUser.FindOne(this.ctx, bson.M{"_id": entity.UserID}).Decode(&user)
-	if err != nil {
-		return fmt.Errorf("cant find user in database: %w", err)
-	}
-	html, err := base().GenerateHTML(offlineEmail(&user, entity, log))
+	html, err := base().GenerateHTML(offlineEmail(user, entity, log))
 	if err != nil {
 		return fmt.Errorf("cant generate email html: %w", err)
 	}

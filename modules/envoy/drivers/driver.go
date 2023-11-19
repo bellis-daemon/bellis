@@ -6,7 +6,7 @@ import (
 )
 
 type EnvoyDriver interface {
-	AlertOffline(entity *models.Application, log *models.OfflineLog) error
+	AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error
 	WithPolicy(policy any) EnvoyDriver
 	WithPolicyId(policyId primitive.ObjectID) EnvoyDriver
 }

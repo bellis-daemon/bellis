@@ -48,3 +48,7 @@ func ServeGrpc(lis net.Listener) {
 		panic(err)
 	}
 }
+
+func Server() *grpc.Server {
+	return server
+}

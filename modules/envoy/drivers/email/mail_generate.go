@@ -85,6 +85,9 @@ func captchaEmail(captcha string) hermes.Email {
 				"Bellis account manager",
 				"Your captcha is " + captcha,
 			},
+			Outros: []string{
+				"If this is not what you are doing, it is recommended to change your password or contact us",
+			},
 		},
 	}
 	return email

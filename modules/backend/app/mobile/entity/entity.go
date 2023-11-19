@@ -95,6 +95,9 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 	}
 }
 
+// GetOfflineLog retrieves offline logs for a specific entity based on the provided request.
+// It first checks the ownership of the entity, then fetches the offline logs based on the entity ID and pagination options.
+// The retrieved logs are formatted and returned as an OfflineLogPage along with any encountered errors.
 func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) (*OfflineLogPage, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), request.EntityID),
@@ -136,6 +139,9 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 	}, nil
 }
 
+// DeleteEntity deletes the entity based on the provided ID after checking ownership.
+// It first checks the ownership of the entity, then proceeds to delete the entity from the storage.
+// After the deletion, it triggers a post-deletion process asynchronously and returns an empty response or an error.
 func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*empty.Empty, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
@@ -158,6 +164,9 @@ func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*empty.Empty, 
 	return &empty.Empty{}, nil
 }
 
+// NewEntity creates a new entity based on the provided Entity object.
+// It initializes a new Application model, populates it with the provided data, and inserts it into the storage.
+// After the creation, it triggers a post-creation process asynchronously and returns the ID of the newly created entity.
 func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, error) {
 	e := &models.Application{
 		ID:          primitive.NewObjectID(),
@@ -182,6 +191,9 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 	}, nil
 }
 
+// UpdateEntity updates the entity based on the provided Entity object after checking ownership.
+// It first checks the ownership of the entity, then proceeds to update the entity in the storage.
+// After the update, it triggers a post-update process asynchronously and returns an empty response or an error.
 func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), entity.ID),
