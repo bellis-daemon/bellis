@@ -9,7 +9,6 @@ require (
 	github.com/go-co-op/gocron-redis-lock v1.2.0
 	github.com/go-ping/ping v1.1.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
-	github.com/golang/protobuf v1.5.3
 	github.com/google/go-github/v32 v32.1.0
 	github.com/gotify/go-api-client/v2 v2.0.4
 	github.com/improbable-eng/grpc-web v0.15.0

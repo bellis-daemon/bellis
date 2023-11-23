@@ -16,7 +16,6 @@ import (
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
 	"github.com/bellis-daemon/bellis/modules/backend/assertion"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
@@ -144,26 +143,26 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 // DeleteEntity deletes the entity based on the provided ID after checking ownership.
 // It first checks the ownership of the entity, then proceeds to delete the entity from the storage.
 // After the deletion, it triggers a post-deletion process asynchronously and returns an empty response or an error.
-func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*empty.Empty, error) {
+func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*emptypb.Empty, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
 	)
 	if err != nil {
-		return &empty.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
 	}
 	oid, err := primitive.ObjectIDFromHex(id.ID)
 	if err != nil {
-		return &empty.Empty{}, status.Error(codes.InvalidArgument, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 	_, err = storage.CEntity.DeleteOne(ctx, bson.M{
 		"_id": oid,
 	})
 	if err != nil {
 		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
 	go afterDeleteEntity(id.GetID())
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // NewEntity creates a new entity based on the provided Entity object.
@@ -196,23 +195,23 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 // UpdateEntity updates the entity based on the provided Entity object after checking ownership.
 // It first checks the ownership of the entity, then proceeds to update the entity in the storage.
 // After the update, it triggers a post-update process asynchronously and returns an empty response or an error.
-func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty, error) {
+func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*emptypb.Empty, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), entity.ID),
 	)
 	if err != nil {
-		return &empty.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
 	}
 	oid, err := primitive.ObjectIDFromHex(entity.ID)
 	if err != nil {
 		glgf.Warn(err)
-		return &empty.Empty{}, status.Error(codes.InvalidArgument, "invalid entity id")
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "invalid entity id")
 	}
 	e := &models.Application{}
 	err = storage.CEntity.FindOne(ctx, bson.M{"_id": oid}).Decode(e)
 	if err != nil {
 		glgf.Warn(err)
-		return &empty.Empty{}, status.Error(codes.InvalidArgument, "cant find entity by id")
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "cant find entity by id")
 	}
 	e.Name = entity.GetName()
 	e.Description = entity.GetDescription()
@@ -222,10 +221,10 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*empty.Empty
 	_, err = storage.CEntity.ReplaceOne(ctx, bson.M{"_id": oid}, e)
 	if err != nil {
 		glgf.Error(err)
-		return &empty.Empty{}, status.Error(codes.Internal, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
 	go afterUpdateEntity(e)
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
@@ -263,7 +262,7 @@ func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
 	}, nil
 }
 
-func (h handler) GetAllEntities(ctx context.Context, e *empty.Empty) (*AllEntities, error) {
+func (h handler) GetAllEntities(ctx context.Context, e *emptypb.Empty) (*AllEntities, error) {
 	user := midwares.GetUserFromCtx(ctx)
 	var entities []models.Application
 	find, err := storage.CEntity.Find(ctx, bson.M{"UserID": user.ID})
@@ -422,7 +421,7 @@ from(bucket: "backend")
 	return entityStatus, nil
 }
 
-func (h handler) GetAllStatus(ctx context.Context, e *empty.Empty) (*AllEntityStatus, error) {
+func (h handler) GetAllStatus(ctx context.Context, e *emptypb.Empty) (*AllEntityStatus, error) {
 	ret := &AllEntityStatus{}
 	user := midwares.GetUserFromCtx(ctx)
 	var entities []models.Application
