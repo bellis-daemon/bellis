@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"math"
 	"net"
 	"time"
 )
@@ -28,11 +29,15 @@ func init() {
 			midwares.BasicLoggerStream(),
 		),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle:     10 * time.Second,
-			MaxConnectionAge:      15 * time.Second,
+			MaxConnectionIdle:     time.Duration(math.MaxInt64),
+			MaxConnectionAge:      5 * time.Minute,
 			MaxConnectionAgeGrace: 5 * time.Second,
-			Time:                  5 * time.Second,
+			Time:                  6 * time.Second,
 			Timeout:               3 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             10 * time.Second,
+			PermitWithoutStream: false,
 		}),
 	)
 }

@@ -9,7 +9,6 @@ require (
 	github.com/go-co-op/gocron-redis-lock v1.2.0
 	github.com/go-ping/ping v1.1.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
-	github.com/golang/protobuf v1.5.3
 	github.com/google/go-github/v32 v32.1.0
 	github.com/gotify/go-api-client/v2 v2.0.4
 	github.com/improbable-eng/grpc-web v0.15.0
@@ -69,6 +68,7 @@ require (
 	github.com/go-test/deep v1.1.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
