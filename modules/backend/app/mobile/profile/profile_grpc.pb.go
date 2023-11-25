@@ -20,14 +20,15 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ProfileService_GetUserProfile_FullMethodName  = "/bellis.backend.mobile.profile.ProfileService/GetUserProfile"
-	ProfileService_ChangePassword_FullMethodName  = "/bellis.backend.mobile.profile.ProfileService/ChangePassword"
-	ProfileService_ChangeEmail_FullMethodName     = "/bellis.backend.mobile.profile.ProfileService/ChangeEmail"
-	ProfileService_ChangeAlert_FullMethodName     = "/bellis.backend.mobile.profile.ProfileService/ChangeAlert"
-	ProfileService_ChangeSensitive_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/ChangeSensitive"
-	ProfileService_UseGotify_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/UseGotify"
-	ProfileService_UseEmail_FullMethodName        = "/bellis.backend.mobile.profile.ProfileService/UseEmail"
-	ProfileService_UseWebhook_FullMethodName      = "/bellis.backend.mobile.profile.ProfileService/UseWebhook"
+	ProfileService_GetUserProfile_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/GetUserProfile"
+	ProfileService_ChangePassword_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/ChangePassword"
+	ProfileService_ChangeEmail_FullMethodName          = "/bellis.backend.mobile.profile.ProfileService/ChangeEmail"
+	ProfileService_ChangeAlert_FullMethodName          = "/bellis.backend.mobile.profile.ProfileService/ChangeAlert"
+	ProfileService_ChangeSensitive_FullMethodName      = "/bellis.backend.mobile.profile.ProfileService/ChangeSensitive"
+	ProfileService_UseGotify_FullMethodName            = "/bellis.backend.mobile.profile.ProfileService/UseGotify"
+	ProfileService_UseEmail_FullMethodName             = "/bellis.backend.mobile.profile.ProfileService/UseEmail"
+	ProfileService_UseWebhook_FullMethodName           = "/bellis.backend.mobile.profile.ProfileService/UseWebhook"
+	ProfileService_GetEnvoyTelegramLink_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/GetEnvoyTelegramLink"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -42,6 +43,7 @@ type ProfileServiceClient interface {
 	UseGotify(ctx context.Context, in *Gotify, opts ...grpc.CallOption) (*EnvoyPolicy, error)
 	UseEmail(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EnvoyPolicy, error)
 	UseWebhook(ctx context.Context, in *Webhook, opts ...grpc.CallOption) (*EnvoyPolicy, error)
+	GetEnvoyTelegramLink(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EnvoyTelegramLink, error)
 }
 
 type profileServiceClient struct {
@@ -124,6 +126,15 @@ func (c *profileServiceClient) UseWebhook(ctx context.Context, in *Webhook, opts
 	return out, nil
 }
 
+func (c *profileServiceClient) GetEnvoyTelegramLink(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EnvoyTelegramLink, error) {
+	out := new(EnvoyTelegramLink)
+	err := c.cc.Invoke(ctx, ProfileService_GetEnvoyTelegramLink_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations should embed UnimplementedProfileServiceServer
 // for forward compatibility
@@ -136,6 +147,7 @@ type ProfileServiceServer interface {
 	UseGotify(context.Context, *Gotify) (*EnvoyPolicy, error)
 	UseEmail(context.Context, *Email) (*EnvoyPolicy, error)
 	UseWebhook(context.Context, *Webhook) (*EnvoyPolicy, error)
+	GetEnvoyTelegramLink(context.Context, *emptypb.Empty) (*EnvoyTelegramLink, error)
 }
 
 // UnimplementedProfileServiceServer should be embedded to have forward compatible implementations.
@@ -165,6 +177,9 @@ func (UnimplementedProfileServiceServer) UseEmail(context.Context, *Email) (*Env
 }
 func (UnimplementedProfileServiceServer) UseWebhook(context.Context, *Webhook) (*EnvoyPolicy, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UseWebhook not implemented")
+}
+func (UnimplementedProfileServiceServer) GetEnvoyTelegramLink(context.Context, *emptypb.Empty) (*EnvoyTelegramLink, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEnvoyTelegramLink not implemented")
 }
 
 // UnsafeProfileServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -322,6 +337,24 @@ func _ProfileService_UseWebhook_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_GetEnvoyTelegramLink_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetEnvoyTelegramLink(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetEnvoyTelegramLink_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetEnvoyTelegramLink(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -360,6 +393,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UseWebhook",
 			Handler:    _ProfileService_UseWebhook_Handler,
+		},
+		{
+			MethodName: "GetEnvoyTelegramLink",
+			Handler:    _ProfileService_GetEnvoyTelegramLink_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

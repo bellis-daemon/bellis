@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GoVersion=$(go version)' -X 'main.BuildTime=`date "+%F %T"`'" -o entry modules/$MODULE/main.go \
-    && upx -9 entry
+    && upx -6 entry
 
 FROM alpine
 

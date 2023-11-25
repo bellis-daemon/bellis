@@ -86,7 +86,7 @@ func entityOfflineAlert() {
 		if err != nil {
 			return err
 		}
-		glgf.Debug("Offline alert sent: ", entity.Name)
+		glgf.Debugf("Offline alert of %s sent via %s", entity.Name, envoyType)
 		return nil
 	})
 }

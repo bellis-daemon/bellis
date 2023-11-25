@@ -1,6 +1,8 @@
 package models
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type EnvoyTelegram struct {
-	ID     string `json:"ID" bson:"_id"`
-	ChatId int64  `json:"ChatId" bson:"ChatId"`
+	ID     primitive.ObjectID `json:"ID" bson:"_id"`
+	ChatId int64              `json:"ChatId" bson:"ChatId"`
 }

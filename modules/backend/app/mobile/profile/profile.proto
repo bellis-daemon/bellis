@@ -9,7 +9,7 @@ option go_package = 'github.com/bellis-daemon/bellis/modules/backend/app/mobile/
 message UserProfile{
   string email = 1;
   string createdAt = 2;
-  bool isVip = 3;
+  uint32 level = 3;
   EnvoyPolicy envoy = 4;
 }
 
@@ -49,15 +49,25 @@ message Webhook{
   bool insecure = 2;
 }
 
+message Telegram{
+  int64 chat_id = 1;
+}
+
 message EnvoyPolicyContent{
   oneof content{
     Gotify gotify = 1;
     Email email = 2;
+    Webhook webhook = 3;
+    Telegram telegram = 4;
   }
 }
 
 message Sensitive{
   int32 level = 1;
+}
+
+message EnvoyTelegramLink{
+  string url = 1;
 }
 
 service ProfileService{
@@ -69,6 +79,7 @@ service ProfileService{
   rpc UseGotify(Gotify) returns (EnvoyPolicy);
   rpc UseEmail(Email) returns(EnvoyPolicy);
   rpc UseWebhook(Webhook) returns(EnvoyPolicy);
+  rpc GetEnvoyTelegramLink(google.protobuf.Empty) returns (EnvoyTelegramLink);
 }
 
 

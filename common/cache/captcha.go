@@ -11,17 +11,17 @@ import (
 const captchaPrefix = "CAPTCHA_"
 const captchaLength = 6
 
-func CaptchaSet(email string) (string, error) {
+func CaptchaSet(key string) (string, error) {
 	captcha := cryptoo.RandNum(captchaLength)
-	err := storage.Redis().Set(context.Background(), captchaPrefix+email, captcha, 5*time.Minute).Err()
+	err := storage.Redis().Set(context.Background(), captchaPrefix+key, captcha, 5*time.Minute).Err()
 	if err != nil {
 		return "", err
 	}
 	return captcha, nil
 }
 
-func CaptchaCheck(email string, captcha string) (bool, error) {
-	c, err := storage.Redis().Get(context.Background(), captchaPrefix+email).Result()
+func CaptchaCheck(key string, captcha string) (bool, error) {
+	c, err := storage.Redis().Get(context.Background(), captchaPrefix+key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return false, nil

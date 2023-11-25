@@ -5,6 +5,7 @@ import (
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"time"
 )
 
@@ -18,7 +19,11 @@ func BasicLogger() grpc.UnaryServerInterceptor {
 		if forwarded := md.Get("X-Forwarded-For"); len(forwarded) > 0 {
 			addr = forwarded[0]
 		} else {
-			addr = "Unknown"
+			if p, ok := peer.FromContext(ctx); ok {
+				addr = p.Addr.String()
+			} else {
+				addr = "Unknown"
+			}
 		}
 		if err != nil {
 			glgf.Warnf("| %-15s |<%s> in %d(ms) ERR:%s", addr, info.FullMethod, dur, err.Error())
@@ -39,7 +44,11 @@ func BasicLoggerStream() grpc.StreamServerInterceptor {
 		if forwarded := md.Get("X-Forwarded-For"); len(forwarded) > 0 {
 			addr = forwarded[0]
 		} else {
-			addr = "Unknown"
+			if p, ok := peer.FromContext(ss.Context()); ok {
+				addr = p.Addr.String()
+			} else {
+				addr = "Unknown"
+			}
 		}
 		if err != nil {
 			glgf.Warnf("| %-15s | Streamed <%s> during %d(ms) ERR:%s", addr, info.FullMethod, dur, err.Error())

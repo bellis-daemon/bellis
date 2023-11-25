@@ -14,6 +14,7 @@ type ConfigInfo struct {
 	InfluxDBToken          string `mapstructure:"influxdb_token"`
 	TelegramBotToken       string `mapstructure:"telegram_bot_token"`
 	TelegramBotApiEndpoint string `mapstructure:"telegram_bot_api_endpoint"`
+	TelegramBotName        string `mapstructure:"telegram_bot_name"`
 	TencentSTMPPassword    string `mapstructure:"tencent_smtp_password"`
 	WebEndpoint            string `mapstructure:"web_endpoint"`
 }

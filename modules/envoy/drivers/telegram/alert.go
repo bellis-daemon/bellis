@@ -20,18 +20,18 @@ type handler struct {
 }
 
 func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
-	api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().TelegramBotApiEndpoint, storage.Config().TelegramBotToken)
+	api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().TelegramBotToken, storage.Config().TelegramBotApiEndpoint+"/bot%s/%s")
 	if err != nil {
 		return err
 	}
 	message := tgbotapi.NewMessage(
 		this.policy.ChatId,
-		fmt.Sprintf(`Bellis entity offline alert
-Entity name: %s
-TimeZone: %s
+		fmt.Sprintf(`Bellis entity offline alert ⚠
+Entity name:        %s
+Offline message:    %s
+TimeZone:           %s
 Entity create time: %s
-Offline time: %s
-Offline message: %s
+Offline time:       %s
 This should be a note worthy and validating message.
 `,
 			entity.Name,
@@ -55,7 +55,7 @@ func (this *handler) WithPolicy(policy any) drivers.EnvoyDriver {
 
 func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriver {
 	this.policy = new(models.EnvoyTelegram)
-	err := storage.CEnvoyEmail.FindOne(this.ctx, bson.M{"_id": policyId}).Decode(this.policy)
+	err := storage.CEnvoyTelegram.FindOne(this.ctx, bson.M{"_id": policyId}).Decode(this.policy)
 	if err != nil {
 		glgf.Error(err)
 	}

@@ -8,15 +8,16 @@ import (
 )
 
 var (
-	CUser         *mongo.Collection
-	CEntity       *mongo.Collection
-	CEnvoyGotify  *mongo.Collection
-	CEnvoyEmail   *mongo.Collection
-	CEnvoyWebhook *mongo.Collection
-	COfflineLog   *mongo.Collection
-	CTLS          *mongo.Collection
-	client        *mongo.Client
-	bellisBackend *mongo.Database
+	CUser          *mongo.Collection
+	CEntity        *mongo.Collection
+	CEnvoyGotify   *mongo.Collection
+	CEnvoyEmail    *mongo.Collection
+	CEnvoyWebhook  *mongo.Collection
+	CEnvoyTelegram *mongo.Collection
+	COfflineLog    *mongo.Collection
+	CTLS           *mongo.Collection
+	client         *mongo.Client
+	bellisBackend  *mongo.Database
 )
 
 func ConnectMongo() {
@@ -34,6 +35,7 @@ func ConnectMongo() {
 	CEnvoyEmail = bellisBackend.Collection("EnvoyEmail")
 	CEnvoyGotify = bellisBackend.Collection("EnvoyGotify")
 	CEnvoyWebhook = bellisBackend.Collection("EnvoyWebhook")
+	CEnvoyTelegram = bellisBackend.Collection("EnvoyTelegram")
 	CTLS = bellisBackend.Collection("TLS")
 }
 

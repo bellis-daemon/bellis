@@ -19,9 +19,43 @@ type User struct {
 	Email     string             `json:"Email" bson:"Email"`
 	Password  string             `json:"Password" bson:"Password"`
 	CreatedAt time.Time          `json:"CreatedAt" bson:"CreatedAt"`
-	IsVip     bool               `json:"IsVip" bson:"IsVip"`
-	Envoy     EnvoyPolicy        `json:"Envoy" bson:"Envoy"`
-	Timezone  Timezone           `json:"Timezone" bson:"Timezone"`
+	// Level user plan level
+	// default(free) level: 0
+	Level    UserLevel   `json:"Level" bson:"Level"`
+	Usage    UserUsage   `json:"Usage" bson:"Usage"`
+	Envoy    EnvoyPolicy `json:"Envoy" bson:"Envoy"`
+	Timezone Timezone    `json:"Timezone" bson:"Timezone"`
+}
+
+type UserLevel uint32
+
+func (this UserLevel) Limit() UserUsage {
+	switch this {
+	case 0:
+		return UserUsage{
+			EnvoySMSCount: 10,
+			EnvoyCount:    1000,
+			EntityCount:   10,
+		}
+	case 1:
+		return UserUsage{
+			EnvoySMSCount: 100,
+			EnvoyCount:    5000,
+			EntityCount:   50,
+		}
+	default:
+		return UserUsage{
+			EnvoySMSCount: -1,
+			EnvoyCount:    -1,
+			EntityCount:   -1,
+		}
+	}
+}
+
+type UserUsage struct {
+	EnvoySMSCount int32
+	EnvoyCount    int32
+	EntityCount   int32
 }
 
 func NewUser() *User {
@@ -30,7 +64,7 @@ func NewUser() *User {
 		Email:     "",
 		Password:  "",
 		CreatedAt: time.Now(),
-		IsVip:     false,
+		Level:     0,
 		Envoy: EnvoyPolicy{
 			OfflineAlert: false,
 			PredictAlert: false,
@@ -65,8 +99,69 @@ func (this *User) SetPassword(ctx context.Context, pwd string) error {
 	return nil
 }
 
+func (this *User) SetProfile(ctx context.Context, policyType EnvoyPolicyType, policy any) error {
+	return storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		// delete old policy
+		if this.Envoy.PolicyID != primitive.NilObjectID {
+			var coll *mongo.Collection
+			switch this.Envoy.PolicyType {
+			case IsEnvoyGotify:
+				coll = storage.CEnvoyGotify
+			case IsEnvoyEmail:
+				coll = storage.CEnvoyEmail
+			case IsEnvoyWebhook:
+				coll = storage.CEnvoyWebhook
+			case IsEnvoyTelegram:
+				coll = storage.CEnvoyTelegram
+			}
+			_, err := coll.DeleteOne(sessionContext, bson.M{
+				"_id": this.Envoy.PolicyID,
+			})
+			if err != nil {
+				return err
+			}
+		}
+		// create new policy
+		switch policyType {
+		case IsEnvoyGotify:
+			one, err := storage.CEnvoyGotify.InsertOne(sessionContext, policy)
+			if err != nil {
+				return err
+			}
+			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
+		case IsEnvoyEmail:
+			one, err := storage.CEnvoyEmail.InsertOne(sessionContext, policy)
+			if err != nil {
+				return err
+			}
+			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
+		case IsEnvoyWebhook:
+			one, err := storage.CEnvoyWebhook.InsertOne(sessionContext, policy)
+			if err != nil {
+				return err
+			}
+			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
+		case IsEnvoyTelegram:
+			one, err := storage.CEnvoyTelegram.InsertOne(sessionContext, policy)
+			if err != nil {
+				return err
+			}
+			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
+		}
+		this.Envoy.PolicyType = policyType
+		// modify user model
+		_, err := storage.CUser.ReplaceOne(sessionContext, bson.M{"_id": this.ID}, this)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+type EnvoyPolicyType int
+
 const (
-	IsEnvoyEmail = iota + 1000
+	IsEnvoyEmail EnvoyPolicyType = iota + 1000
 	IsEnvoyGotify
 	IsEnvoySMS
 	IsEnvoyTelegram
@@ -75,7 +170,7 @@ const (
 
 type EnvoyPolicy struct {
 	PolicyID     primitive.ObjectID `json:"PolicyID" bson:"PolicyID"`
-	PolicyType   int                `json:"PolicyType" bson:"PolicyType"`
+	PolicyType   EnvoyPolicyType    `json:"PolicyType" bson:"PolicyType"`
 	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
 	PredictAlert bool               `json:"PredictAlert" bson:"PredictAlert"`
 	Sensitive    int                `json:"Sensitive" bson:"Sensitive"`

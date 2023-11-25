@@ -2,6 +2,8 @@ package profile
 
 import (
 	"context"
+	"fmt"
+	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
@@ -17,6 +19,22 @@ import (
 
 // implement ProfileServiceServer
 type handler struct{}
+
+func (h handler) GetEnvoyTelegramLink(ctx context.Context, empty *emptypb.Empty) (*EnvoyTelegramLink, error) {
+	if storage.Config().TelegramBotName == "" {
+		return &EnvoyTelegramLink{}, status.Error(codes.Internal, "telegram not supported on server")
+	}
+	user := midwares.GetUserFromCtx(ctx)
+	captcha := "tg_" + cryptoo.RandString(24)
+	err := storage.Redis().Set(ctx, captcha, user.ID.Hex(), time.Minute).Err()
+	if err != nil {
+		return &EnvoyTelegramLink{}, status.Error(codes.Internal, err.Error())
+	}
+	link := fmt.Sprintf("t.me/%s?start=%s", storage.Config().TelegramBotName, captcha)
+	return &EnvoyTelegramLink{
+		Url: link,
+	}, nil
+}
 
 func (h handler) ChangeSensitive(ctx context.Context, sensitive *Sensitive) (*emptypb.Empty, error) {
 	user := midwares.GetUserFromCtx(ctx)
@@ -78,7 +96,7 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 	ret := &UserProfile{
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt.Local().Format(time.DateTime),
-		IsVip:     user.IsVip,
+		Level:     uint32(user.Level),
 		Envoy: &EnvoyPolicy{
 			PolicyID:      user.Envoy.PolicyID.Hex(),
 			PolicyType:    int32(user.Envoy.PolicyType),
@@ -114,6 +132,21 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Email{
 			Email: &Email{
 				Address: policy.Address,
+			},
+		}
+	case models.IsEnvoyWebhook:
+	case models.IsEnvoySMS:
+	case models.IsEnvoyTelegram:
+		var policy models.EnvoyTelegram
+		err := storage.CEnvoyTelegram.FindOne(ctx, bson.M{
+			"_id": user.Envoy.PolicyType,
+		}).Decode(&policy)
+		if err != nil {
+			return ret, nil
+		}
+		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Telegram{
+			Telegram: &Telegram{
+				ChatId: policy.ChatId,
 			},
 		}
 	}
