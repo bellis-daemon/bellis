@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/models"
@@ -19,6 +20,17 @@ type handler struct {
 	policy *models.EnvoyTelegram
 }
 
+func escapeCharacters(input string) string {
+	charsToEscape := "_*[]()~`>#-|={}.!"
+	escapedString := input
+
+	for _, char := range charsToEscape {
+		escapedString = strings.ReplaceAll(escapedString, string(char), "\\"+string(char))
+	}
+
+	return escapedString
+}
+
 func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
 	api, err := tgbotapi.NewBotAPIWithAPIEndpoint(storage.Config().TelegramBotToken, storage.Config().TelegramBotApiEndpoint+"/bot%s/%s")
 	if err != nil {
@@ -26,21 +38,24 @@ func (this *handler) AlertOffline(user *models.User, entity *models.Application,
 	}
 	message := tgbotapi.NewMessage(
 		this.policy.ChatId,
-		fmt.Sprintf(`Bellis entity offline alert ⚠
-Entity name:        %s
-Offline message:    %s
-TimeZone:           %s
-Entity create time: %s
-Offline time:       %s
-This should be a note worthy and validating message.
-`,
+		fmt.Sprintf("*Bellis entity offline alert* ⚠\n"+
+			"This should be a note worthy and validating message.\n"+
+			"The following is the information from this offline session:\n"+
+			"```\n"+
+			"Entity name:        %s\n"+
+			"TimeZone:           %s\n"+
+			"Offline message:    %s\n"+
+			"Entity create time: %s\n"+
+			"Offline time:       %s\n"+
+			"```\n",
 			entity.Name,
 			user.Timezone,
+			log.OfflineMessage,
 			entity.CreatedAt.In(user.Timezone.Location()).Format(time.DateTime),
 			log.OfflineTime.In(user.Timezone.Location()).Format(time.DateTime),
-			log.OfflineMessage,
 		),
 	)
+	message.ParseMode = tgbotapi.ModeMarkdown
 	_, err = api.Send(message)
 	if err != nil {
 		return err
