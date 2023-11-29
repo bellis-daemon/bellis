@@ -41,13 +41,11 @@ func (this *handler) AlertOffline(user *models.User, entity *models.Application,
 		fmt.Sprintf("*Bellis entity offline alert* ⚠\n"+
 			"This should be a note worthy and validating message.\n"+
 			"The following is the information from this offline session:\n"+
-			"```\n"+
-			"Entity name:        %s\n"+
-			"TimeZone:           %s\n"+
-			"Offline message:    %s\n"+
-			"Entity create time: %s\n"+
-			"Offline time:       %s\n"+
-			"```\n",
+			"*Entity name:* `%s`\n"+
+			"*TimeZone:* `%s`\n"+
+			"*Entity create time:* `%s`\n"+
+			"*Offline time:* `%s`\n"+
+			"*Offline message:* `%s`\n",
 			entity.Name,
 			user.Timezone,
 			log.OfflineMessage,
