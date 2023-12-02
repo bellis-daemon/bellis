@@ -169,7 +169,7 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 		}
 		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Telegram{
 			Telegram: &Telegram{
-				ChatId: policy.ChatId,
+				ChatId: policy.ChatID,
 			},
 		}
 	}

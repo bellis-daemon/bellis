@@ -37,7 +37,7 @@ func (this *handler) AlertOffline(user *models.User, entity *models.Application,
 		return err
 	}
 	message := tgbotapi.NewMessage(
-		this.policy.ChatId,
+		this.policy.ChatID,
 		fmt.Sprintf("*Bellis entity offline alert* ⚠\n"+
 			"This should be a note worthy and validating message.\n"+
 			"The following is the information from this offline session:\n"+

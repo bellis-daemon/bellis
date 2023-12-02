@@ -11,14 +11,14 @@ import (
 type EnvoyTelegram struct {
 	EnvoyHeader
 	ID     primitive.ObjectID `json:"ID" bson:"_id"`
-	ChatId int64              `json:"ChatId" bson:"ChatId"`
+	ChatID int64              `json:"ChatID" bson:"ChatID"`
 }
 
 func init() {
 	index.RegistrerIndex(&storage.CEnvoyTelegram, []mongo.IndexModel{
 		{
 			Keys: bson.D{
-				{Key: "ChatId", Value: 1},
+				{Key: "ChatID", Value: 1},
 			},
 		},
 	})

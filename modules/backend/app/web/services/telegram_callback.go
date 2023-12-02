@@ -61,13 +61,16 @@ func TelegramCallbackService() gin.HandlerFunc {
 							CreatedAt: time.Now(),
 						},
 						ID:     primitive.NewObjectID(),
-						ChatId: update.Message.Chat.ID,
+						ChatID: update.Message.Chat.ID,
 					})
 					if err != nil {
 						glgf.Warn(err)
 						break
 					}
 					reply.Text = "Welcome to Bellis envoy, successfully bind to user: " + user.Email
+				} else {
+					glgf.Warn(err)
+					break
 				}
 			case "status":
 				entityName := update.Message.CommandArguments()
@@ -94,7 +97,7 @@ func TelegramCallbackService() gin.HandlerFunc {
 						}
 						break
 					}
-					err = all.Decode(&entities)
+					err = all.All(ctx, &entities)
 					if err != nil {
 						glgf.Error(err)
 						reply.Text = "Internal server error"
@@ -138,7 +141,11 @@ from(bucket: "backend")
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
-`, entity.Scheme, entity.ID))
+`, entity.Scheme, entity.ID.Hex()))
+	if err != nil {
+		glgf.Error(err)
+		return ""
+	}
 	for query.Next() {
 		switch query.Record().Field() {
 		case "c_live":
