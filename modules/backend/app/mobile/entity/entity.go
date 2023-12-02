@@ -111,7 +111,6 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 		return &OfflineLogPage{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 	options := request.Pagination.ToOptions().SetSort(bson.M{"$natural": -1})
-	glgf.Debug(options)
 	find, err := storage.COfflineLog.Find(ctx, bson.M{"EntityID": eid}, options)
 	if err != nil {
 		return &OfflineLogPage{}, status.Error(codes.Internal, err.Error())
@@ -227,6 +226,9 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*emptypb.Emp
 	return &emptypb.Empty{}, nil
 }
 
+// GetEntity retrieves the entity details based on the provided EntityID after checking ownership.
+// It first checks the ownership of the entity, then fetches the entity details from the storage and returns it as an Entity object.
+// The options are converted to a Struct message before returning.
 func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
@@ -262,6 +264,9 @@ func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
 	}, nil
 }
 
+// GetAllEntities retrieves all entities belonging to the user from the storage.
+// It fetches the entities based on the user's ID and returns them as a list of Entity objects within an AllEntities response.
+// The options for each entity are converted to structpb.Struct format before being included in the response.
 func (h handler) GetAllEntities(ctx context.Context, e *emptypb.Empty) (*AllEntities, error) {
 	user := midwares.GetUserFromCtx(ctx)
 	var entities []models.Application
@@ -296,6 +301,10 @@ func (h handler) GetAllEntities(ctx context.Context, e *emptypb.Empty) (*AllEnti
 	return res, nil
 }
 
+// GetStatus retrieves the status of a specific entity based on the provided EntityID after checking ownership.
+// It fetches various status metrics including live status, uptime, error message, response time, and live series from the storage and external sources.
+// The retrieved status is returned as an EntityStatus object.
+// The function uses goroutines to concurrently fetch different aspects of the entity's status and aggregates the results before returning.
 func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
@@ -411,7 +420,6 @@ from(bucket: "backend")
 		wg.Wait()
 		close(errC)
 	}()
-
 	for e := range errC {
 		err = errors.Wrap(err, e.Error())
 	}
@@ -421,6 +429,8 @@ from(bucket: "backend")
 	return entityStatus, nil
 }
 
+// GetAllStatus retrieves the status of all entities belonging to the user from the storage.
+// It fetches the status of each entity using the GetStatus function and aggregates the results into an AllEntityStatus response.
 func (h handler) GetAllStatus(ctx context.Context, e *emptypb.Empty) (*AllEntityStatus, error) {
 	ret := &AllEntityStatus{}
 	user := midwares.GetUserFromCtx(ctx)
@@ -446,6 +456,8 @@ func (h handler) GetAllStatus(ctx context.Context, e *emptypb.Empty) (*AllEntity
 	return ret, nil
 }
 
+// GetSeries retrieves time series data for a specific entity based on the provided EntityID after checking ownership.
+// It fetches the time series data from the storage and returns it as an EntitySeries object, with the data organized into a structpb.Struct format.
 func (h handler) GetSeries(ctx context.Context, id *EntityID) (*EntitySeries, error) {
 	err := assertion.Assert(
 		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
@@ -494,6 +506,8 @@ func (h handler) NeedAuth() bool {
 	return true
 }
 
+// init registers the EntityServiceServer with the provided gRPC server using the handler implementation.
+// It is called during package initialization and returns the service name "Entity" for mobile registration.
 func init() {
 	mobile.Register(func(server *grpc.Server) string {
 		RegisterEntityServiceServer(server, &handler{})

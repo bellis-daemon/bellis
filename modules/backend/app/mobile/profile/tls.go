@@ -27,6 +27,8 @@ func (this *tlsHandler) NeedAuth() bool {
 	return true
 }
 
+// GetUserTLS retrieves the list of TLS configurations belonging to the user from the storage.
+// It fetches the TLS configurations based on the user's ID and returns them as a TLSList response, with sensitive data hidden.
 func (this *tlsHandler) GetUserTLS(ctx context.Context, empty *emptypb.Empty) (*TLSList, error) {
 	ret := &TLSList{}
 	user := midwares.GetUserFromCtx(ctx)
@@ -60,6 +62,8 @@ func (this *tlsHandler) GetUserTLS(ctx context.Context, empty *emptypb.Empty) (*
 	return ret, nil
 }
 
+// CreateTLS creates a new TLS configuration for the user based on the provided TLS object.
+// It initializes a new TLS model, validates the TLS configuration, inserts it into the storage, and returns the resulting TLS object or an error.
 func (this *tlsHandler) CreateTLS(ctx context.Context, cert *TLS) (*TLS, error) {
 	user := midwares.GetUserFromCtx(ctx)
 	tls := &models.TLS{
@@ -86,6 +90,8 @@ func (this *tlsHandler) CreateTLS(ctx context.Context, cert *TLS) (*TLS, error) 
 	return cert, nil
 }
 
+// UpdateTLS updates an existing TLS configuration for the user based on the provided TLS object.
+// It fetches the existing TLS configuration, validates the user's permission, updates the configuration in the storage, and returns the updated TLS object or an error.
 func (this *tlsHandler) UpdateTLS(ctx context.Context, cert *TLS) (*TLS, error) {
 	id, err := primitive.ObjectIDFromHex(cert.Id)
 	if err != nil {
@@ -114,6 +120,8 @@ func (this *tlsHandler) UpdateTLS(ctx context.Context, cert *TLS) (*TLS, error) 
 	return cert, nil
 }
 
+// DeleteTLS deletes a TLS configuration based on the provided ID.
+// It removes the TLS configuration from the storage and returns an empty response or an error if encountered.
 func (this *tlsHandler) DeleteTLS(ctx context.Context, id *public.PrimitiveID) (*emptypb.Empty, error) {
 	oid, err := primitive.ObjectIDFromHex(id.Id)
 	if err != nil {

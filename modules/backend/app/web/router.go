@@ -9,6 +9,8 @@ import (
 	"net"
 )
 
+// ServeWeb serves the gRPC and HTTP endpoints using the provided net.Listener.
+// It wraps the gRPC server, sets up routing for callback services, and starts serving requests using the gin router.
 func ServeWeb(lis net.Listener) {
 	wrappedGrpc := grpcweb.WrapServer(mobile.Server())
 	router := gin.Default()

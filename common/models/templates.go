@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
+)
 
 type Timezone string
 
@@ -13,4 +16,9 @@ func (this Timezone) Location() *time.Location {
 	}
 	loc, _ := time.LoadLocation(s)
 	return loc
+}
+
+type EnvoyHeader struct {
+	UserID    primitive.ObjectID `json:"UserID" bson:"user_id"`
+	CreatedAt time.Time          `json:"CreatedAt" bson:"created_at"`
 }
