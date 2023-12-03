@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -103,9 +105,18 @@ func TelegramCallbackService() gin.HandlerFunc {
 						reply.Text = "Internal server error"
 						break
 					}
+					var wg sync.WaitGroup
+					var buf bytes.Buffer
 					for i := range entities {
-						reply.Text += getEntityStatusInline(ctx, &entities[i])
+						wg.Add(1)
+						i := i
+						go func() {
+							defer wg.Done()
+							buf.WriteString(getEntityStatusInline(ctx, &entities[i]))
+						}()
 					}
+					wg.Wait()
+					reply.Text = buf.String()
 				} else {
 					var entity models.Application
 					err := storage.CEntity.FindOne(ctx, bson.M{"Name": entityName, "UserID": policy.UserID}).Decode(&entity)
