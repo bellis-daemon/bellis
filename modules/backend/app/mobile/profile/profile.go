@@ -119,7 +119,6 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 			PolicyID:      user.Envoy.PolicyID.Hex(),
 			PolicyType:    int32(user.Envoy.PolicyType),
 			OfflineAlert:  user.Envoy.OfflineAlert,
-			PredictAlert:  user.Envoy.PredictAlert,
 			PolicyContent: &EnvoyPolicyContent{},
 		},
 	}

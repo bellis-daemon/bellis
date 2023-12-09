@@ -39,7 +39,7 @@ func main() {
 	}
 	m := cmux.New(l)
 	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
-	webL := m.Match(cmux.Any())
+	webL := m.Match(cmux.HTTP1Fast())
 	go mobile.ServeGrpc(grpcL)
 	go web.ServeWeb(webL)
 	err = m.Serve()

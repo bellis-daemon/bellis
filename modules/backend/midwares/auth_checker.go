@@ -61,7 +61,7 @@ func check(ctx context.Context) *models.User {
 		user         models.User
 		requestToken string
 	)
-	if value, ok := md["request_token"]; ok {
+	if value, ok := md["request-token"]; ok {
 		requestToken = value[0]
 	}
 	if email, err := storage.Redis().Get(ctx, requestToken).Result(); err != nil {

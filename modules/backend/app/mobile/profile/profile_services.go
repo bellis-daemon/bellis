@@ -63,6 +63,5 @@ func useNewPolicy(ctx context.Context, policy any) (*EnvoyPolicy, error) {
 		PolicyID:     user.Envoy.PolicyID.Hex(),
 		PolicyType:   int32(user.Envoy.PolicyType),
 		OfflineAlert: user.Envoy.OfflineAlert,
-		PredictAlert: user.Envoy.PredictAlert,
 	}, nil
 }

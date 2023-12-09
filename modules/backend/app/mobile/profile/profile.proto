@@ -18,8 +18,7 @@ message EnvoyPolicy{
   int32 policyType = 2;
   int32 sensitive = 3;
   bool offlineAlert = 4;
-  bool predictAlert = 5;
-  EnvoyPolicyContent policyContent = 6;
+  EnvoyPolicyContent policyContent = 5;
 }
 
 message NewPassword{

@@ -67,7 +67,6 @@ func NewUser() *User {
 		Level:     0,
 		Envoy: EnvoyPolicy{
 			OfflineAlert: false,
-			PredictAlert: false,
 			Sensitive:    3,
 		},
 		Timezone: DefaultTimezone,
@@ -172,7 +171,6 @@ type EnvoyPolicy struct {
 	PolicyID     primitive.ObjectID `json:"PolicyID" bson:"PolicyID"`
 	PolicyType   EnvoyPolicyType    `json:"PolicyType" bson:"PolicyType"`
 	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
-	PredictAlert bool               `json:"PredictAlert" bson:"PredictAlert"`
 	Sensitive    int                `json:"Sensitive" bson:"Sensitive"`
 }
 

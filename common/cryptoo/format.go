@@ -26,7 +26,7 @@ func FormatDuration(duration time.Duration) string {
 		Suffix string
 	}{
 		{years, "y"},
-		{months, "M"},
+		{months, "m"},
 		{days, "d"},
 		{hours, "h"},
 		{minutes, "m"},
