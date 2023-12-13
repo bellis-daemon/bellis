@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"github.com/bellis-daemon/bellis/modules/backend/jobs"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/bellis-daemon/bellis/common"
 	_ "github.com/bellis-daemon/bellis/common/models"
@@ -40,10 +45,19 @@ func main() {
 	m := cmux.New(l)
 	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
 	webL := m.Match(cmux.HTTP1Fast())
-	go mobile.ServeGrpc(grpcL)
-	go web.ServeWeb(webL)
-	err = m.Serve()
-	if err != nil {
-		panic(err)
-	}
+	ctx, cancel := context.WithCancel(context.Background())
+	go mobile.ServeGrpc(ctx, grpcL)
+	go web.ServeWeb(ctx, webL)
+	go func() {
+		err = m.Serve()
+		if err != nil {
+			panic(err)
+		}
+	}()
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	glgf.Warn("Shutting down server")
+	cancel()
+	time.Sleep(3 * time.Second)
 }

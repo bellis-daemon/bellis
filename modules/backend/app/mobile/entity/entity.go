@@ -63,6 +63,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 		}
 	}()
 	var wg sync.WaitGroup
+	var once sync.Once
 	defer ticker.Stop()
 	for {
 		select {
@@ -85,6 +86,9 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 				}
 				wg.Wait()
 				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Now().Sub(start).Milliseconds())
+				once.Do(func() {
+					server.Send(all)
+				})
 				err := server.Send(all)
 				if err != nil {
 					glgf.Error(err)

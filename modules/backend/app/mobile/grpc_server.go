@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"context"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
@@ -46,11 +47,17 @@ func Register(reg func(server *grpc.Server) string) {
 	glgf.Infof("Registering service to grpc server: %s", reg(server))
 }
 
-func ServeGrpc(lis net.Listener) {
+func ServeGrpc(ctx context.Context, lis net.Listener) {
 	glgf.Success("GRPC server now listening:", lis.Addr())
-	err := server.Serve(lis)
-	if err != nil {
-		panic(err)
+	go func() {
+		err := server.Serve(lis)
+		if err != nil {
+			panic(err)
+		}
+	}()
+	select {
+	case <-ctx.Done():
+		server.GracefulStop()
 	}
 }
 
