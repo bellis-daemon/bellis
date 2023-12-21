@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"sync"
 	"time"
+
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/bellis-daemon/bellis/common"
@@ -20,14 +21,19 @@ import (
 	"github.com/spf13/cast"
 )
 
+var pool = sync.Pool{
+	New: func() any {
+		return new(Entity)
+	},
+}
+
 func NewEntity(ctx context.Context, deadline time.Time, entity *models.Application) (*Entity, error) {
+	app := pool.Get().(*Entity)
 	ctx2, cancel := context.WithDeadline(ctx, deadline)
-	app := &Entity{
-		ctx:         ctx2,
-		cancel:      cancel,
-		deadline:    deadline,
-		measurement: entity.Scheme,
-	}
+	app.ctx = ctx2
+	app.cancel = cancel
+	app.deadline = deadline
+	app.measurement = entity.Scheme
 	err := app.UpdateOptions(entity)
 	if err != nil {
 		return nil, err
