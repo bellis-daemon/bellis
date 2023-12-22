@@ -34,6 +34,7 @@ func NewEntity(ctx context.Context, deadline time.Time, entity *models.Applicati
 	app.cancel = cancel
 	app.deadline = deadline
 	app.measurement = entity.Scheme
+	app.once = sync.Once{}
 	err := app.UpdateOptions(entity)
 	if err != nil {
 		return nil, err
