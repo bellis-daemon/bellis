@@ -84,7 +84,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 					}()
 				}
 				wg.Wait()
-				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Now().Sub(start).Milliseconds())
+				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Since(start).Milliseconds())
 				err := server.Send(all)
 				if err != nil {
 					glgf.Error(err)
@@ -325,7 +325,7 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		query, err := storage.QueryInfluxDB.Query(ctx,
 			fmt.Sprintf(`
 from(bucket: "backend")
-  |> range(start: -10m)
+  |> range(start: -1m)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")`,

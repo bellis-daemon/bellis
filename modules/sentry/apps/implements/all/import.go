@@ -3,6 +3,7 @@ package all
 import (
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/apache"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/bt"
+	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/couchdb"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/dns"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/docker"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/github"
