@@ -2,6 +2,7 @@ package geo
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,36 +32,36 @@ func (this *GeoData) String() string {
 	}
 	var buf bytes.Buffer
 	var count = 0
-	if this.IP!=""{
-		if count!=0{
+	if this.IP != "" {
+		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.IP)
 		count++
 	}
-	if this.Country!=""{
-		if count!=0{
+	if this.Country != "" {
+		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.Country)
 		count++
 	}
-	if this.Region!=""{
-		if count!=0{
+	if this.Region != "" {
+		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.Region)
 		count++
 	}
-	if this.City!=""{
-		if count!=0{
+	if this.City != "" {
+		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.City)
 		count++
 	}
-	if this.ISP!=""{
-		if count!=0{
+	if this.ISP != "" {
+		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.ISP)
