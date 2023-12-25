@@ -11,7 +11,6 @@ import (
 func GetIpInfo() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ip := ctx.ClientIP()
-		glgf.Debug(ip)
 		res, err := geo.FromLocal(ip)
 		if err != nil {
 			glgf.Error(err)

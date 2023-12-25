@@ -32,35 +32,35 @@ func (this *GeoData) String() string {
 	}
 	var buf bytes.Buffer
 	var count = 0
-	if this.IP != "" {
+	if this.IP != "" && this.IP != "0" {
 		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.IP)
 		count++
 	}
-	if this.Country != "" {
+	if this.Country != "" && this.Country != "0" {
 		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.Country)
 		count++
 	}
-	if this.Region != "" {
+	if this.Region != "" && this.Region != "0" {
 		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.Region)
 		count++
 	}
-	if this.City != "" {
+	if this.City != "" && this.City != "0" {
 		if count != 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString(this.City)
 		count++
 	}
-	if this.ISP != "" {
+	if this.ISP != "" && this.ISP != "0" {
 		if count != 0 {
 			buf.WriteString(",")
 		}
