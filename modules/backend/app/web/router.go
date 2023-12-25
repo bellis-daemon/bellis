@@ -1,9 +1,10 @@
 package web
 
 import (
+	"net"
+
 	"github.com/bellis-daemon/bellis/modules/backend/app/web/services"
 	"github.com/gin-gonic/gin"
-	"net"
 )
 
 // ServeWeb serves the gRPC and HTTP endpoints using the provided net.Listener.
@@ -14,6 +15,10 @@ func ServeWeb(lis net.Listener) {
 		callbackRouter := router.Group("callback")
 		{
 			callbackRouter.POST("telegram", services.TelegramCallbackService())
+		}
+		apiRouter := router.Group("api")
+		{
+			apiRouter.GET("ip", services.GetIpInfo())
 		}
 	}
 	err := router.RunListener(lis)
