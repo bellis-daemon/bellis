@@ -2,10 +2,14 @@ package midwares
 
 import (
 	"context"
+	"time"
+
+	"github.com/bellis-daemon/bellis/common/geo"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -72,6 +76,36 @@ func check(ctx context.Context) *models.User {
 			glgf.Error(err)
 			return nil
 		}
+		// success login check
+		onAuthed(ctx, &user)
 		return &user
+	}
+}
+
+func onAuthed(ctx context.Context, user *models.User) {
+	exist, err := storage.Redis().Exists(ctx, "ONLINE"+user.Email).Result()
+	if err != nil {
+		glgf.Error(err)
+		return
+	}
+	if exist == 0 {
+		err = storage.Redis().Set(ctx, "ONLINE"+user.Email, true, 10*time.Minute).Err()
+		if err != nil {
+			glgf.Error(err)
+			return
+		}
+		ip := ipFromContext(ctx)
+		loc, err := geo.FromLocal(ip)
+		if err != nil {
+			glgf.Error(err)
+			return
+		}
+		storage.CUserLoginLog.InsertOne(ctx, &models.UserLoginLog{
+			ID:        primitive.NewObjectID(),
+			UserID:    user.ID,
+			LoginTime: time.Now(),
+			Location:  loc.String(),
+		})
+
 	}
 }
