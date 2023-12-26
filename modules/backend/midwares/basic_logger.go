@@ -49,8 +49,23 @@ func ipFromContext(ctx context.Context) string {
 		if p, ok := peer.FromContext(ctx); ok {
 			addr = p.Addr.String()
 		} else {
-			addr = "Unknown"
+			addr = "Unknown Address"
 		}
 	}
 	return addr
+}
+
+func deviceFromContext(ctx context.Context) string {
+	var device string
+	md, _ := metadata.FromIncomingContext(ctx)
+	if deviceName := md.Get("Request-Device"); len(deviceName) > 0 {
+		device = deviceName[0]
+	} else {
+		if p, ok := peer.FromContext(ctx); ok {
+			device = p.Addr.String()
+		} else {
+			device = "Unknown Device"
+		}
+	}
+	return device
 }

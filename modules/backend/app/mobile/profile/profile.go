@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/bellis-daemon/bellis/common/cryptoo"
+	"github.com/bellis-daemon/bellis/common/generic"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,6 +21,26 @@ import (
 
 // implement ProfileServiceServer
 type handler struct{}
+
+func (h handler) GetUserLoginLogs(ctx context.Context, empty *emptypb.Empty) (*UserLoginLogs, error) {
+	user := midwares.GetUserFromCtx(ctx)
+	var logs []models.UserLoginLog
+	find, err := storage.CUserLoginLog.Find(ctx, bson.M{"UserID": user.ID}, options.Find().SetSort(bson.M{"_id": -1}).SetLimit(7))
+	if err != nil {
+		return &UserLoginLogs{}, status.Error(codes.Internal, err.Error())
+	}
+	err = find.All(ctx, &logs)
+	if err != nil {
+		return &UserLoginLogs{}, status.Error(codes.Internal, err.Error())
+	}
+	return &UserLoginLogs{Logs: generic.SliceConvert(logs, func(s models.UserLoginLog) *UserLoginLog {
+		return &UserLoginLog{
+			LoginTime: s.LoginTime.In(user.Timezone.Location()).Format(time.DateTime),
+			Location:  s.Location,
+			Device:    s.Device,
+		}
+	})}, nil
+}
 
 // GetEnvoyTelegramLink generates a unique Telegram link for the user to connect with the server's Telegram bot.
 // It creates a unique captcha, associates it with the user ID in Redis, and returns the Telegram link for the user to initiate the connection.

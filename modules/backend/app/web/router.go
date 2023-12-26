@@ -11,7 +11,7 @@ import (
 
 // ServeWeb serves the gRPC and HTTP endpoints using the provided net.Listener.
 // It wraps the gRPC server, sets up routing for callback services, and starts serving requests using the gin router.
-func ServeWeb(lis net.Listener) {
+func ServeWeb(ctx context.Context, lis net.Listener) {
 	router := gin.Default()
 	{
 		callbackRouter := router.Group("callback")

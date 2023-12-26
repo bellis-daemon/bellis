@@ -58,6 +58,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	glgf.Warn("Shutting down server")
+	m.Close()
 	cancel()
 	time.Sleep(3 * time.Second)
 }

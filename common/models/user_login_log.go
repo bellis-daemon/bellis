@@ -15,6 +15,7 @@ type UserLoginLog struct {
 	UserID    primitive.ObjectID `json:"UserID" bson:"UserID"`
 	LoginTime time.Time          `json:"LoginTime" bson:"LoginTime"`
 	Location  string             `json:"Location" bson:"Location"`
+	Device    string             `json:"Device" bson:"Device"`
 }
 
 func init() {
