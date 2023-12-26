@@ -6,6 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/gin-gonic/gin"
@@ -15,9 +21,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"net/http"
-	"sync"
-	"time"
 )
 
 // TelegramCallbackService handles the callback from the Telegram bot.
@@ -107,15 +110,22 @@ func TelegramCallbackService() gin.HandlerFunc {
 					}
 					var wg sync.WaitGroup
 					var buf bytes.Buffer
+					var ls []string
 					for i := range entities {
 						wg.Add(1)
 						i := i
 						go func() {
 							defer wg.Done()
-							buf.WriteString(getEntityStatusInline(ctx, &entities[i]))
+							ls = append(ls, getEntityStatusInline(ctx, &entities[i]))
 						}()
 					}
 					wg.Wait()
+					sort.Slice(ls, func(i, j int) bool {
+						return strings.Split(ls[i], ":")[0] < strings.Split(ls[j], ":")[0]
+					})
+					for i := range entities {
+						buf.WriteString(ls[i])
+					}
 					reply.Text = buf.String()
 				} else {
 					var entity models.Application

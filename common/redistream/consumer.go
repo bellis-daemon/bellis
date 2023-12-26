@@ -3,16 +3,17 @@ package redistream
 import (
 	"context"
 	"fmt"
-	"github.com/bellis-daemon/bellis/common/storage"
-	"github.com/minoic/glgf"
-	"github.com/pkg/errors"
-	"github.com/redis/go-redis/v9"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/minoic/glgf"
+	"github.com/pkg/errors"
+	"github.com/redis/go-redis/v9"
 )
 
 type ConsumerOptions struct {
@@ -26,6 +27,7 @@ type ConsumerOptions struct {
 	// >=1: fix workers that can limit consume speed
 	Workers      int
 	BufferSize   int // default: 16 (too big will cause pending timeout)
+	MaxRetry     int // default: 10 times
 	ErrorHandler func(err error)
 }
 
@@ -66,6 +68,9 @@ func NewConsumer(r redis.UniversalClient, options ...*ConsumerOptions) *Consumer
 	}
 	if c.options.Workers < 0 {
 		panic("Redistream workers cant be negative number")
+	}
+	if c.options.MaxRetry <= 0 {
+		c.options.MaxRetry = 10
 	}
 	if c.options.BufferSize < 0 {
 		panic("Redistream buffer size cant be negative number")
@@ -197,6 +202,13 @@ func (this *Consumer) reclaim(ctx context.Context) {
 					msgs := make([]string, 0)
 
 					for _, r := range res {
+						if r.RetryCount >= int64(this.options.MaxRetry) {
+							err = this.r.XAck(ctx, stream, this.options.GroupName, r.ID).Err()
+							if err != nil {
+								this.options.ErrorHandler(errors.Wrapf(err, "error acknowledging after max retry for %q stream and %q message", stream, r.ID))
+								continue
+							}
+						}
 						if r.Idle >= this.options.PendingTimeout {
 							claimres, err := this.r.XClaim(ctx, &redis.XClaimArgs{
 								Stream:   stream,

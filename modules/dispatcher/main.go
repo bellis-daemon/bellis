@@ -6,7 +6,6 @@ import (
 	"github.com/bellis-daemon/bellis/modules/dispatcher/consumer"
 	"github.com/bellis-daemon/bellis/modules/dispatcher/dispatch"
 	"github.com/minoic/glgf"
-	_ "net/http/pprof"
 )
 
 var (

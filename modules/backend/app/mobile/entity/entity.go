@@ -329,7 +329,7 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		query, err := storage.QueryInfluxDB.Query(ctx,
 			fmt.Sprintf(`
 from(bucket: "backend")
-  |> range(start: -10m)
+  |> range(start: -1m)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")`,

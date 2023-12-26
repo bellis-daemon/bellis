@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"sync"
 	"time"
+
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/bellis-daemon/bellis/common"
@@ -20,14 +21,20 @@ import (
 	"github.com/spf13/cast"
 )
 
+var pool = sync.Pool{
+	New: func() any {
+		return new(Entity)
+	},
+}
+
 func NewEntity(ctx context.Context, deadline time.Time, entity *models.Application) (*Entity, error) {
+	app := pool.Get().(*Entity)
 	ctx2, cancel := context.WithDeadline(ctx, deadline)
-	app := &Entity{
-		ctx:         ctx2,
-		cancel:      cancel,
-		deadline:    deadline,
-		measurement: entity.Scheme,
-	}
+	app.ctx = ctx2
+	app.cancel = cancel
+	app.deadline = deadline
+	app.measurement = entity.Scheme
+	app.once = sync.Once{}
 	err := app.UpdateOptions(entity)
 	if err != nil {
 		return nil, err
@@ -59,7 +66,15 @@ func (this *Entity) Run() {
 			glgf.Info("Entity started:", this.Options.Name, this.Options.ID, "till", this.deadline, "rest time:", fmt.Sprintf("%.2f", this.deadline.Sub(time.Now()).Seconds()), "(s)")
 			defer glgf.Warn("Entity stopped:", this.Options.Name, this.Options.ID)
 			go this.refresh()
-			t1 := time.NewTicker(time.Duration(5*this.Options.Public.Multiplier*this.Handler.Multiplier()) * time.Second)
+			multiplier1 := this.Options.Public.Multiplier
+			if multiplier1 <= 0 {
+				multiplier1 = 1
+			}
+			multiplier2 := this.Handler.Multiplier()
+			if multiplier2 <= 0 {
+				multiplier2 = 1
+			}
+			t1 := time.NewTicker(time.Duration(5*multiplier1*multiplier2) * time.Second)
 			for {
 				select {
 				case <-t1.C:
