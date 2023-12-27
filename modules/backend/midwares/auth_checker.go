@@ -2,6 +2,8 @@ package midwares
 
 import (
 	"context"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/geo"
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
@@ -12,7 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 // UserIncomingCtx To get user model from incoming context in grpc
@@ -76,19 +77,20 @@ func check(ctx context.Context) *models.User {
 			return nil
 		}
 		// success login check
-		onAuthed(ctx, &user)
+		onAuthed(ctx, &user, requestToken)
 		return &user
 	}
 }
 
-func onAuthed(ctx context.Context, user *models.User) {
+func onAuthed(ctx context.Context, user *models.User, requestToken string) {
 	go func() {
-		setted, err := storage.Redis().SetNX(ctx, "ONLINE"+user.Email, true, 10*time.Minute).Result()
+		setted, err := storage.Redis().SetNX(ctx, "ONLINE"+user.Email+requestToken, true, 10*time.Minute).Result()
 		if err != nil {
 			glgf.Error(err)
 			return
 		}
-		if setted == true {
+		storage.Redis().Expire(ctx, "ONLINE"+user.Email+requestToken, 10*time.Minute)
+		if setted {
 			ip := ipFromContext(ctx)
 			loc, err := geo.FromLocal(ip)
 			if err != nil {
@@ -96,11 +98,12 @@ func onAuthed(ctx context.Context, user *models.User) {
 				return
 			}
 			_, err = storage.CUserLoginLog.InsertOne(ctx, &models.UserLoginLog{
-				ID:        primitive.NewObjectID(),
-				UserID:    user.ID,
-				LoginTime: time.Now(),
-				Location:  loc.String(),
-				Device:    deviceFromContext(ctx),
+				ID:         primitive.NewObjectID(),
+				UserID:     user.ID,
+				LoginTime:  time.Now(),
+				Location:   loc.String(),
+				Device:     deviceFromContext(ctx),
+				DeviceType: deviceTypeFromContext(ctx),
 			})
 			if err != nil {
 				glgf.Error(err)

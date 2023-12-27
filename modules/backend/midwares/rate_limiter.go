@@ -54,5 +54,4 @@ func RateLimiter(mode uint) grpc.UnaryServerInterceptor {
 		}
 	}
 	panic("invalid limiter mode")
-	return nil
 }

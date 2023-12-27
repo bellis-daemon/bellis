@@ -69,3 +69,18 @@ func deviceFromContext(ctx context.Context) string {
 	}
 	return device
 }
+
+func deviceTypeFromContext(ctx context.Context) string {
+	var device string
+	md, _ := metadata.FromIncomingContext(ctx)
+	if deviceType := md.Get("Request-Device-Type"); len(deviceType) > 0 {
+		device = deviceType[0]
+	} else {
+		if p, ok := peer.FromContext(ctx); ok {
+			device = p.Addr.String()
+		} else {
+			device = "Unknown DeviceType"
+		}
+	}
+	return device
+}
