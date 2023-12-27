@@ -47,7 +47,7 @@ func ipFromContext(ctx context.Context) string {
 		addr = forwarded[0]
 	} else {
 		if p, ok := peer.FromContext(ctx); ok {
-			addr = p.Addr.String()
+			addr, _, _ = strings.Cut(p.Addr.String(), ":")
 		} else {
 			addr = "Unknown Address"
 		}
@@ -61,11 +61,7 @@ func deviceFromContext(ctx context.Context) string {
 	if deviceName := md.Get("Request-Device"); len(deviceName) > 0 {
 		device = deviceName[0]
 	} else {
-		if p, ok := peer.FromContext(ctx); ok {
-			device = p.Addr.String()
-		} else {
-			device = "Unknown Device"
-		}
+		device = "Unknown Device"
 	}
 	return device
 }
@@ -76,11 +72,7 @@ func deviceTypeFromContext(ctx context.Context) string {
 	if deviceType := md.Get("Request-Device-Type"); len(deviceType) > 0 {
 		device = deviceType[0]
 	} else {
-		if p, ok := peer.FromContext(ctx); ok {
-			device = p.Addr.String()
-		} else {
-			device = "Unknown DeviceType"
-		}
+		device = "Unknown DeviceType"
 	}
 	return device
 }
