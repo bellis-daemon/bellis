@@ -203,6 +203,7 @@ func (this *Consumer) reclaim(ctx context.Context) {
 
 					for _, r := range res {
 						if r.RetryCount >= int64(this.options.MaxRetry) {
+							glgf.Warn("Discarding messages beyond retries: %s",r.ID)
 							err = this.r.XAck(ctx, stream, this.options.GroupName, r.ID).Err()
 							if err != nil {
 								this.options.ErrorHandler(errors.Wrapf(err, "error acknowledging after max retry for %q stream and %q message", stream, r.ID))

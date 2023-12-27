@@ -56,7 +56,7 @@ func (this *handler) AlertOffline(user *models.User, entity *models.Application,
 	message.ParseMode = tgbotapi.ModeMarkdown
 	_, err = api.Send(message)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w via policy: %+v", err, this.policy)
 	}
 	return nil
 }
