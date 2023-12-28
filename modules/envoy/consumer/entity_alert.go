@@ -45,13 +45,15 @@ func entityOfflineAlert() {
 			return fmt.Errorf("cant find user using user id: %s: %w", entity.UserID.Hex(), err)
 		}
 		// check if entity is previously offline
-		ok, err := isOnlineState(ctx, &entity)
+		log, err := recentOfflineLog(ctx, &entity)
 		if err != nil {
 			return fmt.Errorf("cant get entity offline log: %w", err)
 		}
-		if !ok {
-			glgf.Warn("entity alert canceled because of previously offline: ", entity, message)
-			return nil
+		if !log.OnlineTime.IsZero() {
+			log, err = writeOfflineLog(ctx, &entity, message.Values["Message"].(string), offlineTime)
+			if err != nil {
+				return fmt.Errorf("cant write offline log: %w", err)
+			}
 		}
 		envoyType := ""
 		var envoyDriver drivers.EnvoyDriver
@@ -72,30 +74,29 @@ func entityOfflineAlert() {
 			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
 			return nil
 		}
-		err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
-			log, err := writeOfflineLog(sessionContext, &entity, message.Values["Message"].(string), offlineTime, envoyType)
-			if err != nil {
-				return fmt.Errorf("cant write offline log: %w", err)
-			}
-			err = envoyDriver.AlertOffline(user, &entity, log)
-			if err != nil {
-				return fmt.Errorf("send offline alert failed: %w", err)
-			}
-			return nil
-		})
+		err = envoyDriver.AlertOffline(user, &entity, log)
+		envoyLog := &models.EnvoyLog{
+			ID:             primitive.NewObjectID(),
+			SendTime:       time.Now(),
+			Success:        err == nil,
+			FailedMessage:  err.Error(),
+			OfflineLogID:   log.ID,
+			PolicyType:     envoyType,
+			PolicySnapShot: envoyDriver.PolicySnapShot(),
+		}
+		storage.CEnvoyLog.InsertOne(ctx, envoyLog)
 		if err != nil {
-			return err
+			return fmt.Errorf("send offline alert failed: %w", err)
 		}
 		glgf.Debugf("Offline alert of %s sent via %s", entity.Name, envoyType)
 		return nil
 	})
 }
 
-func writeOfflineLog(ctx context.Context, entity *models.Application, envoyMessage string, offlineTime time.Time, envoyType string) (*models.OfflineLog, error) {
+func writeOfflineLog(ctx context.Context, entity *models.Application, envoyMessage string, offlineTime time.Time) (*models.OfflineLog, error) {
 	log := &models.OfflineLog{
 		ID:             primitive.NewObjectID(),
 		EntityID:       entity.ID,
-		EnvoyType:      envoyType,
 		OfflineTime:    time.Now(),
 		OfflineMessage: envoyMessage,
 		SentryLogs:     []models.SentryLog{},
@@ -187,15 +188,15 @@ func writeOnlineLog(ctx context.Context, entity *models.Application, onlineTIme 
 	return nil
 }
 
-func isOnlineState(ctx context.Context, entity *models.Application) (bool, error) {
+func recentOfflineLog(ctx context.Context, entity *models.Application) (*models.OfflineLog, error) {
 	var log models.OfflineLog
 	err := storage.COfflineLog.FindOne(ctx, bson.M{"EntityID": entity.ID}, options.FindOne().SetSort(bson.M{"$natural": -1})).Decode(&log)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return false, fmt.Errorf("internal mongodb err: %w", err)
+			return nil, fmt.Errorf("internal mongodb err: %w", err)
 		} else {
-			return true, nil
+			return &models.OfflineLog{OnlineTime: time.Now()}, nil
 		}
 	}
-	return !log.OnlineTime.IsZero(), nil
+	return &log, nil
 }

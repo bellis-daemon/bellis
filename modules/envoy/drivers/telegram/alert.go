@@ -11,6 +11,7 @@ import (
 	"github.com/bellis-daemon/bellis/modules/envoy/drivers"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/minoic/glgf"
+	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -74,6 +75,13 @@ func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriv
 	}
 	return this
 }
+
+func (this *handler) PolicySnapShot() bson.M {
+	ret := make(bson.M)
+	_ = mapstructure.Decode(this.policy, &ret)
+	return ret
+}
+
 
 func New(ctx context.Context) drivers.EnvoyDriver {
 	return &handler{ctx: ctx}

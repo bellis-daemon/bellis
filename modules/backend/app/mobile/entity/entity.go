@@ -129,7 +129,6 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 		OfflineLogs: generic.SliceConvert(logs, func(log models.OfflineLog) *OfflineLog {
 			return &OfflineLog{
 				OfflineTime: log.OfflineTime.Local().Format(time.DateTime),
-				EnvoyType:   log.EnvoyType,
 				Duration:    cryptoo.FormatDuration(log.OnlineTime.Sub(log.OfflineTime)),
 				SentryLogs: generic.SliceConvert(log.SentryLogs, func(log models.SentryLog) *SentryLog {
 					return &SentryLog{

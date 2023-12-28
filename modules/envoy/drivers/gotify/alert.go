@@ -15,6 +15,7 @@ import (
 	"github.com/gotify/go-api-client/v2/gotify"
 	gmodels "github.com/gotify/go-api-client/v2/models"
 	"github.com/minoic/glgf"
+	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -37,6 +38,13 @@ func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriv
 	}
 	return this
 }
+
+func (this *handler) PolicySnapShot() bson.M {
+	ret := make(bson.M)
+	_ = mapstructure.Decode(this.policy, &ret)
+	return ret
+}
+
 
 func (this *handler) AlertOffline(user *models.User, entity *models.Application, log *models.OfflineLog) error {
 	gotifyURL, err := url.Parse(this.policy.URL)

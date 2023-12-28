@@ -15,6 +15,7 @@ var (
 	CEnvoyWebhook  *mongo.Collection
 	CEnvoyTelegram *mongo.Collection
 	COfflineLog    *mongo.Collection
+	CEnvoyLog      *mongo.Collection
 	CUserLoginLog  *mongo.Collection
 	CTLS           *mongo.Collection
 	client         *mongo.Client
@@ -38,6 +39,7 @@ func ConnectMongo() {
 	CEnvoyGotify = bellisBackend.Collection("EnvoyGotify")
 	CEnvoyWebhook = bellisBackend.Collection("EnvoyWebhook")
 	CEnvoyTelegram = bellisBackend.Collection("EnvoyTelegram")
+	CEnvoyLog = bellisBackend.Collection("EnvoyLog")
 	CTLS = bellisBackend.Collection("TLS")
 }
 

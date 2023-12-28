@@ -13,7 +13,6 @@ import (
 type OfflineLog struct {
 	ID             primitive.ObjectID `bson:"_id"`
 	EntityID       primitive.ObjectID `bson:"EntityID"`
-	EnvoyType      string             `bson:"EnvoyType"`
 	OfflineTime    time.Time          `bson:"OfflineTime"`
 	OfflineMessage string             `bson:"OfflineMessage"`
 	OnlineTime     time.Time          `bson:"OnlineTime"`

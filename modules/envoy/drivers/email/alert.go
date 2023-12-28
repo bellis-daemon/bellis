@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mitchellh/mapstructure"
 	mail "github.com/xhit/go-simple-mail/v2"
 
 	"github.com/bellis-daemon/bellis/common/models"
@@ -53,6 +54,12 @@ func (this *handler) WithPolicyId(policyId primitive.ObjectID) drivers.EnvoyDriv
 		glgf.Error(err)
 	}
 	return this
+}
+
+func (this *handler) PolicySnapShot() bson.M {
+	ret := make(bson.M)
+	_ = mapstructure.Decode(this.policy, &ret)
+	return ret
 }
 
 func New(ctx context.Context) drivers.EnvoyDriver {
