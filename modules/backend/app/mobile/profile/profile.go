@@ -35,9 +35,10 @@ func (h handler) GetUserLoginLogs(ctx context.Context, empty *emptypb.Empty) (*U
 	}
 	return &UserLoginLogs{Logs: generic.SliceConvert(logs, func(s models.UserLoginLog) *UserLoginLog {
 		return &UserLoginLog{
-			LoginTime: s.LoginTime.In(user.Timezone.Location()).Format(time.DateTime),
-			Location:  s.Location,
-			Device:    s.Device,
+			LoginTime:  s.LoginTime.In(user.Timezone.Location()).Format(time.DateTime),
+			Location:   s.Location,
+			Device:     s.Device,
+			DeticeType: s.DeviceType,
 		}
 	})}, nil
 }

@@ -73,6 +73,7 @@ message UserLoginLog{
   string loginTime = 1;
   string location = 2;
   string device = 3;
+  string deticeType = 4;
 }
 
 message UserLoginLogs{
