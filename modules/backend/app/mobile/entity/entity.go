@@ -49,7 +49,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 		glgf.Error(err)
 		return status.Error(codes.Internal, err.Error())
 	}
-	ticker := time.NewTicker(4900 * time.Millisecond) // 4.9s
+	ticker := time.NewTicker(5050 * time.Millisecond) // 5.05s
 	trigger := make(chan struct{}, 1)
 	go func() {
 		trigger <- struct{}{}
