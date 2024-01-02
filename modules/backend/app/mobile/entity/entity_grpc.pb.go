@@ -30,6 +30,7 @@ const (
 	EntityService_GetSeries_FullMethodName          = "/bellis.backend.mobile.entity.EntityService/GetSeries"
 	EntityService_GetOfflineLog_FullMethodName      = "/bellis.backend.mobile.entity.EntityService/GetOfflineLog"
 	EntityService_GetStreamAllStatus_FullMethodName = "/bellis.backend.mobile.entity.EntityService/GetStreamAllStatus"
+	EntityService_StreamAck_FullMethodName          = "/bellis.backend.mobile.entity.EntityService/StreamAck"
 )
 
 // EntityServiceClient is the client API for EntityService service.
@@ -46,6 +47,7 @@ type EntityServiceClient interface {
 	GetSeries(ctx context.Context, in *EntityID, opts ...grpc.CallOption) (*EntitySeries, error)
 	GetOfflineLog(ctx context.Context, in *OfflineLogRequest, opts ...grpc.CallOption) (*OfflineLogPage, error)
 	GetStreamAllStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (EntityService_GetStreamAllStatusClient, error)
+	StreamAck(ctx context.Context, in *StreamAckRequire, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type entityServiceClient struct {
@@ -169,6 +171,15 @@ func (x *entityServiceGetStreamAllStatusClient) Recv() (*AllEntityStatus, error)
 	return m, nil
 }
 
+func (c *entityServiceClient) StreamAck(ctx context.Context, in *StreamAckRequire, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, EntityService_StreamAck_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EntityServiceServer is the server API for EntityService service.
 // All implementations should embed UnimplementedEntityServiceServer
 // for forward compatibility
@@ -183,6 +194,7 @@ type EntityServiceServer interface {
 	GetSeries(context.Context, *EntityID) (*EntitySeries, error)
 	GetOfflineLog(context.Context, *OfflineLogRequest) (*OfflineLogPage, error)
 	GetStreamAllStatus(*emptypb.Empty, EntityService_GetStreamAllStatusServer) error
+	StreamAck(context.Context, *StreamAckRequire) (*emptypb.Empty, error)
 }
 
 // UnimplementedEntityServiceServer should be embedded to have forward compatible implementations.
@@ -218,6 +230,9 @@ func (UnimplementedEntityServiceServer) GetOfflineLog(context.Context, *OfflineL
 }
 func (UnimplementedEntityServiceServer) GetStreamAllStatus(*emptypb.Empty, EntityService_GetStreamAllStatusServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetStreamAllStatus not implemented")
+}
+func (UnimplementedEntityServiceServer) StreamAck(context.Context, *StreamAckRequire) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StreamAck not implemented")
 }
 
 // UnsafeEntityServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -414,6 +429,24 @@ func (x *entityServiceGetStreamAllStatusServer) Send(m *AllEntityStatus) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _EntityService_StreamAck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StreamAckRequire)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityServiceServer).StreamAck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityService_StreamAck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityServiceServer).StreamAck(ctx, req.(*StreamAckRequire))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EntityService_ServiceDesc is the grpc.ServiceDesc for EntityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -456,6 +489,10 @@ var EntityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOfflineLog",
 			Handler:    _EntityService_GetOfflineLog_Handler,
+		},
+		{
+			MethodName: "StreamAck",
+			Handler:    _EntityService_StreamAck_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

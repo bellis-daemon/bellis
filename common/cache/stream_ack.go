@@ -9,7 +9,7 @@ import (
 )
 
 const streamAckPrefix = "STREAM_ACK_"
-const streamAckTolerance = 3
+const streamAckTolerance = 2
 
 type StreamAckEventType uint
 

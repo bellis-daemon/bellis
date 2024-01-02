@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"fmt"
+	"github.com/bellis-daemon/bellis/common/cache"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -28,6 +29,11 @@ import (
 
 // implements EntityServiceServer
 type handler struct{}
+
+func (h handler) StreamAck(ctx context.Context, require *StreamAckRequire) (*emptypb.Empty, error) {
+	cache.StreamAckEvent(ctx, cache.StreamAckReceived, require.StreamKey)
+	return &emptypb.Empty{}, nil
+}
 
 // GetStreamAllStatus streams all status for the user's entities using a periodic ticker.
 // It retrieves the user from the context, fetches the user's entities, and then streams the status of each entity periodically using a ticker.
@@ -65,12 +71,21 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 	var wg sync.WaitGroup
 	var once sync.Once
 	defer ticker.Stop()
+	streamKey := cryptoo.RandString(16)
+	cache.StreamAckStart(server.Context(), streamKey)
+	defer cache.StreamAckStop(context.Background(), streamKey)
 	for {
 		select {
 		case <-trigger:
+			if !cache.StreamAckCheck(server.Context(), streamKey) {
+				return nil
+			}
+			cache.StreamAckEvent(server.Context(), cache.StreamAckSent, streamKey)
 			go func() {
 				start := time.Now()
-				all := &AllEntityStatus{}
+				all := &AllEntityStatus{
+					StreamKey: streamKey,
+				}
 				wg.Add(len(entities))
 				for i := range entities {
 					entity := &entities[i]
@@ -87,6 +102,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 				wg.Wait()
 				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Since(start).Milliseconds())
 				once.Do(func() {
+					cache.StreamAckEvent(server.Context(), cache.StreamAckSent, streamKey)
 					server.Send(all)
 				})
 				err := server.Send(all)

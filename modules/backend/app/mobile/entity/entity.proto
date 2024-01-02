@@ -24,8 +24,13 @@ message EntityStatus{
   int64 response_time = 8;
 }
 
-message AllEntityStatus{ 
-  repeated EntityStatus status = 1;
+message AllEntityStatus{
+  string StreamKey = 1;
+  repeated EntityStatus status = 2;
+}
+
+message StreamAckRequire{
+  string StreamKey = 1;
 }
 
 message EntitySeries{
@@ -88,4 +93,5 @@ service EntityService{
   rpc GetSeries(EntityID) returns(EntitySeries);
   rpc GetOfflineLog(OfflineLogRequest) returns (OfflineLogPage);
   rpc GetStreamAllStatus(google.protobuf.Empty) returns(stream AllEntityStatus);
+  rpc StreamAck(StreamAckRequire) returns(google.protobuf.Empty);
 }
