@@ -39,19 +39,18 @@ func (this *handler) AlertOffline(user *models.User, entity *models.Application,
 	}
 	message := tgbotapi.NewMessage(
 		this.policy.ChatID,
-		fmt.Sprintf("*Bellis entity offline alert* ⚠\n"+
-			"This should be a note worthy and validating message.\n"+
+		fmt.Sprintf("Bellis entity *OFFLINE* alert ⚠\n"+
 			"The following is the information from this offline session:\n"+
 			"*Entity name:* `%s`\n"+
 			"*TimeZone:* `%s`\n"+
-			"*Entity create time:* `%s`\n"+
+			"*Created time:* `%s`\n"+
 			"*Offline time:* `%s`\n"+
 			"*Offline message:* `%s`\n",
 			entity.Name,
 			user.Timezone,
-			log.OfflineMessage,
 			entity.CreatedAt.In(user.Timezone.Location()).Format(time.DateTime),
 			log.OfflineTime.In(user.Timezone.Location()).Format(time.DateTime),
+			log.OfflineMessage,
 		),
 	)
 	message.ParseMode = tgbotapi.ModeMarkdown
@@ -81,7 +80,6 @@ func (this *handler) PolicySnapShot() bson.M {
 	_ = mapstructure.Decode(this.policy, &ret)
 	return ret
 }
-
 
 func New(ctx context.Context) drivers.EnvoyDriver {
 	return &handler{ctx: ctx}

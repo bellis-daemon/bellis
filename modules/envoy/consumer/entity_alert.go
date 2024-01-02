@@ -84,7 +84,13 @@ func entityOfflineAlert() {
 			PolicyType:     envoyType,
 			PolicySnapShot: envoyDriver.PolicySnapShot(),
 		}
-		storage.CEnvoyLog.InsertOne(ctx, envoyLog)
+		go func() {
+			_, err := storage.CEnvoyLog.InsertOne(ctx, envoyLog)
+			if err != nil {
+				glgf.Error(err)
+				return
+			}
+		}()
 		if err != nil {
 			return fmt.Errorf("send offline alert failed: %w", err)
 		}

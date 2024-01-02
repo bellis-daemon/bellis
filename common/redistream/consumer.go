@@ -58,7 +58,7 @@ func NewConsumer(r redis.UniversalClient, options ...*ConsumerOptions) *Consumer
 		c.options.GroupName = "redistream"
 	}
 	if c.options.PendingTimeout == 0 {
-		c.options.PendingTimeout = 4 * time.Second
+		c.options.PendingTimeout = 10 * time.Second
 	}
 	if c.options.BlockTimeout == 0 {
 		c.options.BlockTimeout = 1 * time.Second
@@ -176,7 +176,7 @@ func (this *Consumer) reclaim(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return
 		case <-ticker.C:
 			for stream := range this.handlers {
 				start := "-"
@@ -203,7 +203,7 @@ func (this *Consumer) reclaim(ctx context.Context) {
 
 					for _, r := range res {
 						if r.RetryCount >= int64(this.options.MaxRetry) {
-							glgf.Warn("Discarding messages beyond retries: %s",r.ID)
+							glgf.Warn("Discarding messages beyond retries: %s", r.ID)
 							err = this.r.XAck(ctx, stream, this.options.GroupName, r.ID).Err()
 							if err != nil {
 								this.options.ErrorHandler(errors.Wrapf(err, "error acknowledging after max retry for %q stream and %q message", stream, r.ID))
@@ -211,6 +211,7 @@ func (this *Consumer) reclaim(ctx context.Context) {
 							}
 						}
 						if r.Idle >= this.options.PendingTimeout {
+							glgf.Warn("Reclaiming pending timeout message:", r.ID, r.Idle)
 							claimres, err := this.r.XClaim(ctx, &redis.XClaimArgs{
 								Stream:   stream,
 								Group:    this.options.GroupName,
@@ -267,7 +268,7 @@ func (this *Consumer) infiniteWork(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return
 		case message := <-this.queue:
 			go this.safeProcess(ctx, message)
 		}
@@ -279,7 +280,7 @@ func (this *Consumer) work(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return
 		case message := <-this.queue:
 			this.safeProcess(ctx, message)
 		}

@@ -85,7 +85,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 					}()
 				}
 				wg.Wait()
-				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Now().Sub(start).Milliseconds())
+				glgf.Debugf("done status get for user %s in %d(ms)", user.Email, time.Since(start).Milliseconds())
 				once.Do(func() {
 					server.Send(all)
 				})
@@ -328,7 +328,7 @@ func (h handler) GetStatus(ctx context.Context, id *EntityID) (*EntityStatus, er
 		query, err := storage.QueryInfluxDB.Query(ctx,
 			fmt.Sprintf(`
 from(bucket: "backend")
-  |> range(start: -1m)
+  |> range(start: -15s)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")`,
@@ -381,8 +381,8 @@ from(bucket: "backend")
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
   |> filter(fn: (r) => r["id"] == "%s")
-  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> fill(column: "_value", value: true)
+  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> yield(name: "first")`,
 						id.GetScheme(),
 						id.GetID()))
@@ -397,8 +397,8 @@ from(bucket: "backend")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_field"] == "c_live")
   |> filter(fn: (r) => r["id"] == "%s")
-  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> fill(column: "_value", value: true)
+  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
   |> yield(name: "first")`,
 						id.GetID()))
 				if err != nil {
@@ -478,13 +478,13 @@ import "types"
 import "strings"
 from(bucket: "backend")
   |> range(start: -10m)
-  |> sort(columns: ["_time"], desc: true)
-  |> limit(n:60)
-  |> sort(columns: ["_time"], desc: false)
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => types.isNumeric(v: r["_value"]))
-  |> filter(fn: (r) => not strings.hasPrefix(v: r["_field"], prefix: "c_"))`,
+  |> filter(fn: (r) => not strings.hasPrefix(v: r["_field"], prefix: "c_"))
+  |> sort(columns: ["_time"], desc: true)
+  |> limit(n:60)
+  |> sort(columns: ["_time"], desc: false)`,
 			id.GetScheme(),
 			id.GetID()))
 	if err != nil {

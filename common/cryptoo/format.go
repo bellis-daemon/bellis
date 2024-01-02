@@ -19,6 +19,9 @@ func FormatDuration(duration time.Duration) string {
 	duration -= hours * time.Hour
 
 	minutes := duration / time.Minute
+	duration -= minutes * time.Minute
+
+	seconds := duration / time.Second
 
 	// 只保留两个有值且最大的数量级
 	units := []struct {
@@ -30,6 +33,7 @@ func FormatDuration(duration time.Duration) string {
 		{days, "d"},
 		{hours, "h"},
 		{minutes, "m"},
+		{seconds, "s"},
 	}
 
 	var result string

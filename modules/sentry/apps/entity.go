@@ -213,7 +213,7 @@ func (this *Entity) UpdateOptions(option *models.Application) (err error) {
 		fmt.Sprintf(
 			`
 from(bucket: "backend")
-  |> range(start: -1h)
+  |> range(start: -1m)
   |> last()
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_failed_count")
