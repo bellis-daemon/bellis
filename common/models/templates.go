@@ -19,6 +19,6 @@ func (this Timezone) Location() *time.Location {
 }
 
 type EnvoyHeader struct {
-	UserID    primitive.ObjectID `json:"UserID" bson:"user_id"`
-	CreatedAt time.Time          `json:"CreatedAt" bson:"created_at"`
+	UserID    primitive.ObjectID `json:"UserID" bson:"UserID"`
+	CreatedAt time.Time          `json:"CreatedAt" bson:"CreatedAt"`
 }

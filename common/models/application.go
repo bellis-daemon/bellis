@@ -20,7 +20,7 @@ type Application struct {
 	Scheme      string                   `json:"Scheme" bson:"Scheme"`
 	Active      bool                     `json:"Active" bson:"Active"`
 	Public      ApplicationPublicOptions `json:"Public" bson:"Public"`
-	Options     bson.M                   `json:"options" bson:"options"`
+	Options     bson.M                   `json:"Options" bson:"Options"`
 }
 
 type ApplicationPublicOptions struct {

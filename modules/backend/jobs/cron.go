@@ -19,5 +19,6 @@ func StartAsync() {
 	}
 	s.NewJob(gocron.DurationJob(12*time.Hour), gocron.NewTask(setTelegramWebhook), gocron.WithStartAt(gocron.WithStartImmediately()))
 	s.NewJob(gocron.MonthlyJob(1, gocron.NewDaysOfTheMonth(1), gocron.NewAtTimes(gocron.NewAtTime(6, 0, 0))), gocron.NewTask(resetUserUsages))
+	s.NewJob(gocron.DurationJob(12*time.Hour), gocron.NewTask(checkUserLevelExpire))
 	s.Start()
 }
