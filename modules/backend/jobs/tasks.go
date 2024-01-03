@@ -2,22 +2,13 @@ package jobs
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/minoic/glgf"
-	"net/http"
-	"time"
 )
-
-func clearInfluxdbDataExpired() {
-	glgf.Info("deleting data before one week in influxdb")
-	err := storage.DeleteInfluxDB.DeleteWithName(context.Background(), "bellis", "backend", time.UnixMilli(0), time.Now().AddDate(0, 0, -7), "")
-	if err != nil {
-		glgf.Error(err)
-	}
-}
 
 func setTelegramWebhook() {
 	if storage.Config().TelegramBotToken != "" {
@@ -36,6 +27,10 @@ func setTelegramWebhook() {
 			return
 		}
 		req, err := http.NewRequest("POST", target, &buf)
+		if err != nil {
+			glgf.Error("err while setting telegram webhook", err)
+			return
+		}
 		req.Header.Set("Content-Type", "application/json")
 		glgf.Debug(webhookEndpoint)
 		get, err := http.DefaultClient.Do(req)
@@ -47,4 +42,9 @@ func setTelegramWebhook() {
 		buf.ReadFrom(get.Body)
 		glgf.Info("updated telegram webhook", get.Status, buf.String())
 	}
+}
+
+func resetUserUsages() {
+	glgf.Debug("reseting user usages")
+	//todo: implement reset usage function
 }
