@@ -79,10 +79,13 @@ func entityOfflineAlert() {
 			ID:             primitive.NewObjectID(),
 			SendTime:       time.Now(),
 			Success:        err == nil,
-			FailedMessage:  err.Error(),
 			OfflineLogID:   log.ID,
 			PolicyType:     envoyType,
 			PolicySnapShot: envoyDriver.PolicySnapShot(),
+		}
+		if err!=nil{
+			glgf.Error(err)
+			envoyLog.FailedMessage = err.Error()
 		}
 		go func() {
 			_, err := storage.CEnvoyLog.InsertOne(ctx, envoyLog)
