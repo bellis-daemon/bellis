@@ -34,7 +34,7 @@ services:
   sentry-singleton:
     image: registry.cn-shanghai.aliyuncs.com/bellis/sentry-singleton
     build:
-      docker-file: Dockerfile
+      dockerfile: Dockerfile
       context: ..
       args:
         MODULE: sentry/cmd/singleton
