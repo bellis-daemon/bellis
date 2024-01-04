@@ -12,7 +12,7 @@ import (
 
 func setTelegramWebhook() {
 	if storage.Config().TelegramBotToken != "" {
-		webhookEndpoint := storage.Config().WebEndpoint + "/callback/telegram"
+		webhookEndpoint := storage.Config().WebEndpoint + "/api/callback/telegram"
 		target := storage.Config().TelegramBotApiEndpoint + fmt.Sprintf("/bot%s/setWebhook", storage.Config().TelegramBotToken)
 		body := map[string]any{
 			"url": webhookEndpoint,

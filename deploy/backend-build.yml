@@ -30,4 +30,11 @@ services:
       dockerfile: Dockerfile
       context: ..
       args:
-        MODULE: sentry
+        MODULE: sentry/cmd/cluster
+  sentry-singleton:
+    image: registry.cn-shanghai.aliyuncs.com/bellis/sentry-singleton
+    build:
+      docker-file: Dockerfile
+      context: ..
+      args:
+        MODULE: sentry/cmd/singleton
