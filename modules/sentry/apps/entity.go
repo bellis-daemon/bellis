@@ -137,7 +137,6 @@ func (this *Entity) refresh() {
 			}
 			if this.failedCount == 0 {
 				// 确认恢复
-				// todo: 对于之前是否已确认离线无保证
 				this.onlineLog()
 			}
 		}

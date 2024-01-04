@@ -108,7 +108,7 @@ func getEntityUptime(ctx context.Context, entityID string) string {
 	return *s
 }
 
-func afterDeleteEntity(entityID string) {
+func afterDeleteEntity(user *models.User, entityID string) {
 	ctx := context.Background()
 	id, err := primitive.ObjectIDFromHex(entityID)
 	if err != nil {
@@ -118,16 +118,18 @@ func afterDeleteEntity(entityID string) {
 	if err != nil {
 		glgf.Error("error deleting in influxdb", err)
 	}
-	_, _ = storage.COfflineLog.DeleteMany(ctx, bson.M{"EntityID": id})
-	_ = producer.NoticeEntityDelete(ctx, entityID)
+	storage.COfflineLog.DeleteMany(ctx, bson.M{"EntityID": id})
+	user.UsageEntityIncr(ctx, -1)
+	producer.NoticeEntityDelete(ctx, entityID)
 }
 
-func afterCreateEntity(entity *models.Application) {
+func afterCreateEntity(user *models.User, entity *models.Application) {
 	ctx := context.Background()
-	_ = producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
+	user.UsageEntityIncr(ctx, 1)
+	producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
 }
 
 func afterUpdateEntity(entity *models.Application) {
 	ctx := context.Background()
-	_ = producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
+	producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
 }

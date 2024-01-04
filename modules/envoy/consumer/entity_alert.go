@@ -44,6 +44,14 @@ func entityOfflineAlert() {
 		if err != nil {
 			return fmt.Errorf("cant find user using user id: %s: %w", entity.UserID.Hex(), err)
 		}
+		if user.Envoy.PolicyType == models.IsEnvoySMS && !user.UsageEnvoySMSAccessible() {
+			glgf.Warn("User <%s>`s envoy sms usage exceeds: %d.", user.Usage.EnvoySMSCount)
+			return nil
+		}
+		if user.Envoy.PolicyType != models.IsEnvoySMS && !user.UsageEnvoyAccessible() {
+			glgf.Warn("User <%s>`s envoy usage exceeds: %d.", user.Usage.EnvoyCount)
+			return nil
+		}
 		// check if entity is previously offline
 		log, err := recentOfflineLog(ctx, &entity)
 		if err != nil {
@@ -83,15 +91,26 @@ func entityOfflineAlert() {
 			PolicyType:     envoyType,
 			PolicySnapShot: envoyDriver.PolicySnapShot(),
 		}
-		if err!=nil{
+		if err != nil {
 			glgf.Error(err)
 			envoyLog.FailedMessage = err.Error()
 		}
 		go func() {
+			ctx := context.Background()
 			_, err := storage.CEnvoyLog.InsertOne(ctx, envoyLog)
 			if err != nil {
 				glgf.Error(err)
-				return
+			}
+			if user.Envoy.PolicyType == models.IsEnvoySMS {
+				err = user.UsageEnvoySMSIncr(ctx, 1)
+				if err != nil {
+					glgf.Error(err)
+				}
+			} else {
+				err = user.UsageEnvoyIncr(ctx, 1)
+				if err != nil {
+					glgf.Error(err)
+				}
 			}
 		}()
 		if err != nil {

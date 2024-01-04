@@ -67,6 +67,7 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	}
 	ret.StatusCode = resp.StatusCode
 	ret.ContentLength = resp.ContentLength
+	ret.ContentType = resp.Header.Get("Content-Type")
 	return ret, nil
 }
 
@@ -74,6 +75,7 @@ type httpStatus struct {
 	IP            string
 	StatusCode    int
 	ContentLength int64
+	ContentType   string
 	TLSVersion    string
 	TLSStartTime  string
 	TLSExpireTime string

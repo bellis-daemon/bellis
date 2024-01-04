@@ -49,11 +49,22 @@ func setTelegramWebhook() {
 }
 
 func resetUserUsages() {
-	glgf.Debug("reseting user usages")
-	//todo: implement reset usage function
+	ctx := context.Background()
+	many, err := storage.CUser.UpdateMany(ctx, bson.M{}, bson.M{
+		"$set": bson.M{
+			"Usage.EnvoySMSCount":    0,
+			"Usage.EnvoyCount":       0,
+			"Usage.EnvoyPolicyCount": 0,
+		},
+	})
+	if err != nil {
+		glgf.Error(err)
+		return
+	}
+	glgf.Infof("Reseted user usages, <%d> users matched, <%d> users modified.", many.MatchedCount, many.ModifiedCount)
 }
 
-func checkUserLevelExpire() {
+func checkUserEntityUsageCount() {
 	ctx := context.Background()
 	find, err := storage.CUser.Find(ctx, bson.M{})
 	if err != nil {
@@ -67,18 +78,60 @@ func checkUserLevelExpire() {
 			glgf.Error(err)
 			continue
 		}
-		if user.LevelExpireAt.IsZero() {
+		count, err := storage.CEntity.CountDocuments(ctx, bson.M{"_id": user.ID})
+		if err != nil {
+			glgf.Error(err)
 			continue
 		}
-		if user.LevelExpireAt.After(time.Now()) {
+		if int32(count) == user.Usage.EntityCount {
 			continue
 		}
+		updated, err := storage.CUser.UpdateByID(ctx, user.ID, bson.M{
+			"$set": bson.M{
+				"Usage.EntityCount": count,
+			},
+		})
+		if err != nil {
+			glgf.Error(err)
+			return
+		}
+		glgf.Infof("User <%s> has wrong entity usage count, updated: %d => %d,modified document: %d", user.Email, user.Usage.EntityCount, count, updated.ModifiedCount)
+	}
+}
+
+func checkUserLevelExpire() {
+	ctx := context.Background()
+	find, err := storage.CUser.Find(ctx, bson.M{"$and": bson.D{
+		{
+			Key:   "LevelExpireAt",
+			Value: bson.E{Key: "$lt", Value: time.Now()},
+		},
+		{
+			Key:   "LevelExpireAt",
+			Value: bson.E{Key: "$ne", Value: time.Time{}},
+		},
+	}})
+	if err != nil {
+		glgf.Error(err)
+		return
+	}
+	var user models.User
+	for find.Next(ctx) {
+		err := find.Decode(&user)
+		if err != nil {
+			glgf.Error(err)
+			continue
+		}
+		glgf.Infof("User <%s>`s level expires (%s), moving user to free level.", user.ID, user.LevelExpireAt.Format(time.DateTime))
 		user.LevelExpireAt = time.Time{}
 		user.Level = models.UserLevelFree
 		_, err = storage.CUser.ReplaceOne(ctx, bson.M{"_id": user.ID}, &user)
 		if err != nil {
 			glgf.Error(err)
 			continue
+		}
+		if user.Usage.EntityCount > user.Level.Limit().EntityCount {
+
 		}
 	}
 }

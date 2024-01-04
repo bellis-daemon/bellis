@@ -162,8 +162,9 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 // It first checks the ownership of the entity, then proceeds to delete the entity from the storage.
 // After the deletion, it triggers a post-deletion process asynchronously and returns an empty response or an error.
 func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*emptypb.Empty, error) {
+	user := midwares.GetUserFromCtx(ctx)
 	err := assertion.Assert(
-		checkEntityOwnershipById(ctx, midwares.GetUserFromCtx(ctx), id.ID),
+		checkEntityOwnershipById(ctx, user, id.ID),
 	)
 	if err != nil {
 		return &emptypb.Empty{}, status.Error(codes.FailedPrecondition, err.Error())
@@ -179,7 +180,7 @@ func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*emptypb.Empty
 		glgf.Error(err)
 		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
-	go afterDeleteEntity(id.GetID())
+	go afterDeleteEntity(user, id.GetID())
 	return &emptypb.Empty{}, nil
 }
 
@@ -187,11 +188,21 @@ func (h handler) DeleteEntity(ctx context.Context, id *EntityID) (*emptypb.Empty
 // It initializes a new Application model, populates it with the provided data, and inserts it into the storage.
 // After the creation, it triggers a post-creation process asynchronously and returns the ID of the newly created entity.
 func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, error) {
+	user := midwares.GetUserFromCtx(ctx)
+	err := assertion.Assert(func() error {
+		if !user.UsageEntityAccessible() {
+			return errors.New("The number of entities reaches the upper limit.")
+		}
+		return nil
+	})
+	if err != nil {
+		return &EntityID{}, status.Error(codes.FailedPrecondition, err.Error())
+	}
 	e := &models.Application{
 		ID:          primitive.NewObjectID(),
 		Name:        entity.Name,
 		Description: entity.Description,
-		UserID:      midwares.GetUserFromCtx(ctx).ID,
+		UserID:      user.ID,
 		CreatedAt:   time.Now(),
 		Scheme:      entity.Scheme,
 		Active:      true,
@@ -199,12 +210,12 @@ func (h handler) NewEntity(ctx context.Context, entity *Entity) (*EntityID, erro
 	}
 	loadPublicOptions(entity, e)
 	glgf.Debugf("creating entity: %+v => %+v", entity, e)
-	_, err := storage.CEntity.InsertOne(ctx, e)
+	_, err = storage.CEntity.InsertOne(ctx, e)
 	if err != nil {
 		glgf.Error(err)
 		return &EntityID{}, status.Error(codes.Internal, err.Error())
 	}
-	go afterCreateEntity(e)
+	go afterCreateEntity(user, e)
 	return &EntityID{
 		ID: e.ID.Hex(),
 	}, nil
@@ -395,10 +406,10 @@ from(bucket: "backend")
 from(bucket: "backend") 
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["_field"] == "c_live")
   |> filter(fn: (r) => r["id"] == "%s")
-  |> fill(column: "_value", value: true)
+  |> filter(fn: (r) => r["_field"] == "c_live")
   |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
+  |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
 						id.GetScheme(),
 						id.GetID()))
@@ -411,10 +422,10 @@ from(bucket: "backend")
 					fmt.Sprintf(`
 from(bucket: "backend") 
   |> range(start: -24h)
-  |> filter(fn: (r) => r["_field"] == "c_live")
   |> filter(fn: (r) => r["id"] == "%s")
-  |> fill(column: "_value", value: true)
+  |> filter(fn: (r) => r["_field"] == "c_live")
   |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
+  |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
 						id.GetID()))
 				if err != nil {

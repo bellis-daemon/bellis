@@ -81,22 +81,29 @@ func (this UserLevel) Limit() UserUsage {
 }
 
 type UserUsage struct {
-	EnvoySMSCount    int32
-	EnvoyCount       int32
-	EntityCount      int32
-	EnvoyPolicyCount int32
+	EnvoySMSCount    int32 `json:"EnvoySMSCount" bson:"EnvoySMSCount"`
+	EnvoyCount       int32 `json:"EnvoyCount" bson:"EnvoyCount"`
+	EntityCount      int32 `json:"EntityCount" bson:"EntityCount"`
+	EnvoyPolicyCount int32 `json:"EnvoyPolicyCount" bson:"EnvoyPolicyCount"`
 }
 
 func NewUser() *User {
 	ret := &User{
-		ID:        primitive.NewObjectID(),
-		Email:     "",
-		Password:  "",
-		CreatedAt: time.Now(),
-		Level:     0,
+		ID:            primitive.NewObjectID(),
+		Email:         "",
+		Password:      "",
+		CreatedAt:     time.Now(),
+		Level:         UserLevelFree,
+		LevelExpireAt: time.Time{},
 		Envoy: EnvoyPolicy{
 			OfflineAlert: false,
 			Sensitive:    3,
+		},
+		Usage: UserUsage{
+			EnvoySMSCount:    0,
+			EnvoyCount:       0,
+			EntityCount:      0,
+			EnvoyPolicyCount: 0,
 		},
 		Timezone: DefaultTimezone,
 	}
