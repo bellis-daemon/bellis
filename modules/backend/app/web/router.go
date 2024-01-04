@@ -3,30 +3,30 @@ package web
 import (
 	"context"
 	"errors"
-	"github.com/bellis-daemon/bellis/modules/backend/app/web/services"
-	"github.com/gin-gonic/gin"
 	"net"
 	"net/http"
+
+	"github.com/bellis-daemon/bellis/modules/backend/app/web/services"
+	"github.com/gin-gonic/gin"
 )
 
 // ServeWeb serves the gRPC and HTTP endpoints using the provided net.Listener.
 // It wraps the gRPC server, sets up routing for callback services, and starts serving requests using the gin router.
 func ServeWeb(ctx context.Context, lis net.Listener) {
 	router := gin.Default()
+	apiRouter := router.Group("api")
 	{
-		callbackRouter := router.Group("callback")
+		apiRouter.GET("ip", services.GetIpInfo())
+		callbackRouter := apiRouter.Group("callback")
 		{
 			callbackRouter.POST("telegram", services.TelegramCallbackService())
 		}
-		apiRouter := router.Group("api")
-		{
-			apiRouter.GET("ip", services.GetIpInfo())
-		}
-		chartsRouter := router.Group("charts")
+		chartsRouter := apiRouter.Group("charts")
 		{
 			chartsRouter.GET(":id/request-time.png", services.RequestTimeChart())
 		}
 	}
+
 	srv := &http.Server{
 		Handler: router,
 	}
@@ -35,8 +35,6 @@ func ServeWeb(ctx context.Context, lis net.Listener) {
 			panic(err)
 		}
 	}()
-	select {
-	case <-ctx.Done():
-		srv.Shutdown(context.Background())
-	}
+	<-ctx.Done()
+	srv.Shutdown(context.Background())
 }
