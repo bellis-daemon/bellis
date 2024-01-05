@@ -16,8 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// UserIncomingCtx To get user model from incoming context in grpc
-type UserIncomingCtx struct{}
+// userIdFromContextKey To get user model from incoming context in grpc
+type userIdFromContextKey struct{}
 
 // NeedAuthChecker All servers registered with this interceptor MUST implement this interface
 type NeedAuthChecker interface {
@@ -25,7 +25,14 @@ type NeedAuthChecker interface {
 }
 
 func GetUserFromCtx(ctx context.Context) *models.User {
-	return ctx.Value(UserIncomingCtx{}).(*models.User)
+	id := ctx.Value(userIdFromContextKey{}).(primitive.ObjectID)
+	var user models.User
+	err := storage.CUser.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+	if err != nil {
+		glgf.Error(err)
+		return nil
+	}
+	return &user
 }
 
 func AuthChecker() grpc.UnaryServerInterceptor {
@@ -33,11 +40,11 @@ func AuthChecker() grpc.UnaryServerInterceptor {
 		if !info.Server.(NeedAuthChecker).NeedAuth() {
 			return handler(ctx, req)
 		}
-		user := check(ctx)
-		if user == nil {
+		userId := check(ctx)
+		if userId == primitive.NilObjectID {
 			return resp, status.Error(codes.Unauthenticated, "Unauthenticated")
 		}
-		return handler(context.WithValue(ctx, UserIncomingCtx{}, user), req)
+		return handler(context.WithValue(ctx, userIdFromContextKey{}, userId), req)
 	}
 }
 
@@ -46,69 +53,82 @@ func AuthCheckerStream() grpc.StreamServerInterceptor {
 		if !srv.(NeedAuthChecker).NeedAuth() {
 			return handler(srv, ss)
 		}
-		user := check(ss.Context())
-		if user == nil {
+		userId := check(ss.Context())
+		if userId == primitive.NilObjectID {
 			return status.Error(codes.Unauthenticated, "Unauthenticated")
 		}
 		wrapped := WrapServerStream(ss)
-		wrapped.WrappedContext = context.WithValue(ss.Context(), UserIncomingCtx{}, user)
+		wrapped.WrappedContext = context.WithValue(ss.Context(), userIdFromContextKey{}, userId)
 		return handler(srv, wrapped)
 	}
 }
 
-func check(ctx context.Context) *models.User {
+func check(ctx context.Context) primitive.ObjectID {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil
+		return primitive.NilObjectID
 	}
 	var (
-		user         models.User
 		requestToken string
 	)
 	if value := md.Get("Request-Token"); len(value) > 0 {
 		requestToken = value[0]
 	}
-	if email, err := storage.Redis().Get(ctx, requestToken).Result(); err != nil {
-		return nil
+	if idHex, err := storage.Redis().Get(ctx, "LOGIN"+requestToken).Result(); err != nil {
+		return primitive.NilObjectID
 	} else {
-		err = storage.CUser.FindOne(ctx, bson.M{"Email": email}).Decode(&user)
+		id, err := primitive.ObjectIDFromHex(idHex)
 		if err != nil {
 			glgf.Error(err)
-			return nil
+			return primitive.NilObjectID
 		}
 		// success login check
-		onAuthed(ctx, &user, requestToken)
-		return &user
+		ok := onAuthed(ctx, id, requestToken)
+		if !ok {
+			return primitive.NilObjectID
+		}
+		return id
 	}
 }
 
-func onAuthed(ctx context.Context, user *models.User, requestToken string) {
-	go func() {
-		setted, err := storage.Redis().SetNX(ctx, "ONLINE"+user.Email+requestToken, true, 10*time.Minute).Result()
+func onAuthed(ctx context.Context, userId primitive.ObjectID, requestToken string) bool {
+	setted, err := storage.Redis().SetNX(ctx, "ONLINE"+userId.Hex()+requestToken, true, 10*time.Minute).Result()
+	if err != nil {
+		glgf.Error(err)
+		return false
+	}
+	storage.Redis().Expire(ctx, "ONLINE"+userId.Hex()+requestToken, 10*time.Minute)
+	if setted {
+		count, err := storage.CUser.CountDocuments(ctx, bson.M{"_id": userId})
 		if err != nil {
 			glgf.Error(err)
-			return
+			return false
 		}
-		storage.Redis().Expire(ctx, "ONLINE"+user.Email+requestToken, 10*time.Minute)
-		if setted {
-			ip := ipFromContext(ctx)
-			loc, err := geo.FromLocal(ip)
-			if err != nil {
-				glgf.Error(err)
-				return
-			}
-			_, err = storage.CUserLoginLog.InsertOne(ctx, &models.UserLoginLog{
-				ID:         primitive.NewObjectID(),
-				UserID:     user.ID,
-				LoginTime:  time.Now(),
-				Location:   loc.String(),
-				Device:     deviceFromContext(ctx),
-				DeviceType: deviceTypeFromContext(ctx),
-			})
-			if err != nil {
-				glgf.Error(err)
-				return
-			}
+		if count == 0 {
+			storage.Redis().Del(ctx, "ONLINE"+userId.Hex()+requestToken)
+			storage.Redis().Del(ctx, requestToken)
+			return false
 		}
-	}()
+		ip := ipFromContext(ctx)
+		var locString string
+		loc, err := geo.FromLocal(ip)
+		if err != nil {
+			glgf.Error(err)
+			locString = loc.String()
+		} else {
+			locString = "Unknown Location"
+		}
+		_, err = storage.CUserLoginLog.InsertOne(ctx, &models.UserLoginLog{
+			ID:         primitive.NewObjectID(),
+			UserID:     userId,
+			LoginTime:  time.Now(),
+			Location:   locString,
+			Device:     deviceFromContext(ctx),
+			DeviceType: deviceTypeFromContext(ctx),
+		})
+		if err != nil {
+			glgf.Error(err)
+		}
+	}
+	return true
 }

@@ -35,7 +35,7 @@ func ServeHttpEventListener(token string) {
 				glgf.Error(err)
 				return
 			}
-			req.Header.Add("request-token", token)
+			req.Header.Add("Request-Token", token)
 			resp, err := cl.Do(req)
 			if err != nil {
 				if resp.StatusCode == http.StatusUnauthorized {

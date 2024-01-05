@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/cache"
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/models"
@@ -15,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"time"
 )
 
 type handler struct{}
@@ -35,7 +36,7 @@ func (handler) Login(ctx context.Context, request *LoginRequest) (*LoginResponse
 		return &LoginResponse{}, status.Error(codes.InvalidArgument, "Wrong password")
 	}
 	token := cryptoo.RandToken()
-	err = storage.Redis().Set(ctx, token, user.Email, 30*24*time.Hour).Err()
+	err = storage.Redis().Set(ctx, "LOGIN"+token, user.ID.Hex(), 30*24*time.Hour).Err()
 	if err != nil {
 		glgf.Error(err)
 		return &LoginResponse{}, status.Error(codes.Internal, "Redis error")

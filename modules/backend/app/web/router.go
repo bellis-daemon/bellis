@@ -25,6 +25,10 @@ func ServeWeb(ctx context.Context, lis net.Listener) {
 		{
 			chartsRouter.GET(":id/request-time.png", services.RequestTimeChart())
 		}
+		sentrySingletonRouter:=apiRouter.Group("sentry-singleton")
+		{
+			sentrySingletonRouter.POST("refresh",services.SentrySingletonRefresh())
+		}
 	}
 
 	srv := &http.Server{

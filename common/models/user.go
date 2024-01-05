@@ -16,17 +16,16 @@ import (
 const SALT = "MONGOUSERSALT"
 
 type User struct {
-	ID        primitive.ObjectID `json:"ID" bson:"_id"`
-	Email     string             `json:"Email" bson:"Email"`
-	Password  string             `json:"Password" bson:"Password"`
-	CreatedAt time.Time          `json:"CreatedAt" bson:"CreatedAt"`
-	// Level user plan level
-	// default(free) level: 0
-	Level         UserLevel   `json:"Level" bson:"Level"`
-	LevelExpireAt time.Time   `json:"LevelExpireAt" bson:"LevelExpireAt"`
-	Usage         UserUsage   `json:"Usage" bson:"Usage"`
-	Envoy         EnvoyPolicy `json:"Envoy" bson:"Envoy"`
-	Timezone      Timezone    `json:"Timezone" bson:"Timezone"`
+	ID             primitive.ObjectID `json:"ID" bson:"_id"`
+	Email          string             `json:"Email" bson:"Email"`
+	Password       string             `json:"Password" bson:"Password"`
+	CreatedAt      time.Time          `json:"CreatedAt" bson:"CreatedAt"`
+	Level          UserLevel          `json:"Level" bson:"Level"` // default(free) level: 0
+	LevelExpireAt  time.Time          `json:"LevelExpireAt" bson:"LevelExpireAt"`
+	Usage          UserUsage          `json:"Usage" bson:"Usage"`
+	Envoy          EnvoyPolicy        `json:"Envoy" bson:"Envoy"`
+	Timezone       Timezone           `json:"Timezone" bson:"Timezone"`
+	CustomSentries []string           `json:"CustomSentries" bson:"CustomSentries"`
 }
 
 type UserLevel int32
