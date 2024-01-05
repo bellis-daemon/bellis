@@ -30,7 +30,9 @@ func GetUserFromCtx(ctx context.Context) *models.User {
 	err := storage.CUser.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
 	if err != nil {
 		glgf.Error(err)
-		return nil
+		md, _ := metadata.FromIncomingContext(ctx)
+		storage.Redis().Del(ctx, "LOGIN"+md.Get("Request-Token")[0])
+		panic("Invalid user authed, removing token from redis")
 	}
 	return &user
 }

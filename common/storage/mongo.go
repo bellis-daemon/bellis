@@ -24,9 +24,12 @@ var (
 
 func ConnectMongo() {
 	ctx := context.Background()
-	clientOptions := options.Client().ApplyURI("mongodb://mongo1,mongo2/?replicaSet=rs0")
+	// Use the SetServerAPIOptions() method to set the Stable API version to 1
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().ApplyURI(Config().MongoDBURI).SetServerAPIOptions(serverAPI)
+	// Create a new client and connect to the server
 	var err error
-	client, err = mongo.Connect(ctx, clientOptions)
+	client, err = mongo.Connect(ctx, opts)
 	if err != nil {
 		panic(err)
 	}

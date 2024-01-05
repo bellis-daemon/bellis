@@ -410,7 +410,7 @@ from(bucket: "backend")
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
-  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
+  |> aggregateWindow(every: 5m, fn: mode, createEmpty: true)
   |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
 						id.GetScheme(),
@@ -426,7 +426,7 @@ from(bucket: "backend")
   |> range(start: -24h)
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
-  |> aggregateWindow(every: 5m, fn: first, createEmpty: true)
+  |> aggregateWindow(every: 5m, fn: mode, createEmpty: true)
   |> fill(column: "_value", value: true)
   |> yield(name: "first")`,
 						id.GetID()))
