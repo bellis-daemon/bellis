@@ -3,12 +3,13 @@ package entity
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/cache"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"sync"
-	"time"
 
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/generic"
@@ -140,6 +141,7 @@ func (h handler) GetOfflineLog(ctx context.Context, request *OfflineLogRequest) 
 	if err != nil {
 		return &OfflineLogPage{}, status.Error(codes.Internal, err.Error())
 	}
+	glgf.Debug(request.EntityID, request.Pagination, logs)
 	return &OfflineLogPage{
 		Length: int32(len(logs)),
 		OfflineLogs: generic.SliceConvert(logs, func(log models.OfflineLog) *OfflineLog {

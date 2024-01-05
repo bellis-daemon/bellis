@@ -78,7 +78,7 @@ func checkUserEntityUsageCount() {
 			glgf.Error(err)
 			continue
 		}
-		count, err := storage.CEntity.CountDocuments(ctx, bson.M{"_id": user.ID})
+		count, err := storage.CEntity.CountDocuments(ctx, bson.M{"UserID": user.ID})
 		if err != nil {
 			glgf.Error(err)
 			continue

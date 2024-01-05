@@ -83,7 +83,7 @@ func check(ctx context.Context) primitive.ObjectID {
 			return primitive.NilObjectID
 		}
 		// success login check
-		ok := onAuthed(ctx, id, requestToken)
+		ok := checkAuthedUser(ctx, id, requestToken)
 		if !ok {
 			return primitive.NilObjectID
 		}
@@ -91,7 +91,7 @@ func check(ctx context.Context) primitive.ObjectID {
 	}
 }
 
-func onAuthed(ctx context.Context, userId primitive.ObjectID, requestToken string) bool {
+func checkAuthedUser(ctx context.Context, userId primitive.ObjectID, requestToken string) bool {
 	setted, err := storage.Redis().SetNX(ctx, "ONLINE"+userId.Hex()+requestToken, true, 10*time.Minute).Result()
 	if err != nil {
 		glgf.Error(err)
@@ -106,9 +106,10 @@ func onAuthed(ctx context.Context, userId primitive.ObjectID, requestToken strin
 		}
 		if count == 0 {
 			storage.Redis().Del(ctx, "ONLINE"+userId.Hex()+requestToken)
-			storage.Redis().Del(ctx, requestToken)
+			storage.Redis().Del(ctx, "LOGIN"+requestToken)
 			return false
 		}
+		storage.Redis().Expire(ctx, "LOGIN"+requestToken, 30*24*time.Hour)
 		ip := ipFromContext(ctx)
 		var locString string
 		loc, err := geo.FromLocal(ip)

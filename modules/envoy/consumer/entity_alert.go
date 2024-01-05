@@ -53,7 +53,8 @@ func entityOfflineAlert() {
 			return nil
 		}
 		// check if entity is previously offline
-		log, err := recentOfflineLog(ctx, &entity)
+		var log *models.OfflineLog
+		log, err = recentOfflineLog(ctx, &entity)
 		if err != nil {
 			return fmt.Errorf("cant get entity offline log: %w", err)
 		}
@@ -62,6 +63,9 @@ func entityOfflineAlert() {
 			if err != nil {
 				return fmt.Errorf("cant write offline log: %w", err)
 			}
+		} else {
+			glgf.Warn("Offline alert message received for an already offline entity, ignoring: %s", entity.ID.Hex())
+			return nil
 		}
 		envoyType := ""
 		var envoyDriver drivers.EnvoyDriver
@@ -83,24 +87,29 @@ func entityOfflineAlert() {
 			return nil
 		}
 		err = envoyDriver.AlertOffline(user, &entity, log)
-		envoyLog := &models.EnvoyLog{
-			ID:             primitive.NewObjectID(),
-			SendTime:       time.Now(),
-			Success:        err == nil,
-			OfflineLogID:   log.ID,
-			PolicyType:     envoyType,
-			PolicySnapShot: envoyDriver.PolicySnapShot(),
-		}
-		if err != nil {
-			glgf.Error(err)
-			envoyLog.FailedMessage = err.Error()
-		}
 		go func() {
 			ctx := context.Background()
+			envoyLog := &models.EnvoyLog{
+				ID:             primitive.NewObjectID(),
+				SendTime:       time.Now(),
+				Success:        err == nil,
+				OfflineLogID:   log.ID,
+				PolicyType:     envoyType,
+				PolicySnapShot: envoyDriver.PolicySnapShot(),
+			}
+			if err != nil {
+				glgf.Error(err)
+				envoyLog.FailedMessage = err.Error()
+			}
 			_, err := storage.CEnvoyLog.InsertOne(ctx, envoyLog)
 			if err != nil {
 				glgf.Error(err)
 			}
+		}()
+		if err != nil {
+			return fmt.Errorf("send offline alert failed: %w", err)
+		}
+		go func() {
 			if user.Envoy.PolicyType == models.IsEnvoySMS {
 				err = user.UsageEnvoySMSIncr(ctx, 1)
 				if err != nil {
@@ -113,9 +122,6 @@ func entityOfflineAlert() {
 				}
 			}
 		}()
-		if err != nil {
-			return fmt.Errorf("send offline alert failed: %w", err)
-		}
 		glgf.Debugf("Offline alert of %s sent via %s", entity.Name, envoyType)
 		return nil
 	})
