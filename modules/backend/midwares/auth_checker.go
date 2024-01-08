@@ -117,9 +117,9 @@ func checkAuthedUser(ctx context.Context, userId primitive.ObjectID, requestToke
 		loc, err := geo.FromLocal(ip)
 		if err != nil {
 			glgf.Error(err)
-			locString = loc.String()
-		} else {
 			locString = "Unknown Location"
+		} else {
+			locString = loc.String()
 		}
 		_, err = storage.CUserLoginLog.InsertOne(ctx, &models.UserLoginLog{
 			ID:         primitive.NewObjectID(),
