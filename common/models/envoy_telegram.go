@@ -9,7 +9,7 @@ import (
 )
 
 type EnvoyTelegram struct {
-	EnvoyHeader
+	EnvoyHeader `json:"EnvoyHeader" bson:"EnvoyHeader"`
 	ID     primitive.ObjectID `json:"ID" bson:"_id"`
 	ChatID int64              `json:"ChatID" bson:"ChatID"`
 }

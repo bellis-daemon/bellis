@@ -1,9 +1,10 @@
 version: "3.8"
 
 services:
+  # bellis containers
   backend:
     hostname: backend
-    container_name: backend
+    image: registry.cn-shanghai.aliyuncs.com/bellis/backend
     build:
       dockerfile: Dockerfile
       context: ..
@@ -12,13 +13,15 @@ services:
         PORT: 7001
     networks:
       - bellis
-    restart: always
     ports:
       - "7001:7001"
-
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 2
   dispatcher:
     hostname: dispatcher
-    container_name: dispatcher
+    image: registry.cn-shanghai.aliyuncs.com/bellis/dispatcher
     build:
       dockerfile: Dockerfile
       context: ..
@@ -26,11 +29,13 @@ services:
         MODULE: dispatcher
     networks:
       - bellis
-    restart: always
-
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 2
   envoy:
     hostname: envoy
-    container_name: envoy
+    image: registry.cn-shanghai.aliyuncs.com/bellis/envoy
     build:
       dockerfile: Dockerfile
       context: ..
@@ -38,15 +43,58 @@ services:
         MODULE: envoy
     networks:
       - bellis
-    restart: always
+  sentry:
+    hostname: sentry
+    image: registry.cn-shanghai.aliyuncs.com/bellis/sentry
+    build:
+      dockerfile: Dockerfile
+      context: ..
+      args:
+        MODULE: sentry
+    networks:
+      - bellis
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 3
+
+  # database containers
+
+  etcd:
+    hostname: etcd
+    networks:
+      - bellis
+    image: docker.io/bitnami/etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    volumes:
+      - '/bellis/dist/database/etcd:/bitnami/etcd'
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+
+  etcd-keeper:
+    image: evildecay/etcdkeeper
+    networks:
+      - bellis
+    environment:
+      HOST: "0.0.0.0"
+    ports:
+      - 8500:8080
+    depends_on:
+      - etcd
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
 
   influxdb:
     hostname: influxdb
-    container_name: influxdb
     image: influxdb
     networks:
       - bellis
-    restart: always
     environment:
       - DOCKER_INFLUXDB_INIT_ORG=bellis
       - DOCKER_INFLUXDB_INIT_BUCKET=backend
@@ -57,96 +105,27 @@ services:
       - "8086:8086"
     volumes:
       - /bellis/dist/database/influxdb:/var/lib/influxdb2
-
-  mongo1:
-    hostname: mongo1
-    container_name: mongo1
-    image: mongo
-    networks:
-      - bellis
-    expose:
-      - 27017
-    restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
-    volumes:
-      - /bellis/dist/database/mongo1/configdb:/data/configdb
-      - /bellis/dist/database/mongo1/db:/data/db
-  mongo2:
-    hostname: mongo2
-    container_name: mongo2
-    image: mongo
-    networks:
-      - bellis
-    expose:
-      - 27017
-    restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
-    volumes:
-      - /bellis/dist/database/mongo2/configdb:/data/configdb
-      - /bellis/dist/database/mongo2/db:/data/db
-  mongo3:
-    hostname: mongo3
-    container_name: mongo3
-    image: mongo
-    networks:
-      - bellis
-    expose:
-      - 27017
-    restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
-    volumes:
-      - /bellis/dist/database/mongo3/configdb:/data/configdb
-      - /bellis/dist/database/mongo3/db:/data/db
-
-  mongo-init:
-    image: mongo
-    networks:
-      - bellis
-    depends_on:
-      - mongo1
-      - mongo2
-      - mongo3
-    restart: on-failure
-    command:
-      - mongosh
-      - mongodb://mongo1:27017/admin
-      - --eval
-      - 'rs.initiate({ _id: "rs0", members: [{_id:1,host:"mongo1:27017"},{_id:2,host:"mongo2:27017"},{_id:3,host:"mongo3:27017"}]})'
-
-  mongo-express:
-    image: mongo-express:1.0.0-alpha.4
-    container_name: mongo-express
-    hostname: mongo-express
-    ports:
-      - "8081:8081"
-    networks:
-      - bellis
-    depends_on:
-      - mongo1
-      - mongo2
-      - mongo3
-    restart: always
-    environment:
-      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
-      - ME_CONFIG_MONGODB_URL=mongodb://mongo1,mongo2,mongo3?replicaSet=rs0
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
 
   redis:
     hostname: redis
-    container_name: redis
     image: redis
     networks:
       - bellis
-    restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - /bellis/dist/database/redis:/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
 
   redis-commander:
-    container_name: redis-commander
     hostname: redis-commander
     image: rediscommander/redis-commander:latest
-    restart: always
+
     networks:
       - bellis
     environment:
@@ -155,20 +134,12 @@ services:
       - "8082:8081"
     depends_on:
       - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
 
-  sentry:
-    hostname: sentry
-    container_name: sentry
-    build:
-      dockerfile: Dockerfile
-      context: ..
-      args:
-        MODULE: sentry
-    networks:
-      - bellis
-    restart: always
-
-    
 networks:
   bellis:
+    driver: overlay
     external: true
