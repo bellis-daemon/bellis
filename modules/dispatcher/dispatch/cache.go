@@ -2,25 +2,27 @@ package dispatch
 
 import (
 	"context"
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/models"
-	"github.com/bellis-daemon/bellis/common/relock"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/dispatcher/producer"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 	"github.com/minoic/glgf"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
-var mutex *relock.Mutex
+var mutex *redsync.Mutex
 
 const EntityList = "EntityList"
 const TermDuration = 1 * time.Minute
 
 func init() {
-	mutex = relock.NewMutex(storage.Redis(), "EntityListMutex")
+	mutex = redsync.New(goredis.NewPool(storage.Redis())).NewMutex("EntityListMutex")
 }
 
 func syncEntityID() {
