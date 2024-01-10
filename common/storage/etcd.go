@@ -1,23 +1,27 @@
 package storage
 
 import (
-	"github.com/spf13/viper"
-	_ "github.com/spf13/viper/remote"
 	"strings"
 	"sync"
+
+	"github.com/spf13/viper"
+	_ "github.com/spf13/viper/remote"
 )
 
 var etcdOnce sync.Once
 var etcdConfig *ConfigInfo
 
 type ConfigInfo struct {
-	InfluxDBToken          string `mapstructure:"influxdb_token"`
-	MongoDBURI             string `mapstructure:"mongodb_uri"`
-	TelegramBotToken       string `mapstructure:"telegram_bot_token"`
-	TelegramBotApiEndpoint string `mapstructure:"telegram_bot_api_endpoint"`
-	TelegramBotName        string `mapstructure:"telegram_bot_name"`
-	TencentSTMPPassword    string `mapstructure:"tencent_smtp_password"`
-	WebEndpoint            string `mapstructure:"web_endpoint"`
+	InfluxDBToken          string   `mapstructure:"influxdb_token"`
+	MongoDBURI             string   `mapstructure:"mongodb_uri"`
+	TelegramBotToken       string   `mapstructure:"telegram_bot_token"`
+	TelegramBotApiEndpoint string   `mapstructure:"telegram_bot_api_endpoint"`
+	TelegramBotName        string   `mapstructure:"telegram_bot_name"`
+	TencentSTMPPassword    string   `mapstructure:"tencent_smtp_password"`
+	WebEndpoint            string   `mapstructure:"web_endpoint"`
+	RedisAddrs             []string `mapstructure:"redis_addrs"`
+	RedisUsername          string   `mapstructure:"redis_username"`
+	RedisPassword          string   `mapstructure:"redis_password"`
 }
 
 func Config() *ConfigInfo {

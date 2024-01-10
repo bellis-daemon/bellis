@@ -4,26 +4,34 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/minoic/glgf"
-	"github.com/redis/go-redis/v9"
 	"reflect"
 	"time"
+
+	"github.com/minoic/glgf"
+	"github.com/redis/go-redis/v9"
 )
 
-var rdb *redis.Client
+var rdb redis.UniversalClient
 
-func Redis() *redis.Client {
+func Redis() redis.UniversalClient {
 	if rdb == nil {
-		rdb = redis.NewClient(&redis.Options{
-			Addr:        "redis:6379",
+		opt := &redis.UniversalOptions{
+			Addrs:       Config().RedisAddrs,
+			Username:    Config().RedisUsername,
+			Password:    Config().RedisPassword,
 			DialTimeout: 3 * time.Second,
-		})
+		}
+		if len(opt.Addrs) > 1 {
+			opt.ReadOnly = true
+			opt.RouteRandomly = true
+		}
+		rdb = redis.NewUniversalClient(opt)
 	}
 	return rdb
 }
 
 func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, error), exp ...time.Duration) (*T, error) {
-	const QUICK_RC = "QUICK_RC"
+	const QUICK_RC = "QUICK_RC_"
 	cmd := Redis().Get(ctx, QUICK_RC+key)
 	if cmd.Err() != nil {
 		value, err := fallback()
