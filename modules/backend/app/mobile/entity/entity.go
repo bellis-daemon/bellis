@@ -399,7 +399,7 @@ from(bucket: "backend")
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		series, err := storage.QuickRCSearch[[]bool](ctx, "EntityLiveSeries"+id.ID, func() ([]bool, error) {
+		series, err := storage.QuickRCSearch[[]bool](ctx, "ENTITY_LIVE_SERIES_"+id.ID, func() ([]bool, error) {
 			var ret []bool
 			var query *api.QueryTableResult
 			if id.Scheme != nil {

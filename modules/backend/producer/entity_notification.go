@@ -19,7 +19,7 @@ func NoticeEntityUpdate(ctx context.Context, id string, entity *models.Applicati
 		MaxLen: 256,
 		Approx: true,
 		Values: map[string]interface{}{
-			"id":     id,
+			"EntityID":     id,
 			"Entity": s,
 		},
 	}).Err()
@@ -31,7 +31,7 @@ func NoticeEntityDelete(ctx context.Context, id string) error {
 		MaxLen: 256,
 		Approx: true,
 		Values: map[string]interface{}{
-			"id": id,
+			"EntityID": id,
 		},
 	}).Err()
 }

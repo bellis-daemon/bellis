@@ -37,7 +37,7 @@ func SentrySingletonAuth() gin.HandlerFunc {
 			return
 		}
 
-		idHex, err := storage.QuickRCSearch[string](ctx, "SENTRY_SINGLETON_TOKEN"+token, func() (string, error) {
+		idHex, err := storage.QuickRCSearch[string](ctx, "SENTRY_SINGLETON_TOKEN_"+token, func() (string, error) {
 			var user models.User
 			err := storage.CUser.FindOne(ctx, bson.M{"CustomSentries": token}).Decode(&user)
 			if err != nil {
