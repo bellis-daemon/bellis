@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -44,14 +45,7 @@ func entityOfflineAlert() {
 		if err != nil {
 			return fmt.Errorf("cant find user using user id: %s: %w", entity.UserID.Hex(), err)
 		}
-		if user.Envoy.PolicyType == models.IsEnvoySMS && !user.UsageEnvoySMSAccessible() {
-			glgf.Warn("User <%s>`s envoy sms usage exceeds: %d.", user.Usage.EnvoySMSCount)
-			return nil
-		}
-		if user.Envoy.PolicyType != models.IsEnvoySMS && !user.UsageEnvoyAccessible() {
-			glgf.Warn("User <%s>`s envoy usage exceeds: %d.", user.Usage.EnvoyCount)
-			return nil
-		}
+
 		// check if entity is previously offline
 		var log *models.OfflineLog
 		log, err = recentOfflineLog(ctx, &entity)
@@ -67,62 +61,107 @@ func entityOfflineAlert() {
 			glgf.Warn("Offline alert message received for an already offline entity, ignoring: %s", entity.ID.Hex())
 			return nil
 		}
-		envoyType := ""
-		var envoyDriver drivers.EnvoyDriver
-		switch user.Envoy.PolicyType {
-		case models.IsEnvoyGotify:
-			envoyType = "Gotify"
-			envoyDriver = gotify.New(ctx).WithPolicyId(user.Envoy.PolicyID)
-		case models.IsEnvoyEmail:
-			envoyType = "Email"
-			envoyDriver = email.New(ctx).WithPolicyId(user.Envoy.PolicyID)
-		case models.IsEnvoyWebhook:
-			envoyType = "Webhook"
-			envoyDriver = webhook.New(ctx).WithPolicyId(user.Envoy.PolicyID)
-		case models.IsEnvoyTelegram:
-			envoyType = "Telegram"
-			envoyDriver = telegram.New(ctx).WithPolicyId(user.Envoy.PolicyID)
-		default:
-			glgf.Warn("User envoy policy is empty, ignoring", entity.Name, user.Envoy)
-			return nil
-		}
-		err = envoyDriver.AlertOffline(user, &entity, log)
-		go func() {
-			ctx := context.Background()
-			envoyLog := &models.EnvoyLog{
-				ID:             primitive.NewObjectID(),
-				SendTime:       time.Now(),
-				Success:        err == nil,
-				OfflineLogID:   log.ID,
-				PolicyType:     envoyType,
-				PolicySnapShot: envoyDriver.PolicySnapShot(),
-			}
-			if err != nil {
-				glgf.Error(err)
-				envoyLog.FailedMessage = err.Error()
-			}
-			_, err := storage.CEnvoyLog.InsertOne(ctx, envoyLog)
-			if err != nil {
-				glgf.Error(err)
-			}
-		}()
-		if err != nil {
-			return fmt.Errorf("send offline alert failed: %w", err)
-		}
-		go func() {
-			if user.Envoy.PolicyType == models.IsEnvoySMS {
-				err = user.UsageEnvoySMSIncr(ctx, 1)
-				if err != nil {
-					glgf.Error(err)
+		var wg sync.WaitGroup
+		failed := false
+		for i := range user.EnvoyPolicies {
+			policyId := user.EnvoyPolicies[i].PolicyID
+			policyType := user.EnvoyPolicies[i].PolicyType
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if policyType == models.IsEnvoySMS && !user.UsageEnvoySMSAccessible() {
+					glgf.Warn("User <%s>`s envoy sms usage exceeds: %d.", user.Usage.EnvoySMSCount)
+					return
 				}
-			} else {
-				err = user.UsageEnvoyIncr(ctx, 1)
-				if err != nil {
-					glgf.Error(err)
+				if policyType != models.IsEnvoySMS && !user.UsageEnvoyAccessible() {
+					glgf.Warn("User <%s>`s envoy usage exceeds: %d.", user.Usage.EnvoyCount)
+					return
 				}
-			}
-		}()
-		glgf.Debugf("Offline alert of %s sent via %s", entity.Name, envoyType)
+				count, err := storage.CEnvoyLog.CountDocuments(ctx, bson.M{
+					"$and": bson.D{
+						{
+							"OfflineLogID", log.ID,
+						},
+						{
+							"Success", true,
+						},
+						{
+							"PolicySnapShot.ID", policyId,
+						},
+					},
+				})
+				if err != nil {
+					failed = true
+					glgf.Warn(err)
+					return
+				}
+				if count != 0 {
+					glgf.Info("Previous alert message success via current policy, ignoring.", policyId.String(), policyType)
+					return
+				}
+				envoyType := ""
+				var envoyDriver drivers.EnvoyDriver
+				switch policyType {
+				case models.IsEnvoyGotify:
+					envoyType = "Gotify"
+					envoyDriver = gotify.New(ctx).WithPolicyId(policyId)
+				case models.IsEnvoyEmail:
+					envoyType = "Email"
+					envoyDriver = email.New(ctx).WithPolicyId(policyId)
+				case models.IsEnvoyWebhook:
+					envoyType = "Webhook"
+					envoyDriver = webhook.New(ctx).WithPolicyId(policyId)
+				case models.IsEnvoyTelegram:
+					envoyType = "Telegram"
+					envoyDriver = telegram.New(ctx).WithPolicyId(policyId)
+				default:
+					glgf.Warn("User envoy policy is empty, ignoring", entity.Name, policyId.String(), policyType)
+					failed = true
+					return
+				}
+				err = envoyDriver.AlertOffline(user, &entity, log)
+				{
+					envoyLog := &models.EnvoyLog{
+						ID:             primitive.NewObjectID(),
+						SendTime:       time.Now(),
+						Success:        err == nil,
+						OfflineLogID:   log.ID,
+						PolicyType:     envoyType,
+						PolicySnapShot: envoyDriver.PolicySnapShot(),
+					}
+					if err != nil {
+						envoyLog.FailedMessage = err.Error()
+					}
+					_, err := storage.CEnvoyLog.InsertOne(context.Background(), envoyLog)
+					if err != nil {
+						glgf.Error(err)
+					}
+				}
+				if err != nil {
+					glgf.Error("send offline alert failed: %w", err)
+					failed = true
+					return
+				}
+				go func() {
+					if policyType == models.IsEnvoySMS {
+						err = user.UsageEnvoySMSIncr(ctx, 1)
+						if err != nil {
+							glgf.Error(err)
+						}
+					} else {
+						err = user.UsageEnvoyIncr(ctx, 1)
+						if err != nil {
+							glgf.Error(err)
+						}
+					}
+				}()
+				glgf.Debugf("Offline alert of %s sent via %s", entity.Name, envoyType)
+			}()
+		}
+		wg.Wait()
+		if failed == true {
+			return errors.New("error while sending alert")
+		}
 		return nil
 	})
 }

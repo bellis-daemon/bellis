@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/bellis-daemon/bellis/common/storage"
 	"net/http"
 	"time"
 
@@ -20,7 +21,8 @@ type SentrySingletonEvents []SentrySingletonEvent
 func ServeHttpEventListener(token string) {
 	ticker := time.NewTicker(5 * time.Second)
 	cl := http.DefaultClient
-	url := "https://bellis.minoic.top/api/sentry-singleton/refresh"
+
+	url := storage.Config().WebEndpoint + "/api/sentry-singleton/refresh"
 	for range ticker.C {
 		go func() {
 			var reqEvents SentrySingletonEvents

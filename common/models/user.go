@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/cryptoo"
@@ -23,7 +22,7 @@ type User struct {
 	Level          UserLevel          `json:"Level" bson:"Level"` // default(free) level: 0
 	LevelExpireAt  time.Time          `json:"LevelExpireAt" bson:"LevelExpireAt"`
 	Usage          UserUsage          `json:"Usage" bson:"Usage"`
-	Envoy          EnvoyPolicy        `json:"Envoy" bson:"Envoy"`
+	EnvoyPolicies  []EnvoyPolicy      `json:"EnvoyPolicies" bson:"EnvoyPolicies"`
 	Timezone       Timezone           `json:"Timezone" bson:"Timezone"`
 	CustomSentries []string           `json:"CustomSentries" bson:"CustomSentries"`
 }
@@ -94,10 +93,7 @@ func NewUser() *User {
 		CreatedAt:     time.Now(),
 		Level:         UserLevelFree,
 		LevelExpireAt: time.Time{},
-		Envoy: EnvoyPolicy{
-			OfflineAlert: false,
-			Sensitive:    3,
-		},
+		EnvoyPolicies: []EnvoyPolicy{},
 		Usage: UserUsage{
 			EnvoySMSCount:    0,
 			EnvoyCount:       0,
@@ -124,19 +120,19 @@ func (this *User) SetUserLevel(ctx context.Context, level UserLevel, ttl ...time
 }
 
 func (this *User) UsageEnvoySMSAccessible() bool {
-	return this.Usage.EnvoySMSCount < this.Level.Limit().EnvoySMSCount
+	return this.Usage.EnvoySMSCount < this.Level.Limit().EnvoySMSCount || this.Level == UserLevelAdmin
 }
 
 func (this *User) UsageEnvoyAccessible() bool {
-	return this.Usage.EnvoyCount < this.Level.Limit().EnvoyCount
+	return this.Usage.EnvoyCount < this.Level.Limit().EnvoyCount || this.Level == UserLevelAdmin
 }
 
 func (this *User) UsageEntityAccessible() bool {
-	return this.Usage.EntityCount < this.Level.Limit().EntityCount
+	return this.Usage.EntityCount < this.Level.Limit().EntityCount || this.Level == UserLevelAdmin
 }
 
 func (this *User) UsageEnvoyPolicyAccessible() bool {
-	return this.Usage.EnvoyPolicyCount < this.Level.Limit().EnvoyPolicyCount
+	return this.Usage.EnvoyPolicyCount < this.Level.Limit().EnvoyPolicyCount || this.Level == UserLevelAdmin
 }
 
 func (this *User) UsageEnvoySMSIncr(ctx context.Context, delta int32) error {
@@ -183,69 +179,6 @@ func (this *User) SetPassword(ctx context.Context, pwd string) error {
 	return nil
 }
 
-func (this *User) SetProfile(ctx context.Context, policyType EnvoyPolicyType, policy any) error {
-	return storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
-		// delete old policy
-		if this.Envoy.PolicyID != primitive.NilObjectID {
-			var coll *mongo.Collection
-			switch this.Envoy.PolicyType {
-			case IsEnvoyGotify:
-				coll = storage.CEnvoyGotify
-			case IsEnvoyEmail:
-				coll = storage.CEnvoyEmail
-			case IsEnvoyWebhook:
-				coll = storage.CEnvoyWebhook
-			case IsEnvoyTelegram:
-				coll = storage.CEnvoyTelegram
-			default:
-				return errors.New("invalid policy type")
-			}
-			_, err := coll.DeleteOne(sessionContext, bson.M{
-				"_id": this.Envoy.PolicyID,
-			})
-			if err != nil {
-				return err
-			}
-		}
-		// create new policy
-		switch policyType {
-		case IsEnvoyGotify:
-			one, err := storage.CEnvoyGotify.InsertOne(sessionContext, policy)
-			if err != nil {
-				return err
-			}
-			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
-		case IsEnvoyEmail:
-			one, err := storage.CEnvoyEmail.InsertOne(sessionContext, policy)
-			if err != nil {
-				return err
-			}
-			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
-		case IsEnvoyWebhook:
-			one, err := storage.CEnvoyWebhook.InsertOne(sessionContext, policy)
-			if err != nil {
-				return err
-			}
-			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
-		case IsEnvoyTelegram:
-			one, err := storage.CEnvoyTelegram.InsertOne(sessionContext, policy)
-			if err != nil {
-				return err
-			}
-			this.Envoy.PolicyID = one.InsertedID.(primitive.ObjectID)
-		default:
-			return errors.New("invalid policy type")
-		}
-		this.Envoy.PolicyType = policyType
-		// modify user model
-		_, err := storage.CUser.ReplaceOne(sessionContext, bson.M{"_id": this.ID}, this)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
 type EnvoyPolicyType int
 
 const (
@@ -256,11 +189,25 @@ const (
 	IsEnvoyWebhook
 )
 
+func (this EnvoyPolicyType) GetCollection() *mongo.Collection {
+	switch this {
+	case IsEnvoyEmail:
+		return storage.CEnvoyEmail
+	case IsEnvoyGotify:
+		return storage.CEnvoyGotify
+	case IsEnvoySMS:
+		return storage.CEnvoySMS
+	case IsEnvoyTelegram:
+		return storage.CEnvoyTelegram
+	case IsEnvoyWebhook:
+		return storage.CEnvoyWebhook
+	}
+	return nil
+}
+
 type EnvoyPolicy struct {
-	PolicyID     primitive.ObjectID `json:"PolicyID" bson:"PolicyID"`
-	PolicyType   EnvoyPolicyType    `json:"PolicyType" bson:"PolicyType"`
-	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
-	Sensitive    int                `json:"Sensitive" bson:"Sensitive"`
+	PolicyID   primitive.ObjectID `json:"PolicyID" bson:"PolicyID"`
+	PolicyType EnvoyPolicyType    `json:"PolicyType" bson:"PolicyType"`
 }
 
 type UserGetter interface {

@@ -23,11 +23,10 @@ const (
 	ProfileService_GetUserProfile_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/GetUserProfile"
 	ProfileService_ChangePassword_FullMethodName       = "/bellis.backend.mobile.profile.ProfileService/ChangePassword"
 	ProfileService_ChangeEmail_FullMethodName          = "/bellis.backend.mobile.profile.ProfileService/ChangeEmail"
-	ProfileService_ChangeAlert_FullMethodName          = "/bellis.backend.mobile.profile.ProfileService/ChangeAlert"
 	ProfileService_ChangeSensitive_FullMethodName      = "/bellis.backend.mobile.profile.ProfileService/ChangeSensitive"
-	ProfileService_UseGotify_FullMethodName            = "/bellis.backend.mobile.profile.ProfileService/UseGotify"
-	ProfileService_UseEmail_FullMethodName             = "/bellis.backend.mobile.profile.ProfileService/UseEmail"
-	ProfileService_UseWebhook_FullMethodName           = "/bellis.backend.mobile.profile.ProfileService/UseWebhook"
+	ProfileService_CreateEnvoyPolicy_FullMethodName    = "/bellis.backend.mobile.profile.ProfileService/CreateEnvoyPolicy"
+	ProfileService_UpdateEnvoyPolicy_FullMethodName    = "/bellis.backend.mobile.profile.ProfileService/UpdateEnvoyPolicy"
+	ProfileService_DeleteEnvoyPolicy_FullMethodName    = "/bellis.backend.mobile.profile.ProfileService/DeleteEnvoyPolicy"
 	ProfileService_GetEnvoyTelegramLink_FullMethodName = "/bellis.backend.mobile.profile.ProfileService/GetEnvoyTelegramLink"
 	ProfileService_GetUserLoginLogs_FullMethodName     = "/bellis.backend.mobile.profile.ProfileService/GetUserLoginLogs"
 )
@@ -39,11 +38,10 @@ type ProfileServiceClient interface {
 	GetUserProfile(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserProfile, error)
 	ChangePassword(ctx context.Context, in *NewPassword, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ChangeEmail(ctx context.Context, in *NewEmail, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	ChangeAlert(ctx context.Context, in *Alert, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ChangeSensitive(ctx context.Context, in *Sensitive, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	UseGotify(ctx context.Context, in *Gotify, opts ...grpc.CallOption) (*EnvoyPolicy, error)
-	UseEmail(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EnvoyPolicy, error)
-	UseWebhook(ctx context.Context, in *Webhook, opts ...grpc.CallOption) (*EnvoyPolicy, error)
+	CreateEnvoyPolicy(ctx context.Context, in *EnvoyPolicy, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateEnvoyPolicy(ctx context.Context, in *EnvoyPolicy, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	DeleteEnvoyPolicy(ctx context.Context, in *EnvoyPolicy, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetEnvoyTelegramLink(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EnvoyTelegramLink, error)
 	GetUserLoginLogs(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserLoginLogs, error)
 }
@@ -83,15 +81,6 @@ func (c *profileServiceClient) ChangeEmail(ctx context.Context, in *NewEmail, op
 	return out, nil
 }
 
-func (c *profileServiceClient) ChangeAlert(ctx context.Context, in *Alert, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, ProfileService_ChangeAlert_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *profileServiceClient) ChangeSensitive(ctx context.Context, in *Sensitive, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, ProfileService_ChangeSensitive_FullMethodName, in, out, opts...)
@@ -101,27 +90,27 @@ func (c *profileServiceClient) ChangeSensitive(ctx context.Context, in *Sensitiv
 	return out, nil
 }
 
-func (c *profileServiceClient) UseGotify(ctx context.Context, in *Gotify, opts ...grpc.CallOption) (*EnvoyPolicy, error) {
-	out := new(EnvoyPolicy)
-	err := c.cc.Invoke(ctx, ProfileService_UseGotify_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) CreateEnvoyPolicy(ctx context.Context, in *EnvoyPolicy, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ProfileService_CreateEnvoyPolicy_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *profileServiceClient) UseEmail(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EnvoyPolicy, error) {
-	out := new(EnvoyPolicy)
-	err := c.cc.Invoke(ctx, ProfileService_UseEmail_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) UpdateEnvoyPolicy(ctx context.Context, in *EnvoyPolicy, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ProfileService_UpdateEnvoyPolicy_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *profileServiceClient) UseWebhook(ctx context.Context, in *Webhook, opts ...grpc.CallOption) (*EnvoyPolicy, error) {
-	out := new(EnvoyPolicy)
-	err := c.cc.Invoke(ctx, ProfileService_UseWebhook_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) DeleteEnvoyPolicy(ctx context.Context, in *EnvoyPolicy, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteEnvoyPolicy_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,11 +142,10 @@ type ProfileServiceServer interface {
 	GetUserProfile(context.Context, *emptypb.Empty) (*UserProfile, error)
 	ChangePassword(context.Context, *NewPassword) (*emptypb.Empty, error)
 	ChangeEmail(context.Context, *NewEmail) (*emptypb.Empty, error)
-	ChangeAlert(context.Context, *Alert) (*emptypb.Empty, error)
 	ChangeSensitive(context.Context, *Sensitive) (*emptypb.Empty, error)
-	UseGotify(context.Context, *Gotify) (*EnvoyPolicy, error)
-	UseEmail(context.Context, *Email) (*EnvoyPolicy, error)
-	UseWebhook(context.Context, *Webhook) (*EnvoyPolicy, error)
+	CreateEnvoyPolicy(context.Context, *EnvoyPolicy) (*emptypb.Empty, error)
+	UpdateEnvoyPolicy(context.Context, *EnvoyPolicy) (*emptypb.Empty, error)
+	DeleteEnvoyPolicy(context.Context, *EnvoyPolicy) (*emptypb.Empty, error)
 	GetEnvoyTelegramLink(context.Context, *emptypb.Empty) (*EnvoyTelegramLink, error)
 	GetUserLoginLogs(context.Context, *emptypb.Empty) (*UserLoginLogs, error)
 }
@@ -175,20 +163,17 @@ func (UnimplementedProfileServiceServer) ChangePassword(context.Context, *NewPas
 func (UnimplementedProfileServiceServer) ChangeEmail(context.Context, *NewEmail) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeEmail not implemented")
 }
-func (UnimplementedProfileServiceServer) ChangeAlert(context.Context, *Alert) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ChangeAlert not implemented")
-}
 func (UnimplementedProfileServiceServer) ChangeSensitive(context.Context, *Sensitive) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeSensitive not implemented")
 }
-func (UnimplementedProfileServiceServer) UseGotify(context.Context, *Gotify) (*EnvoyPolicy, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UseGotify not implemented")
+func (UnimplementedProfileServiceServer) CreateEnvoyPolicy(context.Context, *EnvoyPolicy) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateEnvoyPolicy not implemented")
 }
-func (UnimplementedProfileServiceServer) UseEmail(context.Context, *Email) (*EnvoyPolicy, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UseEmail not implemented")
+func (UnimplementedProfileServiceServer) UpdateEnvoyPolicy(context.Context, *EnvoyPolicy) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateEnvoyPolicy not implemented")
 }
-func (UnimplementedProfileServiceServer) UseWebhook(context.Context, *Webhook) (*EnvoyPolicy, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UseWebhook not implemented")
+func (UnimplementedProfileServiceServer) DeleteEnvoyPolicy(context.Context, *EnvoyPolicy) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteEnvoyPolicy not implemented")
 }
 func (UnimplementedProfileServiceServer) GetEnvoyTelegramLink(context.Context, *emptypb.Empty) (*EnvoyTelegramLink, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEnvoyTelegramLink not implemented")
@@ -262,24 +247,6 @@ func _ProfileService_ChangeEmail_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_ChangeAlert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Alert)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).ChangeAlert(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_ChangeAlert_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).ChangeAlert(ctx, req.(*Alert))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ProfileService_ChangeSensitive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Sensitive)
 	if err := dec(in); err != nil {
@@ -298,56 +265,56 @@ func _ProfileService_ChangeSensitive_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_UseGotify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Gotify)
+func _ProfileService_CreateEnvoyPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnvoyPolicy)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServiceServer).UseGotify(ctx, in)
+		return srv.(ProfileServiceServer).CreateEnvoyPolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProfileService_UseGotify_FullMethodName,
+		FullMethod: ProfileService_CreateEnvoyPolicy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).UseGotify(ctx, req.(*Gotify))
+		return srv.(ProfileServiceServer).CreateEnvoyPolicy(ctx, req.(*EnvoyPolicy))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_UseEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Email)
+func _ProfileService_UpdateEnvoyPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnvoyPolicy)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServiceServer).UseEmail(ctx, in)
+		return srv.(ProfileServiceServer).UpdateEnvoyPolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProfileService_UseEmail_FullMethodName,
+		FullMethod: ProfileService_UpdateEnvoyPolicy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).UseEmail(ctx, req.(*Email))
+		return srv.(ProfileServiceServer).UpdateEnvoyPolicy(ctx, req.(*EnvoyPolicy))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_UseWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Webhook)
+func _ProfileService_DeleteEnvoyPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnvoyPolicy)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServiceServer).UseWebhook(ctx, in)
+		return srv.(ProfileServiceServer).DeleteEnvoyPolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProfileService_UseWebhook_FullMethodName,
+		FullMethod: ProfileService_DeleteEnvoyPolicy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).UseWebhook(ctx, req.(*Webhook))
+		return srv.(ProfileServiceServer).DeleteEnvoyPolicy(ctx, req.(*EnvoyPolicy))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -408,24 +375,20 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProfileService_ChangeEmail_Handler,
 		},
 		{
-			MethodName: "ChangeAlert",
-			Handler:    _ProfileService_ChangeAlert_Handler,
-		},
-		{
 			MethodName: "ChangeSensitive",
 			Handler:    _ProfileService_ChangeSensitive_Handler,
 		},
 		{
-			MethodName: "UseGotify",
-			Handler:    _ProfileService_UseGotify_Handler,
+			MethodName: "CreateEnvoyPolicy",
+			Handler:    _ProfileService_CreateEnvoyPolicy_Handler,
 		},
 		{
-			MethodName: "UseEmail",
-			Handler:    _ProfileService_UseEmail_Handler,
+			MethodName: "UpdateEnvoyPolicy",
+			Handler:    _ProfileService_UpdateEnvoyPolicy_Handler,
 		},
 		{
-			MethodName: "UseWebhook",
-			Handler:    _ProfileService_UseWebhook_Handler,
+			MethodName: "DeleteEnvoyPolicy",
+			Handler:    _ProfileService_DeleteEnvoyPolicy_Handler,
 		},
 		{
 			MethodName: "GetEnvoyTelegramLink",

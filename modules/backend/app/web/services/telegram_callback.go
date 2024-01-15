@@ -6,12 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"sort"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/gin-gonic/gin"
@@ -21,6 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"net/http"
+	"sort"
+	"strings"
+	"sync"
+	"time"
 )
 
 // TelegramCallbackService handles the callback from the Telegram bot.
@@ -47,8 +46,9 @@ func TelegramCallbackService() gin.HandlerFunc {
 			case "start":
 				captcha := update.Message.CommandArguments()
 				glgf.Debug("telegram join: ", captcha, update.Message.Chat.ID)
-				reply.Text = "Welcome to Bellis envoy!"
+				reply.Text = "Welcome to Bellis Envoy!"
 				if val, err := storage.Redis().Get(ctx, captcha).Result(); err == nil {
+					defer storage.Redis().Del(ctx, captcha)
 					id, err := primitive.ObjectIDFromHex(val)
 					if err != nil {
 						glgf.Warn(err)
@@ -60,19 +60,41 @@ func TelegramCallbackService() gin.HandlerFunc {
 						glgf.Warn(err)
 						break
 					}
-					err = user.SetProfile(ctx, models.IsEnvoyTelegram, &models.EnvoyTelegram{
-						EnvoyHeader: models.EnvoyHeader{
-							UserID:    user.ID,
-							CreatedAt: time.Now(),
-						},
-						ID:     primitive.NewObjectID(),
-						ChatID: update.Message.Chat.ID,
+					if !user.UsageEnvoyPolicyAccessible() {
+						reply.Text += "Exceeds envoy policy limit."
+						break
+					}
+					err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+						err := user.UsageEnvoyPolicyIncr(sessionContext, 1)
+						if err != nil {
+							return err
+						}
+						id := primitive.NewObjectID()
+						_, err = storage.CUser.UpdateByID(ctx, user.ID, bson.M{"$push": bson.M{"EnvoyPolicies": bson.M{
+							"PolicyID":   id,
+							"PolicyType": models.IsEnvoyTelegram,
+						}}})
+						if err != nil {
+							return err
+						}
+						_, err = storage.CEnvoyTelegram.InsertOne(ctx, &models.EnvoyTelegram{
+							EnvoyHeader: models.EnvoyHeader{
+								UserID:    user.ID,
+								CreatedAt: time.Now(),
+							},
+							ID:     id,
+							ChatID: update.Message.Chat.ID,
+						})
+						if err != nil {
+							return err
+						}
+						return nil
 					})
 					if err != nil {
 						glgf.Warn(err)
 						break
 					}
-					reply.Text = "Welcome to Bellis envoy, successfully bind to user: " + user.Email
+					reply.Text = "Welcome to Bellis Envoy, successfully bind to user: " + user.Email
 				} else {
 					glgf.Warn(err)
 					break

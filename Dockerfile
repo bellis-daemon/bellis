@@ -7,7 +7,8 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/re
     &&  apk add --no-cache upx tzdata && rm -rf /var/cache/apk/*
 
 # 启用go module
-ENV GO111MODULE=on 
+ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.cn
 ENV TZ=Asia/Shanghai
 
 ARG MODULE=backend

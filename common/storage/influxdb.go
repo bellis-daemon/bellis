@@ -12,7 +12,7 @@ var DeleteInfluxDB api.DeleteAPI
 
 func ConnectInfluxDB() {
 	client := influxdb2.NewClientWithOptions(
-		"http://influxdb:8086",
+		Config().InfluxDBURI,
 		Config().InfluxDBToken,
 		influxdb2.DefaultOptions().
 			SetBatchSize(50).
@@ -22,8 +22,8 @@ func ConnectInfluxDB() {
 			SetMaxRetries(3).
 			SetMaxRetryInterval(500),
 	)
-	WriteInfluxDB = client.WriteAPI("bellis", "backend")
-	WriteInfluxDBBlocking = client.WriteAPIBlocking("bellis", "backend")
-	QueryInfluxDB = client.QueryAPI("bellis")
+	WriteInfluxDB = client.WriteAPI(Config().InfluxDBOrg, Config().InfluxDBDatabase)
+	WriteInfluxDBBlocking = client.WriteAPIBlocking(Config().InfluxDBOrg, Config().InfluxDBDatabase)
+	QueryInfluxDB = client.QueryAPI(Config().InfluxDBOrg)
 	DeleteInfluxDB = client.DeleteAPI()
 }

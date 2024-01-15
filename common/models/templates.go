@@ -19,6 +19,8 @@ func (this Timezone) Location() *time.Location {
 }
 
 type EnvoyHeader struct {
-	UserID    primitive.ObjectID `json:"UserID" bson:"UserID"`
-	CreatedAt time.Time          `json:"CreatedAt" bson:"CreatedAt"`
+	UserID       primitive.ObjectID `json:"UserID" bson:"UserID"`
+	CreatedAt    time.Time          `json:"CreatedAt" bson:"CreatedAt"`
+	OfflineAlert bool               `json:"OfflineAlert" bson:"OfflineAlert"`
+	Sensitive    int                `json:"Sensitive" bson:"Sensitive"`
 }

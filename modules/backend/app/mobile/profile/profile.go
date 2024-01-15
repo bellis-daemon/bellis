@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/bellis-daemon/bellis/common/cryptoo"
 	"github.com/bellis-daemon/bellis/common/generic"
@@ -10,17 +11,174 @@ import (
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
+	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"sort"
+	"sync"
 	"time"
 )
 
 // implement ProfileServiceServer
 type handler struct{}
+
+func (h handler) CreateEnvoyPolicy(ctx context.Context, policy *EnvoyPolicy) (*emptypb.Empty, error) {
+	user := midwares.GetUserFromCtx(ctx)
+	if !user.UsageEnvoyAccessible() {
+		return &emptypb.Empty{}, errors.New("the number of available envoy policies has reached the upper limit")
+	}
+	var targetPolicyType models.EnvoyPolicyType
+	var targetPolicy any
+	header := models.EnvoyHeader{
+		UserID:       user.ID,
+		CreatedAt:    time.Now(),
+		OfflineAlert: policy.OfflineAlert,
+		Sensitive:    int(policy.Sensitive),
+	}
+	switch models.EnvoyPolicyType(policy.PolicyType) {
+	case models.IsEnvoyGotify:
+		targetPolicy = &models.EnvoyGotify{
+			EnvoyHeader: header,
+			ID:          primitive.NewObjectID(),
+			URL:         policy.PolicyContent.GetGotify().Url,
+			Token:       policy.PolicyContent.GetGotify().Token,
+		}
+		targetPolicyType = models.IsEnvoyGotify
+	case models.IsEnvoyEmail:
+		targetPolicy = &models.EnvoyEmail{
+			EnvoyHeader: header,
+			ID:          primitive.NewObjectID(),
+			Address:     policy.PolicyContent.GetEmail().Address,
+		}
+		targetPolicyType = models.IsEnvoyEmail
+	case models.IsEnvoyWebhook:
+		targetPolicy = &models.EnvoyWebhook{
+			EnvoyHeader: header,
+			ID:          primitive.NewObjectID(),
+			URL:         policy.PolicyContent.GetWebhook().Url,
+			Insecure:    policy.PolicyContent.GetWebhook().Insecure,
+		}
+		targetPolicyType = models.IsEnvoyWebhook
+	case models.IsEnvoyTelegram:
+		targetPolicy = &models.EnvoyTelegram{
+			EnvoyHeader: header,
+			ID:          primitive.NewObjectID(),
+			ChatID:      policy.PolicyContent.GetTelegram().ChatId,
+		}
+	default:
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "invalid policy type")
+	}
+	err := storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		// create new policy
+		var policyId primitive.ObjectID
+		inserted, err := targetPolicyType.GetCollection().InsertOne(ctx, targetPolicy)
+		if err != nil {
+			return err
+		}
+		policyId = inserted.InsertedID.(primitive.ObjectID)
+		// modify user model
+		_, err = storage.CUser.UpdateOne(sessionContext, bson.M{"_id": user.ID}, bson.M{"$push": bson.M{"EnvoyPolicies": bson.M{
+			"PolicyID":   policyId,
+			"PolicyType": targetPolicyType,
+		}}})
+		if err != nil {
+			return err
+		}
+		err = user.UsageEnvoyIncr(sessionContext, 1)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (h handler) UpdateEnvoyPolicy(ctx context.Context, policy *EnvoyPolicy) (*emptypb.Empty, error) {
+	id, err := primitive.ObjectIDFromHex(policy.PolicyID)
+	if err != nil {
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "cant find specified policy")
+	}
+	user := midwares.GetUserFromCtx(ctx)
+	err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		policyType := models.EnvoyPolicyType(policy.PolicyType)
+		one, err := storage.CUser.UpdateOne(ctx, bson.M{"_id": user.ID, "EnvoyPolicies.PolicyID": id}, bson.M{"$set": bson.M{
+			"EnvoyPolicies.$.PolicyType": policyType,
+		}})
+		if err != nil {
+			return err
+		}
+		if one.ModifiedCount == 0 {
+			return errors.New("cant find specified envoy policy")
+		}
+		set := bson.M{
+			"Sensitive":    policy.Sensitive,
+			"OfflineAlert": policy.OfflineAlert,
+		}
+		switch policyType {
+		case models.IsEnvoyGotify:
+			set["URL"] = policy.PolicyContent.GetGotify().Url
+			set["Token"] = policy.PolicyContent.GetGotify().Token
+		case models.IsEnvoyEmail:
+			set["Address"] = policy.PolicyContent.GetEmail().Address
+		case models.IsEnvoyTelegram:
+			set["ChatID"] = policy.PolicyContent.GetTelegram().ChatId
+		case models.IsEnvoyWebhook:
+			set["URL"] = policy.PolicyContent.GetWebhook().Url
+			set["Insecure"] = policy.PolicyContent.GetWebhook().Insecure
+		}
+		_, err = policyType.GetCollection().UpdateByID(ctx, id, bson.M{"$set": set})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return &emptypb.Empty{}, err
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (h handler) DeleteEnvoyPolicy(ctx context.Context, policy *EnvoyPolicy) (*emptypb.Empty, error) {
+	user := midwares.GetUserFromCtx(ctx)
+	id, err := primitive.ObjectIDFromHex(policy.PolicyID)
+	if err != nil {
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "invalid policy id")
+	}
+	policyType := models.EnvoyPolicyType(policy.PolicyType)
+	err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		updated, err := storage.CUser.UpdateByID(sessionContext, user.ID, bson.M{"$pull": bson.M{"EnvoyPolicies": bson.M{
+			"PolicyID": id,
+		}}})
+		if err != nil {
+			return err
+		}
+		if updated.ModifiedCount == 0 {
+			return errors.New("policy does not exist in user envoy policies")
+		}
+		_, err = policyType.GetCollection().DeleteOne(ctx, bson.M{"_id": id})
+		if err != nil {
+			return err
+		}
+		err = user.UsageEnvoyIncr(sessionContext, -1)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
+	}
+	return &emptypb.Empty{}, nil
+}
 
 func (h handler) GetUserLoginLogs(ctx context.Context, empty *emptypb.Empty) (*UserLoginLogs, error) {
 	user := midwares.GetUserFromCtx(ctx)
@@ -96,40 +254,6 @@ func (h handler) ChangeEmail(ctx context.Context, email *NewEmail) (*emptypb.Emp
 	return &emptypb.Empty{}, nil
 }
 
-// ChangeAlert updates the user's alert settings for offline and prediction alerts.
-// It modifies the user's alert settings in the storage based on the provided Alert object and returns an empty response or an error
-func (h handler) ChangeAlert(ctx context.Context, alert *Alert) (*emptypb.Empty, error) {
-	user := midwares.GetUserFromCtx(ctx)
-	_, err := storage.CUser.UpdateOne(ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": bson.M{
-			"Envoy.OfflineAlert": alert.OfflineAlert,
-			"Envoy.PredictAlert": alert.PredictAlert,
-		}})
-	if err != nil {
-		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
-	}
-	return &emptypb.Empty{}, nil
-}
-
-// UseGotify sets the user's Envoy policy to use Gotify with the provided configuration.
-// It delegates the policy setup to a common function and returns the resulting EnvoyPolicy object or an error.
-func (h handler) UseGotify(ctx context.Context, gotify *Gotify) (*EnvoyPolicy, error) {
-	return useNewPolicy(ctx, gotify)
-}
-
-// UseEmail sets the user's Envoy policy to use Email with the provided configuration.
-// It delegates the policy setup to a common function and returns the resulting Envoy Policy object or an error.
-func (h handler) UseEmail(ctx context.Context, email *Email) (*EnvoyPolicy, error) {
-	return useNewPolicy(ctx, email)
-}
-
-// UseWebhook sets the user's Envoy policy to use Webhook with the provided configuration.
-// It delegates the policy setup to a common function and returns the resulting Envoy Policy object
-func (h handler) UseWebhook(ctx context.Context, webhook *Webhook) (*EnvoyPolicy, error) {
-	return useNewPolicy(ctx, webhook)
-}
-
 // GetUserProfile retrieves the user's profile details including email, creation date, access level, and Envoy policy information.
 // It fetches the user's policy content based on the policy type and returns the complete UserProfile object.
 func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*UserProfile, error) {
@@ -138,63 +262,72 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt.Local().Format(time.DateTime),
 		Level:     uint32(user.Level),
-		Envoy: &EnvoyPolicy{
-			PolicyID:      user.Envoy.PolicyID.Hex(),
-			PolicyType:    int32(user.Envoy.PolicyType),
-			OfflineAlert:  user.Envoy.OfflineAlert,
-			PolicyContent: &EnvoyPolicyContent{},
-		},
+		Policies:  nil,
 	}
-	switch user.Envoy.PolicyType {
-	case models.IsEnvoyGotify:
-		var policy models.EnvoyGotify
-		err := storage.CEnvoyGotify.FindOne(ctx,
-			bson.M{
-				"_id": user.Envoy.PolicyID,
-			}).Decode(&policy)
-		if err != nil {
-			glgf.Error(err)
-			return nil, status.Error(codes.Internal, "error finding policy content: "+err.Error())
-		}
-		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Gotify{
-			Gotify: &Gotify{
-				Url:   policy.URL,
-				Token: policy.Token,
-			},
-		}
-	case models.IsEnvoyEmail:
-		var policy models.EnvoyEmail
-		err := storage.CEnvoyEmail.FindOne(ctx,
-			bson.M{
-				"_id": user.Envoy.PolicyID,
-			}).Decode(&policy)
-		if err != nil {
-			glgf.Error(err)
-			return nil, status.Error(codes.Internal, "error finding policy content: "+err.Error())
-		}
-		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Email{
-			Email: &Email{
-				Address: policy.Address,
-			},
-		}
-	case models.IsEnvoyWebhook:
-	case models.IsEnvoySMS:
-	case models.IsEnvoyTelegram:
-		var policy models.EnvoyTelegram
-		err := storage.CEnvoyTelegram.FindOne(ctx,
-			bson.M{
-				"_id": user.Envoy.PolicyID,
-			}).Decode(&policy)
-		if err != nil {
-			glgf.Error(err)
-			return nil, status.Error(codes.Internal, "error finding policy content: "+err.Error())
-		}
-		ret.Envoy.PolicyContent.Content = &EnvoyPolicyContent_Telegram{
-			Telegram: &Telegram{
-				ChatId: policy.ChatID,
-			},
-		}
+	var wg sync.WaitGroup
+	for i := range user.EnvoyPolicies {
+		wg.Add(1)
+		p := user.EnvoyPolicies[i]
+		go func() {
+			defer wg.Done()
+			var content bson.M
+			err := p.PolicyType.GetCollection().FindOne(ctx, bson.M{"_id": p.PolicyID}).Decode(&content)
+			if err != nil {
+				glgf.Error(err)
+				return
+			}
+			var policyContent *EnvoyPolicyContent
+			switch p.PolicyType {
+			case models.IsEnvoyGotify:
+				policyContent = &EnvoyPolicyContent{
+					Content: &EnvoyPolicyContent_Gotify{
+						Gotify: &Gotify{
+							Url:   content["URL"].(string),
+							Token: content["Token"].(string),
+						},
+					},
+				}
+			case models.IsEnvoyEmail:
+				policyContent = &EnvoyPolicyContent{
+					Content: &EnvoyPolicyContent_Email{
+						Email: &Email{
+							Address: content["Address"].(string),
+						},
+					},
+				}
+			case models.IsEnvoyWebhook:
+				policyContent = &EnvoyPolicyContent{
+					Content: &EnvoyPolicyContent_Webhook{
+						Webhook: &Webhook{
+							Url:      content["URL"].(string),
+							Insecure: content["Insecure"].(bool),
+						},
+					},
+				}
+			case models.IsEnvoySMS:
+
+			case models.IsEnvoyTelegram:
+				policyContent = &EnvoyPolicyContent{
+					Content: &EnvoyPolicyContent_Telegram{
+						Telegram: &Telegram{
+							ChatId: cast.ToInt64(content["ChatID"]),
+						},
+					},
+				}
+			}
+			ret.Policies = append(ret.Policies, &EnvoyPolicy{
+				PolicyID:      p.PolicyID.Hex(),
+				PolicyType:    int32(p.PolicyType),
+				Sensitive:     cast.ToInt32(content["Sensitive"]),
+				OfflineAlert:  cast.ToBool(content["OfflineAlert"]),
+				PolicyContent: policyContent,
+			})
+		}()
 	}
+	wg.Wait()
+	sort.Slice(ret.Policies, func(i, j int) bool {
+		return ret.Policies[i].PolicyID < ret.Policies[j].PolicyID
+	})
 	return ret, nil
 }
 

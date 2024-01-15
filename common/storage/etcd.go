@@ -13,6 +13,9 @@ var etcdConfig *ConfigInfo
 
 type ConfigInfo struct {
 	InfluxDBToken          string   `mapstructure:"influxdb_token"`
+	InfluxDBURI            string   `mapstructure:"influxdb_uri"`
+	InfluxDBOrg            string   `mapstructure:"influxdb_org"`
+	InfluxDBDatabase       string   `mapstructure:"influxdb_database"`
 	MongoDBURI             string   `mapstructure:"mongodb_uri"`
 	TelegramBotToken       string   `mapstructure:"telegram_bot_token"`
 	TelegramBotApiEndpoint string   `mapstructure:"telegram_bot_api_endpoint"`

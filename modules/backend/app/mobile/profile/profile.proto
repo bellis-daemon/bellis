@@ -10,7 +10,7 @@ message UserProfile{
   string email = 1;
   string createdAt = 2;
   uint32 level = 3;
-  EnvoyPolicy envoy = 4;
+  repeated EnvoyPolicy policies = 4;
 }
 
 message EnvoyPolicy{
@@ -27,11 +27,6 @@ message NewPassword{
 
 message NewEmail{
   string email = 1;
-}
-
-message Alert{
-  bool offlineAlert = 1;
-  bool predictAlert = 2;
 }
 
 message Gotify{
@@ -84,11 +79,10 @@ service ProfileService{
   rpc GetUserProfile(google.protobuf.Empty)returns(UserProfile);
   rpc ChangePassword(NewPassword) returns(google.protobuf.Empty);
   rpc ChangeEmail(NewEmail) returns (google.protobuf.Empty);
-  rpc ChangeAlert(Alert) returns(google.protobuf.Empty);
   rpc ChangeSensitive(Sensitive) returns (google.protobuf.Empty);
-  rpc UseGotify(Gotify) returns (EnvoyPolicy);
-  rpc UseEmail(Email) returns(EnvoyPolicy);
-  rpc UseWebhook(Webhook) returns(EnvoyPolicy);
+  rpc CreateEnvoyPolicy(EnvoyPolicy) returns(google.protobuf.Empty);
+  rpc UpdateEnvoyPolicy(EnvoyPolicy) returns(google.protobuf.Empty);
+  rpc DeleteEnvoyPolicy(EnvoyPolicy) returns(google.protobuf.Empty);
   rpc GetEnvoyTelegramLink(google.protobuf.Empty) returns (EnvoyTelegramLink);
   rpc GetUserLoginLogs(google.protobuf.Empty) returns (UserLoginLogs);
 }

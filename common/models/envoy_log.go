@@ -14,7 +14,7 @@ type EnvoyLog struct {
 	ID             primitive.ObjectID `json:"ID" bson:"_id"`
 	SendTime       time.Time          `json:"SendTime" bson:"SendTime"`
 	Success        bool               `json:"Success" bson:"Success"`
-	FailedMessage  string             `json:"FaildMessage" bson:"FailedMessage"`
+	FailedMessage  string             `json:"FailedMessage" bson:"FailedMessage"`
 	OfflineLogID   primitive.ObjectID `json:"OfflineLogID" bson:"OfflineLogID"`
 	PolicyType     string             `json:"PolicyType" bson:"PolicyType"`
 	PolicySnapShot bson.M             `json:"PolicySnapShot" bson:"PolicySnapShot"`
