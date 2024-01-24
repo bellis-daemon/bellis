@@ -1,5 +1,7 @@
 # bellis(in progress)
 
+[![Docker Image CI](https://github.com/bellis-daemon/bellis/actions/workflows/docker-image.yml/badge.svg)](https://github.com/bellis-daemon/bellis/actions/workflows/docker-image.yml)
+
 [Demo Site](https://bellis.minoic.top)
 
 The distributed cloud monitoring and alarm system adopts a design with clear division of labor between modules. The modules communicate through GRPC and message queue (Redis), and the sampled data is stored through InfluxDB.
