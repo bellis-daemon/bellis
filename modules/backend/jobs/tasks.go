@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bellis-daemon/bellis/common/models"
-	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"time"
+
+	"github.com/bellis-daemon/bellis/common/models"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/minoic/glgf"
@@ -101,15 +102,15 @@ func checkUserEntityUsageCount() {
 
 func checkUserLevelExpire() {
 	ctx := context.Background()
-	find, err := storage.CUser.Find(ctx, bson.M{"$and": bson.D{
-		{
+	find, err := storage.CUser.Find(ctx, bson.M{"$and": bson.A{
+		bson.D{{
 			Key:   "LevelExpireAt",
 			Value: bson.E{Key: "$lt", Value: time.Now()},
-		},
-		{
+		}},
+		bson.D{{
 			Key:   "LevelExpireAt",
 			Value: bson.E{Key: "$ne", Value: time.Time{}},
-		},
+		}},
 	}})
 	if err != nil {
 		glgf.Error(err)
@@ -131,7 +132,7 @@ func checkUserLevelExpire() {
 			continue
 		}
 		if user.Usage.EntityCount > user.Level.Limit().EntityCount {
-
+			//todo: do something
 		}
 	}
 }

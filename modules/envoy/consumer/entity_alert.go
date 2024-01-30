@@ -78,16 +78,16 @@ func entityOfflineAlert() {
 					return
 				}
 				count, err := storage.CEnvoyLog.CountDocuments(ctx, bson.M{
-					"$and": bson.D{
-						{
-							"OfflineLogID", log.ID,
-						},
-						{
-							"Success", true,
-						},
-						{
-							"PolicySnapShot.ID", policyId,
-						},
+					"$and": bson.A{
+						bson.D{{
+							Key: "OfflineLogID", Value: log.ID,
+						}},
+						bson.D{{
+							Key: "Success", Value: true,
+						}},
+						bson.D{{
+							Key: "PolicySnapShot.ID", Value: policyId,
+						}},
 					},
 				})
 				if err != nil {
