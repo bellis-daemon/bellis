@@ -11,6 +11,7 @@ import (
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/influxdb"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/minecraft"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/nginx"
+	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/palworld"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/ping"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/pterodactyl"
 	_ "github.com/bellis-daemon/bellis/modules/sentry/apps/implements/source"

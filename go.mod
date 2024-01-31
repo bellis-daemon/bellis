@@ -9,6 +9,7 @@ require (
 	github.com/go-redsync/redsync/v4 v4.11.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/google/go-github/v32 v32.1.0
+	github.com/gorcon/rcon v1.3.4
 	github.com/gotify/go-api-client/v2 v2.0.4
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/matcornic/hermes v1.2.0

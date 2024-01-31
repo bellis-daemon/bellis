@@ -115,10 +115,10 @@ func entityOfflineAlert() {
 					envoyType = "Telegram"
 					envoyDriver = telegram.New(ctx).WithPolicyId(policyId)
 				default:
-					glgf.Warn("User envoy policy is empty, ignoring", entity.Name, policyId.String(), policyType)
-					failed = true
+					glgf.Warn("User envoy policy type invalid, ignoring", entity.Name, policyId.String(), policyType)
 					return
 				}
+
 				err = envoyDriver.AlertOffline(user, &entity, log)
 				{
 					envoyLog := &models.EnvoyLog{

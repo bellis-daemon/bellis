@@ -41,6 +41,7 @@ func (h handler) CreateEnvoyPolicy(ctx context.Context, policy *EnvoyPolicy) (*e
 		OfflineAlert: policy.OfflineAlert,
 		Sensitive:    int(policy.Sensitive),
 	}
+	glgf.Debug(policy.PolicyContent)
 	switch models.EnvoyPolicyType(policy.PolicyType) {
 	case models.IsEnvoyGotify:
 		targetPolicy = &models.EnvoyGotify{
@@ -154,6 +155,10 @@ func (h handler) DeleteEnvoyPolicy(ctx context.Context, policy *EnvoyPolicy) (*e
 		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "invalid policy id")
 	}
 	policyType := models.EnvoyPolicyType(policy.PolicyType)
+	col := policyType.GetCollection()
+	if col == nil {
+		return nil, errors.New("invalid policy type")
+	}
 	err = storage.MongoUseSession(ctx, func(sessionContext mongo.SessionContext) error {
 		updated, err := storage.CUser.UpdateByID(sessionContext, user.ID, bson.M{"$pull": bson.M{"EnvoyPolicies": bson.M{
 			"PolicyID": id,
@@ -164,7 +169,7 @@ func (h handler) DeleteEnvoyPolicy(ctx context.Context, policy *EnvoyPolicy) (*e
 		if updated.ModifiedCount == 0 {
 			return errors.New("policy does not exist in user envoy policies")
 		}
-		_, err = policyType.GetCollection().DeleteOne(ctx, bson.M{"_id": id})
+		_, err = col.DeleteOne(ctx, bson.M{"_id": id})
 		if err != nil {
 			return err
 		}
