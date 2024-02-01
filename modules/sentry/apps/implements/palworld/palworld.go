@@ -56,6 +56,8 @@ func (this *Palworld) Fetch(ctx context.Context) (status.Status, error) {
 	if ret.ServerName == "" {
 		ret.ServerName = resp
 	}
+	ret.ServerName = strings.TrimRight(ret.ServerName, "\n")
+
 	if ret.ServerVersion == "" {
 		ret.ServerVersion = "Unknown"
 	}
@@ -65,7 +67,7 @@ func (this *Palworld) Fetch(ctx context.Context) (status.Status, error) {
 		return &palworldStatus{}, err
 	}
 	lines := strings.Split(resp2, "\n")
-	ret.OnlinePlayer = len(lines) - 1
+	ret.OnlinePlayer = len(lines) - 2
 	return ret, nil
 }
 
