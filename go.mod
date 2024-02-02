@@ -17,7 +17,7 @@ require (
 	github.com/minoic/bt-go-sdk v0.1.17
 	github.com/minoic/glgf v0.0.5
 	github.com/mitchellh/mapstructure v1.5.1-0.20220423185008-bf980b35cac4
-	github.com/moby/moby v23.0.4+incompatible
+	github.com/moby/moby v24.0.9+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/robfig/cron/v3 v3.0.1
