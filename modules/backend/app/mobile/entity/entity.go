@@ -410,9 +410,8 @@ from(bucket: "backend")
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
-  |> aggregateWindow(every: 5m, fn: mode, createEmpty: true)
-  |> fill(column: "_value", value: true)
-  |> yield(name: "first")`,
+  |> aggregateWindow(every: 1m, fn: first, createEmpty: true)
+  |> fill(column: "_value", value: true)`,
 						id.GetScheme(),
 						id.GetID()))
 				if err != nil {
@@ -426,9 +425,8 @@ from(bucket: "backend")
   |> range(start: -24h)
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => r["_field"] == "c_live")
-  |> aggregateWindow(every: 5m, fn: mode, createEmpty: true)
-  |> fill(column: "_value", value: true)
-  |> yield(name: "first")`,
+  |> aggregateWindow(every: 1m, fn: first, createEmpty: true)
+  |> fill(column: "_value", value: true)`,
 						id.GetID()))
 				if err != nil {
 					glgf.Error(err)
@@ -439,7 +437,7 @@ from(bucket: "backend")
 				ret = append(ret, cast.ToBool(query.Record().Value()))
 			}
 			return ret, nil
-		}, 10*time.Minute)
+		})
 		if err != nil {
 			glgf.Error(err)
 			errC <- err

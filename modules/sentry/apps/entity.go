@@ -100,7 +100,7 @@ func (this *Entity) saveFetch() (s status.Status, err error) {
 func (this *Entity) refresh() {
 	sentryTime := time.Now()
 	s, err := this.saveFetch()
-	responseTime := time.Now().Sub(sentryTime)
+	responseTime := time.Since(sentryTime)
 	fields := map[string]any{}
 	_ = mapstructure.Decode(s, &fields)
 	point := write.NewPoint(
@@ -114,7 +114,7 @@ func (this *Entity) refresh() {
 	cErr := ""
 	cLive := true
 	if err != nil {
-		// 状态不正常时
+		// err occured, entity offline
 		cErr = err.Error()
 		cLive = false
 		// todo: fix offline judge method
@@ -125,8 +125,8 @@ func (this *Entity) refresh() {
 			this.alert(err.Error())
 		}
 	} else {
-		// 状态正常时
-		// 防抖
+		// no error, entity online
+		// debounce
 		if this.failedCount != 0 {
 			if this.failedCount >= this.threshold {
 				this.failedCount = this.threshold
@@ -136,11 +136,12 @@ func (this *Entity) refresh() {
 				this.failedCount = 0
 			}
 			if this.failedCount == 0 {
-				// 确认恢复
+				// confirm that server goes online
+				// NOTICE: cant make sure if entity reached failed count threshold before
 				this.onlineLog()
 			}
 		}
-		// 测试触发器
+		// test the triggers
 		for i := range this.Options.Public.TriggerList {
 			result := s.PullTrigger(this.Options.Public.TriggerList[i])
 			if result != nil {
