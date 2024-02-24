@@ -22,6 +22,7 @@ message EntityStatus{
   google.protobuf.Struct fields = 6;
   repeated bool live_series = 7;
   int64 response_time = 8;
+  double live_percentage = 9;
 }
 
 message AllEntityStatus{

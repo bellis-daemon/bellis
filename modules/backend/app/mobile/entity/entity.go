@@ -446,6 +446,12 @@ from(bucket: "backend")
 		entityStatus.LiveSeries = *series
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		entityStatus.LivePercentage = getEntityAvalibility(ctx, id.GetID(), "24h")
+	}()
+
 	go func() {
 		wg.Wait()
 		close(errC)

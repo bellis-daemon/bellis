@@ -83,7 +83,7 @@ func getEntityAvalibility(ctx context.Context, entityID string, duration string)
 	a, err := storage.QuickRCSearch(ctx, "AVALIBILITY_"+entityID, func() (float64, error) {
 		result, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(`
 total = from(bucket: "backend")
-	|> range(start: %s)
+	|> range(start: -%s)
 	|> filter(fn: (r) => r["id"] == "%s")
 	|> filter(fn: (r) => r["_field"] == "c_live")
 
