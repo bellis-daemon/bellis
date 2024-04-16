@@ -10,7 +10,8 @@ message UserProfile{
   string email = 1;
   string createdAt = 2;
   uint32 level = 3;
-  repeated EnvoyPolicy policies = 4;
+  bytes avatar = 4;
+  repeated EnvoyPolicy policies = 5;
 }
 
 message EnvoyPolicy{

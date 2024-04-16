@@ -31,8 +31,8 @@ func Redis() redis.UniversalClient {
 }
 
 func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, error), exp ...time.Duration) (*T, error) {
-	const QUICK_RC = "QUICK_RC_"
-	cmd := Redis().Get(ctx, QUICK_RC+key)
+	const QuickRc = "QUICK_RC_"
+	cmd := Redis().Get(ctx, QuickRc+key)
 	if cmd.Err() != nil {
 		value, err := fallback()
 		if err != nil {
@@ -52,7 +52,7 @@ func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, e
 				glgf.Warn(err)
 				return
 			}
-			Redis().Set(ctx, QUICK_RC+key, buf.String(), dur)
+			Redis().Set(ctx, QuickRc+key, buf.String(), dur)
 		}()
 		return &value, nil
 	}

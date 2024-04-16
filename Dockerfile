@@ -1,5 +1,5 @@
 # 打包依赖阶段使用golang作为基础镜像
-FROM golang:1.21.0-alpine as builder
+FROM golang:1.22.0-alpine as builder
 
 WORKDIR /workspace
 

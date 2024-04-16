@@ -1,10 +1,10 @@
 module github.com/bellis-daemon/bellis
 
-go 1.21
+go 1.22
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
-	github.com/avast/retry-go/v4 v4.3.4
+	github.com/avast/retry-go/v4 v4.5.1
 	github.com/go-ping/ping v1.1.0
 	github.com/go-redsync/redsync/v4 v4.11.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
@@ -25,7 +25,6 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cast v1.5.1
-	github.com/spf13/viper v1.17.0
 	github.com/v2fly/v2ray-core/v5 v5.4.1
 	github.com/wcharczuk/go-chart/v2 v2.1.1
 	github.com/xhit/go-simple-mail/v2 v2.16.0
@@ -35,7 +34,7 @@ require (
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.143.0
 	google.golang.org/grpc v1.58.3
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (

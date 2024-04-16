@@ -1,45 +1,44 @@
 package storage
 
 import (
+	"github.com/minoic/glgf"
+	"gopkg.in/yaml.v3"
+	"net/http"
+	"os"
 	"strings"
 	"sync"
-
-	"github.com/spf13/viper"
-	_ "github.com/spf13/viper/remote"
 )
 
 var etcdOnce sync.Once
 var etcdConfig *ConfigInfo
 
 type ConfigInfo struct {
-	InfluxDBToken          string   `mapstructure:"influxdb_token"`
-	InfluxDBURI            string   `mapstructure:"influxdb_uri"`
-	InfluxDBOrg            string   `mapstructure:"influxdb_org"`
-	InfluxDBDatabase       string   `mapstructure:"influxdb_database"`
-	MongoDBURI             string   `mapstructure:"mongodb_uri"`
-	TelegramBotToken       string   `mapstructure:"telegram_bot_token"`
-	TelegramBotApiEndpoint string   `mapstructure:"telegram_bot_api_endpoint"`
-	TelegramBotName        string   `mapstructure:"telegram_bot_name"`
-	TencentSTMPPassword    string   `mapstructure:"tencent_smtp_password"`
-	WebEndpoint            string   `mapstructure:"web_endpoint"`
-	RedisAddrs             []string `mapstructure:"redis_addrs"`
-	RedisUsername          string   `mapstructure:"redis_username"`
-	RedisPassword          string   `mapstructure:"redis_password"`
+	InfluxDBToken          string   `yaml:"influxdb_token"`
+	InfluxDBURI            string   `yaml:"influxdb_uri"`
+	InfluxDBOrg            string   `yaml:"influxdb_org"`
+	InfluxDBDatabase       string   `yaml:"influxdb_database"`
+	MongoDBURI             string   `yaml:"mongodb_uri"`
+	TelegramBotToken       string   `yaml:"telegram_bot_token"`
+	TelegramBotApiEndpoint string   `yaml:"telegram_bot_api_endpoint"`
+	TelegramBotName        string   `yaml:"telegram_bot_name"`
+	TencentSTMPPassword    string   `yaml:"tencent_smtp_password"`
+	WebEndpoint            string   `yaml:"web_endpoint"`
+	RedisAddrs             []string `yaml:"redis_addrs"`
+	RedisUsername          string   `yaml:"redis_username"`
+	RedisPassword          string   `yaml:"redis_password"`
 }
 
 func Config() *ConfigInfo {
 	etcdOnce.Do(func() {
+		url := os.ExpandEnv("$CONFIG_URL")
 		etcdConfig = new(ConfigInfo)
-		err := viper.AddRemoteProvider("etcd3", "etcd:2379", "/config")
+		resp, err := http.Get(url)
 		if err != nil {
+			glgf.Error(url)
 			panic(err)
 		}
-		viper.SetConfigType("yaml") // Need to explicitly set this to json
-		err = viper.ReadRemoteConfig()
-		if err != nil {
-			panic(err)
-		}
-		err = viper.Unmarshal(etcdConfig)
+		defer resp.Body.Close()
+		err = yaml.NewDecoder(resp.Body).Decode(etcdConfig)
 		if err != nil {
 			panic(err)
 		}

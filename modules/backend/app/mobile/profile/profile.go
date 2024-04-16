@@ -9,6 +9,7 @@ import (
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
+	"github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile/gravatar"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"github.com/spf13/cast"
@@ -20,6 +21,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"io"
+	"net/http"
 	"sort"
 	"sync"
 	"time"
@@ -267,9 +270,34 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt.Local().Format(time.DateTime),
 		Level:     uint32(user.Level),
+		Avatar:    nil,
 		Policies:  nil,
 	}
 	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		avatar, err := storage.QuickRCSearch[string](ctx, "AVATAR_CACHE_"+user.ID.Hex(), func() (string, error) {
+			cl := &http.Client{
+				Timeout: 3 * time.Second,
+			}
+			get, err := cl.Get(gravatar.NewGravatarFromEmail(user.Email).GetURL())
+			if err != nil {
+				return "", err
+			}
+			defer get.Body.Close()
+			ret, err := io.ReadAll(get.Body)
+			if err != nil {
+				return "", err
+			}
+			return string(ret), nil
+		}, time.Hour)
+		if err != nil {
+			glgf.Error(err)
+		} else {
+			ret.Avatar = []byte(*avatar)
+		}
+	}()
 	for i := range user.EnvoyPolicies {
 		wg.Add(1)
 		p := user.EnvoyPolicies[i]
