@@ -4,19 +4,33 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
-	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
-	"go.mongodb.org/mongo-driver/bson"
+	"io"
 	"net/http"
 	"net/http/httptrace"
 	"strings"
 	"time"
+
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
+	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
+	"github.com/minoic/glgf"
+	"go.mongodb.org/mongo-driver/bson"
 )
+
+var httpClient = http.Client{
+	Timeout: 5 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:          100,
+		IdleConnTimeout:       10 * time.Second,
+		TLSHandshakeTimeout:   4 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
+}
 
 type HTTP struct {
 	implements.Template
-	options httpOptions
+	options  httpOptions
+	tlsState *tls.ConnectionState
 }
 
 func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
@@ -33,32 +47,13 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 			}
 		},
 		TLSHandshakeDone: func(state tls.ConnectionState, err error) {
-			switch state.Version {
-			case tls.VersionTLS10:
-				ret.TLSVersion = "TLS10"
-			case tls.VersionTLS11:
-				ret.TLSVersion = "TLS11"
-			case tls.VersionTLS12:
-				ret.TLSVersion = "TLS12"
-			case tls.VersionTLS13:
-				ret.TLSVersion = "TLS13"
-			default:
-				ret.TLSVersion = "None"
-			}
-			if len(state.PeerCertificates) > 0 {
-				ret.TLSStartTime = state.PeerCertificates[0].NotBefore.Format(time.RFC3339Nano)
-				ret.TLSExpireTime = state.PeerCertificates[0].NotAfter.Format(time.RFC3339Nano)
-				if len(state.PeerCertificates[0].Issuer.Organization) > 0 {
-					ret.TLSIssuer = state.PeerCertificates[0].Issuer.Organization[0]
-				}
+			if this.tlsState == nil {
+				this.tlsState = &state
 			}
 		},
 	}
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
-	client := http.Client{
-		Timeout: 10 * time.Second,
-	}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return ret, err
 	}
@@ -66,8 +61,37 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 		return ret, errors.New(resp.Status)
 	}
 	ret.StatusCode = resp.StatusCode
-	ret.ContentLength = resp.ContentLength
 	ret.ContentType = resp.Header.Get("Content-Type")
+	ret.ContentLength = resp.ContentLength
+	if ret.ContentLength == -1 {
+		length, err := io.Copy(io.Discard, resp.Body)
+		if err != nil {
+			glgf.Warn(err)
+		} else {
+			ret.ContentLength = length
+		}
+	}
+	if this.tlsState != nil {
+		switch this.tlsState.Version {
+		case tls.VersionTLS10:
+			ret.TLSVersion = "TLS10"
+		case tls.VersionTLS11:
+			ret.TLSVersion = "TLS11"
+		case tls.VersionTLS12:
+			ret.TLSVersion = "TLS12"
+		case tls.VersionTLS13:
+			ret.TLSVersion = "TLS13"
+		default:
+			ret.TLSVersion = "None"
+		}
+		if len(this.tlsState.PeerCertificates) > 0 {
+			ret.TLSStartTime = this.tlsState.PeerCertificates[0].NotBefore.Format(time.RFC3339Nano)
+			ret.TLSExpireTime = this.tlsState.PeerCertificates[0].NotAfter.Format(time.RFC3339Nano)
+			if len(this.tlsState.PeerCertificates[0].Issuer.Organization) > 0 {
+				ret.TLSIssuer = this.tlsState.PeerCertificates[0].Issuer.Organization[0]
+			}
+		}
+	}
 	return ret, nil
 }
 
@@ -96,6 +120,10 @@ type httpOptions struct {
 
 func init() {
 	implements.Register("http", func(options bson.M) implements.Implement {
-		return &HTTP{options: option.ToOption[httpOptions](options)}
+		o := option.ToOption[httpOptions](options)
+		if o.Method == "" {
+			o.Method = "GET"
+		}
+		return &HTTP{options: o}
 	})
 }

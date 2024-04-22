@@ -277,25 +277,25 @@ func (h handler) GetUserProfile(ctx context.Context, empty *emptypb.Empty) (*Use
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		avatar, err := storage.QuickRCSearch[string](ctx, "AVATAR_CACHE_"+user.ID.Hex(), func() (string, error) {
+		avatar, err := storage.QuickRCSearch[[]byte](ctx, "AVATAR_CACHE_"+user.ID.Hex(), func() ([]byte, error) {
 			cl := &http.Client{
 				Timeout: 3 * time.Second,
 			}
 			get, err := cl.Get(gravatar.NewGravatarFromEmail(user.Email).GetURL())
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 			defer get.Body.Close()
 			ret, err := io.ReadAll(get.Body)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
-			return string(ret), nil
+			return ret, nil
 		}, time.Hour)
 		if err != nil {
 			glgf.Error(err)
 		} else {
-			ret.Avatar = []byte(*avatar)
+			ret.Avatar = *avatar
 		}
 	}()
 	for i := range user.EnvoyPolicies {

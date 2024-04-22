@@ -45,13 +45,7 @@ func (h handler) GetStreamAllStatus(e *emptypb.Empty, server EntityService_GetSt
 	glgf.Success("starting streaming all status with deadline", ddl, ok)
 	defer glgf.Warn("stopping stream")
 	user := midwares.GetUserFromCtx(server.Context())
-	var entities []models.Application
-	find, err := storage.CEntity.Find(server.Context(), bson.M{"UserID": user.ID})
-	if err != nil {
-		glgf.Error(err)
-		return status.Error(codes.Internal, err.Error())
-	}
-	err = find.All(server.Context(), &entities)
+	entities, err := cache.GetUserEntities(server.Context(), user.ID)
 	if err != nil {
 		glgf.Error(err)
 		return status.Error(codes.Internal, err.Error())
@@ -254,7 +248,7 @@ func (h handler) UpdateEntity(ctx context.Context, entity *Entity) (*emptypb.Emp
 		glgf.Error(err)
 		return &emptypb.Empty{}, status.Error(codes.Internal, err.Error())
 	}
-	go afterUpdateEntity(e)
+	go afterUpdateEntity(midwares.GetUserFromCtx(ctx), e)
 	return &emptypb.Empty{}, nil
 }
 
@@ -301,18 +295,12 @@ func (h handler) GetEntity(ctx context.Context, id *EntityID) (*Entity, error) {
 // The options for each entity are converted to structpb.Struct format before being included in the response.
 func (h handler) GetAllEntities(ctx context.Context, e *emptypb.Empty) (*AllEntities, error) {
 	user := midwares.GetUserFromCtx(ctx)
-	var entities []models.Application
-	find, err := storage.CEntity.Find(ctx, bson.M{"UserID": user.ID})
-	if err != nil {
-		glgf.Error(err)
-		return &AllEntities{}, status.Error(codes.Internal, err.Error())
-	}
-	err = find.All(ctx, &entities)
-	if err != nil {
-		glgf.Error(err)
-		return &AllEntities{}, status.Error(codes.Internal, err.Error())
-	}
 	res := &AllEntities{}
+	entities, err := cache.GetUserEntities(ctx, user.ID)
+	if err != nil {
+		glgf.Error(err)
+		return res, status.Error(codes.Internal, err.Error())
+	}
 	for i := range entities {
 		options, err := structpb.NewStruct(entities[i].Options)
 		if err != nil {
@@ -470,25 +458,25 @@ from(bucket: "backend")
 func (h handler) GetAllStatus(ctx context.Context, e *emptypb.Empty) (*AllEntityStatus, error) {
 	ret := &AllEntityStatus{}
 	user := midwares.GetUserFromCtx(ctx)
-	var entities []models.Application
-	find, err := storage.CEntity.Find(ctx, bson.M{"UserID": user.ID})
+	entities, err := cache.GetUserEntities(ctx, user.ID)
 	if err != nil {
 		glgf.Error(err)
 		return ret, status.Error(codes.Internal, err.Error())
 	}
-	err = find.All(ctx, &entities)
-	if err != nil {
-		glgf.Error(err)
-		return ret, status.Error(codes.Internal, err.Error())
-	}
+	var wg sync.WaitGroup
 	for i := range entities {
-		s, err := h.GetStatus(ctx, &EntityID{ID: entities[i].ID.Hex(), Scheme: &entities[i].Scheme})
-		if err != nil {
-			glgf.Error(err)
-			return ret, status.Error(codes.Internal, err.Error())
-		}
-		ret.Status = append(ret.Status, s)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s, err := h.GetStatus(ctx, &EntityID{ID: entities[i].ID.Hex(), Scheme: &entities[i].Scheme})
+			if err != nil {
+				glgf.Error(err)
+				return
+			}
+			ret.Status = append(ret.Status, s)
+		}()
 	}
+	wg.Wait()
 	return ret, nil
 }
 

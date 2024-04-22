@@ -52,7 +52,10 @@ func QuickRCSearch[T any](ctx context.Context, key string, fallback func() (T, e
 				glgf.Warn(err)
 				return
 			}
-			Redis().Set(ctx, QuickRc+key, buf.String(), dur)
+			err = Redis().Set(ctx, QuickRc+key, buf.String(), dur).Err()
+			if err != nil {
+				glgf.Warn(err)
+			}
 		}()
 		return &value, nil
 	}

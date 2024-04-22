@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bellis-daemon/bellis/common/cache"
 	"time"
 
 	"github.com/bellis-daemon/bellis/common/cryptoo"
@@ -160,15 +161,18 @@ func afterDeleteEntity(user *models.User, entityID string) {
 	storage.COfflineLog.DeleteMany(ctx, bson.M{"EntityID": id})
 	user.UsageEntityIncr(ctx, -1)
 	producer.NoticeEntityDelete(ctx, entityID)
+	cache.ExpireUserEntities(ctx, user.ID)
 }
 
 func afterCreateEntity(user *models.User, entity *models.Application) {
 	ctx := context.Background()
 	user.UsageEntityIncr(ctx, 1)
 	producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
+	cache.ExpireUserEntities(ctx, user.ID)
 }
 
-func afterUpdateEntity(entity *models.Application) {
+func afterUpdateEntity(user *models.User, entity *models.Application) {
 	ctx := context.Background()
 	producer.NoticeEntityUpdate(ctx, entity.ID.Hex(), entity)
+	cache.ExpireUserEntities(ctx, user.ID)
 }
