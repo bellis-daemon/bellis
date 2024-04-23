@@ -47,7 +47,7 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 			}
 		},
 		TLSHandshakeDone: func(state tls.ConnectionState, err error) {
-			if this.tlsState == nil {
+			if this.tlsState == nil && strings.Contains(this.options.URL, "https://") {
 				this.tlsState = &state
 			}
 		},
@@ -64,7 +64,7 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	ret.ContentType = resp.Header.Get("Content-Type")
 	ret.ContentLength = resp.ContentLength
 	if ret.ContentLength == -1 {
-		length, err := io.Copy(io.Discard, resp.Body)
+		length, err := io.CopyN(io.Discard, resp.Body, 1000000)
 		if err != nil {
 			glgf.Warn(err)
 		} else {
@@ -123,6 +123,9 @@ func init() {
 		o := option.ToOption[httpOptions](options)
 		if o.Method == "" {
 			o.Method = "GET"
+		}
+		if !strings.Contains(o.URL, "http://") || !strings.Contains(o.URL, "https://") {
+			o.URL = "http://" + o.URL
 		}
 		return &HTTP{options: o}
 	})
