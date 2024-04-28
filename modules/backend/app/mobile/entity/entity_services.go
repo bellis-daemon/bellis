@@ -39,7 +39,7 @@ func checkEntityOwnershipById(ctx context.Context, user *models.User, entityID s
 				return false, err
 			}
 			return true, nil
-		})
+		},time.Hour)
 		if err != nil {
 			glgf.Warn(err)
 			return errEntityOwnership
@@ -109,7 +109,7 @@ total
 			}
 		}
 		return live / total, nil
-	})
+	},time.Minute)
 	if err != nil {
 		glgf.Error(err)
 		return 0
@@ -140,7 +140,7 @@ func getEntityUptime(ctx context.Context, entityID string) string {
 			return cryptoo.FormatDuration(0), nil
 		}
 		return cryptoo.FormatDuration(time.Since(offlineLog.OnlineTime)), nil
-	})
+	},time.Minute)
 	if err != nil {
 		glgf.Error(err)
 		return cryptoo.FormatDuration(0)

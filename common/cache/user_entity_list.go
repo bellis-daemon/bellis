@@ -1,12 +1,13 @@
 package cache
 
 import (
+	"time"
+
 	"github.com/bellis-daemon/bellis/common/models"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/net/context"
-	"time"
 )
 
 const UserEntitiesKey = "USER_ENTITIES_"

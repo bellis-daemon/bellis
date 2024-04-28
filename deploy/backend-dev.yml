@@ -15,10 +15,8 @@ services:
       - bellis
     ports:
       - "7001:7001"
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 2
+    environment:
+      - CONFIG_URL
   dispatcher:
     hostname: dispatcher
     image: registry.cn-shanghai.aliyuncs.com/bellis/dispatcher
@@ -29,10 +27,8 @@ services:
         MODULE: dispatcher
     networks:
       - bellis
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 2
+    environment:
+      - CONFIG_URL
   envoy:
     hostname: envoy
     image: registry.cn-shanghai.aliyuncs.com/bellis/envoy
@@ -41,6 +37,8 @@ services:
       context: ..
       args:
         MODULE: envoy
+    environment:
+      - CONFIG_URL
     networks:
       - bellis
   sentry:
@@ -53,43 +51,10 @@ services:
         MODULE: sentry
     networks:
       - bellis
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 3
+    environment:
+      - CONFIG_URL
 
   # database containers
-
-  etcd:
-    hostname: etcd
-    networks:
-      - bellis
-    image: docker.io/bitnami/etcd
-    environment:
-      - ALLOW_NONE_AUTHENTICATION=yes
-      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
-    volumes:
-      - '/bellis/dist/database/etcd:/bitnami/etcd'
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 1
-
-  etcd-keeper:
-    image: evildecay/etcdkeeper
-    networks:
-      - bellis
-    environment:
-      HOST: "0.0.0.0"
-    ports:
-      - 8500:8080
-    depends_on:
-      - etcd
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 1
-
   influxdb:
     hostname: influxdb
     image: influxdb
@@ -104,40 +69,7 @@ services:
     ports:
       - "8086:8086"
     volumes:
-      - /bellis/dist/database/influxdb:/var/lib/influxdb2
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 1
-
-  redis:
-    hostname: redis
-    image: redis
-    networks:
-      - bellis
-    volumes:
-      - /bellis/dist/database/redis:/data
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 1
-
-  redis-commander:
-    hostname: redis-commander
-    image: rediscommander/redis-commander:latest
-
-    networks:
-      - bellis
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    ports:
-      - "8082:8081"
-    depends_on:
-      - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
-      replicas: 1
+      - ./dist/database/influxdb:/var/lib/influxdb2
 
 networks:
   bellis:

@@ -425,7 +425,7 @@ from(bucket: "backend")
 				ret = append(ret, cast.ToBool(query.Record().Value()))
 			}
 			return ret, nil
-		})
+		},time.Minute)
 		if err != nil {
 			glgf.Error(err)
 			errC <- err

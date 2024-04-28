@@ -1,2 +1,3 @@
 dist
 backend-swarm.yml
+.env
