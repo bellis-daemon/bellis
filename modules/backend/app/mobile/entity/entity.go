@@ -492,19 +492,19 @@ func (h handler) GetSeries(ctx context.Context, id *EntityID) (*EntitySeries, er
 	ret := &EntitySeries{
 		ID: id.GetID(),
 	}
-	series := map[string]interface{}{}
+	series := map[string][]interface{}{}
 	query, err := storage.QueryInfluxDB.Query(ctx,
 		fmt.Sprintf(`
 import "types"
 import "strings"
 from(bucket: "backend")
-  |> range(start: -10m)
+  |> range(start: -1h)
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["id"] == "%s")
   |> filter(fn: (r) => types.isNumeric(v: r["_value"]))
   |> filter(fn: (r) => not strings.hasPrefix(v: r["_field"], prefix: "c_"))
   |> sort(columns: ["_time"], desc: true)
-  |> limit(n:60)
+  |> limit(n:65)
   |> sort(columns: ["_time"], desc: false)`,
 			id.GetScheme(),
 			id.GetID()))
@@ -514,11 +514,15 @@ from(bucket: "backend")
 	}
 	for query.Next() {
 		if series[query.Record().Field()] == nil {
-			series[query.Record().Field()] = []interface{}{}
+			series[query.Record().Field()] = make([]interface{}, 0, 70)
 		}
-		series[query.Record().Field()] = append(series[query.Record().Field()].([]interface{}), query.Record().Value())
+		series[query.Record().Field()] = append(series[query.Record().Field()], query.Record().Value())
 	}
-	ret.Series, err = structpb.NewStruct(series)
+	s := map[string]interface{}{}
+	for k, v := range series {
+		s[k] = v
+	}
+	ret.Series, err = structpb.NewStruct(s)
 	if err != nil {
 		glgf.Error(err)
 		return ret, status.Error(codes.Internal, err.Error())

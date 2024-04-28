@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const UserEntitiesKey = "UserEntities_"
+const UserEntitiesKey = "USER_ENTITIES_"
 
 func GetUserEntities(ctx context.Context, userId primitive.ObjectID) ([]models.Application, error) {
 	ret, err := storage.QuickRCSearch[[]models.Application](ctx, UserEntitiesKey+UserEntitiesKey+userId.Hex(), func() ([]models.Application, error) {
