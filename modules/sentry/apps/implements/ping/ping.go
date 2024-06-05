@@ -26,9 +26,9 @@ type pingOptions struct {
 
 type pingStatus struct {
 	PacketLoss float64
-	MaxRtt     int64
-	MinRtt     int64
-	AvgRtt     int64
+	MaxRtt     float64
+	MinRtt     float64
+	AvgRtt     float64
 	IP         string
 }
 
@@ -48,8 +48,9 @@ func (this *Ping) Fetch(ctx context.Context) (status.Status, error) {
 	client.SetPrivileged(true)
 	client.Timeout = 3 * time.Second
 	client.Interval = time.Millisecond
-	client.Count = 10
+	client.Count = 100
 	err = client.Run()
+	defer client.Stop()
 	if err != nil {
 		return &pingStatus{}, err
 	}
@@ -61,9 +62,9 @@ func (this *Ping) Fetch(ctx context.Context) (status.Status, error) {
 	}
 	return &pingStatus{
 		PacketLoss: statistics.PacketLoss,
-		MaxRtt:     statistics.MaxRtt.Milliseconds(),
-		MinRtt:     statistics.MinRtt.Milliseconds(),
-		AvgRtt:     statistics.AvgRtt.Milliseconds(),
+		MaxRtt:     float64(statistics.MaxRtt.Microseconds()) / 1000.0,
+		MinRtt:     float64(statistics.MinRtt.Microseconds()) / 1000.0,
+		AvgRtt:     float64(statistics.AvgRtt.Microseconds()) / 1000.0,
 		IP:         statistics.IPAddr.IP.String(),
 	}, nil
 }

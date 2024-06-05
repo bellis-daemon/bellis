@@ -5,6 +5,7 @@ import (
 	"github.com/bellis-daemon/bellis/modules/backend/jobs"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
@@ -48,12 +49,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go mobile.ServeGrpc(ctx, grpcL)
 	go web.ServeWeb(ctx, webL)
-	go func() {
-		err = m.Serve()
-		if err != nil {
-			panic(err)
-		}
-	}()
+	go m.Serve()
+	go RunHeadlessChrome()
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -61,4 +58,23 @@ func main() {
 	m.Close()
 	cancel()
 	time.Sleep(3 * time.Second)
+}
+
+func RunHeadlessChrome() {
+	cmd := exec.Command(
+		"/headless-shell/headless-shell",
+		"--no-sandbox",
+		"--use-gl=angle",
+		"--use-angle=swiftshader",
+		"--remote-debugging-address=0.0.0.0",
+		"--remote-debugging-port=9222",
+	)
+	for {
+		glgf.Infof("Starting chrome headless shell")
+		err := cmd.Run()
+		if err != nil {
+			glgf.Error("Chrome error: ", err)
+		}
+		time.Sleep(5 * time.Second)
+	}
 }

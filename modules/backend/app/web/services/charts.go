@@ -21,6 +21,7 @@ import (
 type responseTimeChartRequest struct {
 	Animation bool   `form:"animation"`
 	Timezone  string `form:"timezone"`
+	Renderer  string `form:"renderer"`
 }
 
 type ResponseTimeChartMode uint
@@ -28,6 +29,7 @@ type ResponseTimeChartMode uint
 const (
 	ResponseTimeChartModeHtml ResponseTimeChartMode = iota
 	ResponseTimeChartModePng
+	ResponseTimeChartModeJpg
 )
 
 func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
@@ -35,6 +37,7 @@ func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
 		req := responseTimeChartRequest{
 			Animation: true,
 			Timezone:  "UTC",
+			Renderer:  "canvas",
 		}
 		err := ctx.BindQuery(&req)
 		if err != nil {
@@ -42,6 +45,12 @@ func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
+
+		if mode != ResponseTimeChartModeHtml {
+			req.Animation = false
+			req.Renderer = "canvas"
+		}
+
 		loc, err := time.LoadLocation(req.Timezone)
 		if err != nil {
 			glgf.Error(err)
@@ -60,6 +69,10 @@ func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
 		if err != nil {
 			glgf.Error(err)
 			ctx.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		if !entity.Public.ExternalChart {
+			ctx.AbortWithStatus(http.StatusPaymentRequired)
 			return
 		}
 		query, err := storage.QueryInfluxDB.Query(ctx, fmt.Sprintf(`
@@ -82,12 +95,12 @@ from(bucket: "backend")
 			values = append(values, opts.LineData{Value: cast.ToFloat64(query.Record().Value())})
 			times = append(times, query.Record().Time().In(loc).Format(time.DateTime))
 		}
-
 		line := charts.NewLine()
-		line.Animation = opts.Bool(req.Animation && mode != ResponseTimeChartModePng)
+		line.Animation = opts.Bool(req.Animation)
 		line.SetGlobalOptions(
 			charts.WithInitializationOpts(opts.Initialization{
 				PageTitle: fmt.Sprintf("Bellis | Response Time - %s", entity.Name),
+				Renderer:  req.Renderer,
 			}),
 			charts.WithTitleOpts(opts.Title{
 				Title:    "Response Time",
@@ -119,7 +132,17 @@ from(bucket: "backend")
 			ctx.Status(http.StatusOK)
 		case ResponseTimeChartModePng:
 			line.BackgroundColor = "#FFFFFF"
-			bts, err := render.MakeChartSnapshot(line.RenderContent())
+			bts, err := render.MakeChartSnapshotPng(line.RenderContent())
+			if err != nil {
+				glgf.Error(err)
+				ctx.Status(http.StatusInternalServerError)
+				break
+			}
+			ctx.Writer.Write(bts)
+			ctx.Status(http.StatusOK)
+		case ResponseTimeChartModeJpg:
+			line.BackgroundColor = "#FFFFFF"
+			bts, err := render.MakeChartSnapshotJpg(line.RenderContent())
 			if err != nil {
 				glgf.Error(err)
 				ctx.Status(http.StatusInternalServerError)

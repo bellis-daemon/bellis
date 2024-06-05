@@ -5,7 +5,7 @@ services:
   backend:
     image: registry.cn-shanghai.aliyuncs.com/bellis/backend
     build:
-      dockerfile: Dockerfile
+      dockerfile: modules/backend/Dockerfile
       context: ..
       args:
         MODULE: backend

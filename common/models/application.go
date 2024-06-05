@@ -24,9 +24,10 @@ type Application struct {
 }
 
 type ApplicationPublicOptions struct {
-	Multiplier  uint     `json:"Multiplier" bson:"Multiplier"`
-	Threshold   int      `json:"Threshold" bson:"Threshold"`
-	TriggerList []string `json:"TriggerList" bson:"TriggerList"`
+	Multiplier    uint     `json:"Multiplier" bson:"Multiplier"`
+	Threshold     int      `json:"Threshold" bson:"Threshold"`
+	TriggerList   []string `json:"TriggerList" bson:"TriggerList"`
+	ExternalChart bool     `json:"ExternalChart" bson:"ExternalChart"`
 }
 
 func (this *Application) User() (*User, error) {

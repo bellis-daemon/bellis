@@ -30,6 +30,7 @@ type SnapshotConfig struct {
 	KeepHtml bool
 	// Timeout  the timeout config
 	Timeout time.Duration
+	ExtName string
 }
 
 type SnapshotConfigOption func(config *SnapshotConfig)
@@ -40,6 +41,7 @@ func NewSnapshotConfig(content []byte, opts ...SnapshotConfigOption) *SnapshotCo
 		Quality:       1,
 		KeepHtml:      false,
 		Timeout:       0,
+		ExtName:       "png",
 	}
 
 	for _, o := range opts {
@@ -48,8 +50,14 @@ func NewSnapshotConfig(content []byte, opts ...SnapshotConfigOption) *SnapshotCo
 	return config
 }
 
-func MakeChartSnapshot(content []byte) ([]byte, error) {
+func MakeChartSnapshotPng(content []byte) ([]byte, error) {
 	return makeSnapshot(NewSnapshotConfig(content))
+}
+
+func MakeChartSnapshotJpg(content []byte) ([]byte, error) {
+	conf := NewSnapshotConfig(content)
+	conf.ExtName = "jpg"
+	return makeSnapshot(conf)
 }
 
 func makeSnapshot(config *SnapshotConfig) ([]byte, error) {
@@ -92,8 +100,8 @@ func makeSnapshot(config *SnapshotConfig) ([]byte, error) {
 	}
 
 	var base64Data string
-	executeJS := fmt.Sprintf(CanvasJs, "png", quality)
-	
+	executeJS := fmt.Sprintf(CanvasJs, config.ExtName, quality)
+
 	err = chromedp.Run(ctx,
 		chromedp.Navigate(fmt.Sprintf("%s%s", FileProtocol, htmlFullPath)),
 		chromedp.WaitVisible(EchartsInstanceDom, chromedp.ByQuery),

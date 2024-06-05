@@ -13,7 +13,7 @@ import (
 const UserEntitiesKey = "USER_ENTITIES_"
 
 func GetUserEntities(ctx context.Context, userId primitive.ObjectID) ([]models.Application, error) {
-	ret, err := storage.QuickRCSearch[[]models.Application](ctx, UserEntitiesKey+UserEntitiesKey+userId.Hex(), func() ([]models.Application, error) {
+	ret, err := storage.QuickRCSearch[[]models.Application](ctx, UserEntitiesKey+userId.Hex(), func() ([]models.Application, error) {
 		var entities []models.Application
 		find, err := storage.CEntity.Find(ctx, bson.M{"UserID": userId})
 		if err != nil {
