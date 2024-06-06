@@ -18,14 +18,13 @@ const (
 	FileProtocol       = "file://"
 	EchartsInstanceDom = "div[_echarts_instance_]"
 	CanvasJs           = "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]'))" +
-		".getDataURL({type: '%s', pixelRatio: %d, excludeComponents: ['toolbox']})"
+		".getDataURL({type: '%s', pixelRatio: 1, excludeComponents: ['toolbox']})"
+	SvgJs = "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]')).renderToSVGString()"
 )
 
 type SnapshotConfig struct {
 	// RenderContent the content bytes of charts after rendered
 	RenderContent []byte
-	// Quality the generated image quality, aka pixelRatio
-	Quality int
 	// KeepHtml whether keep the generated html also, default false
 	KeepHtml bool
 	// Timeout  the timeout config
@@ -38,7 +37,6 @@ type SnapshotConfigOption func(config *SnapshotConfig)
 func NewSnapshotConfig(content []byte, opts ...SnapshotConfigOption) *SnapshotConfig {
 	config := &SnapshotConfig{
 		RenderContent: content,
-		Quality:       1,
 		KeepHtml:      false,
 		Timeout:       0,
 		ExtName:       "png",
@@ -60,9 +58,14 @@ func MakeChartSnapshotJpg(content []byte) ([]byte, error) {
 	return makeSnapshot(conf)
 }
 
+func MakeChartSnapshotSvg(content []byte) ([]byte, error) {
+	conf := NewSnapshotConfig(content)
+	conf.ExtName = "svg"
+	return makeSnapshot(conf)
+}
+
 func makeSnapshot(config *SnapshotConfig) ([]byte, error) {
 	content := config.RenderContent
-	quality := config.Quality
 	keepHtml := config.KeepHtml
 	timeout := config.Timeout
 
@@ -95,26 +98,35 @@ func makeSnapshot(config *SnapshotConfig) ([]byte, error) {
 		return nil, err
 	}
 
-	if quality < 1 {
-		quality = 1
+	var executeJS string
+
+	switch config.ExtName {
+	case "jpg":
+		executeJS = fmt.Sprintf(CanvasJs, config.ExtName)
+	case "png":
+		executeJS = fmt.Sprintf(CanvasJs, config.ExtName)
+	case "svg":
+		executeJS = SvgJs
 	}
 
-	var base64Data string
-	executeJS := fmt.Sprintf(CanvasJs, config.ExtName, quality)
+	var imgData string
 
 	err = chromedp.Run(ctx,
 		chromedp.Navigate(fmt.Sprintf("%s%s", FileProtocol, htmlFullPath)),
 		chromedp.WaitVisible(EchartsInstanceDom, chromedp.ByQuery),
-		chromedp.Evaluate(executeJS, &base64Data),
+		chromedp.Evaluate(executeJS, &imgData),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	imgContent, err := base64.StdEncoding.DecodeString(strings.Split(base64Data, ",")[1])
-	if err != nil {
-		return nil, err
+	if config.ExtName == "jpg" || config.ExtName == "png" {
+		imgContent, err := base64.StdEncoding.DecodeString(strings.Split(imgData, ",")[1])
+		if err != nil {
+			return nil, err
+		}
+		imgData = string(imgContent)
 	}
 
-	return imgContent, nil
+	return []byte(imgData), nil
 }

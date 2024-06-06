@@ -34,6 +34,7 @@ func ServeWeb(ctx context.Context, lis net.Listener) {
 			chartsRouter.GET(":id/response-time.html", services.ResponseTimeChart(services.ResponseTimeChartModeHtml))
 			chartsRouter.GET(":id/response-time.png", services.ResponseTimeChart(services.ResponseTimeChartModePng))
 			chartsRouter.GET(":id/response-time.jpg", services.ResponseTimeChart(services.ResponseTimeChartModeJpg))
+			chartsRouter.GET(":id/response-time.svg", services.ResponseTimeChart(services.ResponseTimeChartModeSvg))
 		}
 		sentrySingletonRouter := apiRouter.Group("sentry-singleton")
 		{
