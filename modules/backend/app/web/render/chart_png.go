@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bellis-daemon/bellis/modules/backend/app/web/render/assets"
 	"github.com/chromedp/chromedp"
 	"github.com/minoic/glgf"
 )
@@ -129,4 +130,21 @@ func makeSnapshot(config *SnapshotConfig) ([]byte, error) {
 	}
 
 	return []byte(imgData), nil
+}
+
+func saveJsFiles() {
+	f1, err := os.OpenFile("echarts.min.js", os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	f1.Write(assets.EChartsMinJs)
+	f2, err := os.OpenFile("echarts@4.min.js", os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	f2.Write(assets.ECharts4MinJs)
+}
+
+func init() {
+	saveJsFiles()
 }

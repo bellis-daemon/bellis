@@ -47,6 +47,8 @@ func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
 			return
 		}
 
+		assetsHost := "https://go-echarts.github.io/go-echarts-assets/assets/"
+
 		switch mode {
 		case ResponseTimeChartModeHtml:
 		case ResponseTimeChartModeJpg:
@@ -54,8 +56,10 @@ func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
 		case ResponseTimeChartModePng:
 			req.Renderer = "canvas"
 			req.Animation = false
+			assetsHost = "./"
 		case ResponseTimeChartModeSvg:
 			req.Renderer = "svg"
+			assetsHost = "./"
 		}
 
 		loc, err := time.LoadLocation(req.Timezone)
@@ -102,14 +106,15 @@ from(bucket: "backend")
 			lastValue = f
 			maxValue = math.Max(maxValue, f)
 			values = append(values, opts.LineData{Value: cast.ToFloat64(query.Record().Value())})
-			times = append(times, query.Record().Time().In(loc).Format("01/02 15:04:05"))
+			times = append(times, query.Record().Time().In(loc).Format("01/02 15:04"))
 		}
 		line := charts.NewLine()
 		line.Animation = opts.Bool(req.Animation)
 		line.SetGlobalOptions(
 			charts.WithInitializationOpts(opts.Initialization{
-				PageTitle: fmt.Sprintf("Bellis | Response Time - %s", entity.Name),
-				Renderer:  req.Renderer,
+				PageTitle:  fmt.Sprintf("Bellis | Response Time - %s", entity.Name),
+				Renderer:   req.Renderer,
+				AssetsHost: assetsHost,
 			}),
 			charts.WithLegendOpts(opts.Legend{
 				Type: "plain",
@@ -127,7 +132,7 @@ from(bucket: "backend")
 				TriggerOn:      "mousemove",
 				ValueFormatter: string(opts.FuncOpts("(data)=>`${data.toFixed(2)} ms`")),
 				AxisPointer: &opts.AxisPointer{
-					Type:"line",
+					Type: "line",
 				},
 			}),
 			charts.WithYAxisOpts(opts.YAxis{
