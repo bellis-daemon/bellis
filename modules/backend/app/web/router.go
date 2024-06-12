@@ -3,12 +3,13 @@ package web
 import (
 	"context"
 	"errors"
-	"github.com/bellis-daemon/bellis/common/storage"
-	gin_cache "github.com/bellis-daemon/bellis/modules/backend/midwares/gin-cache"
-	"github.com/bellis-daemon/bellis/modules/backend/midwares/gin-cache/persist"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/bellis-daemon/bellis/common/storage"
+	gin_cache "github.com/bellis-daemon/bellis/modules/backend/midwares/gin-cache"
+	"github.com/bellis-daemon/bellis/modules/backend/midwares/gin-cache/persist"
 
 	"github.com/bellis-daemon/bellis/modules/backend/app/web/services"
 	"github.com/gin-contrib/gzip"
@@ -25,6 +26,7 @@ func ServeWeb(ctx context.Context, lis net.Listener) {
 	apiRouter := router.Group("api")
 	{
 		apiRouter.GET("ip", services.GetIpInfo())
+		apiRouter.GET("ping", services.GetPingInfo())
 		callbackRouter := apiRouter.Group("callback")
 		{
 			callbackRouter.POST("telegram", services.TelegramCallbackService())
