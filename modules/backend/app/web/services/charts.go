@@ -91,7 +91,8 @@ from(bucket: "backend")
 	|> range(start: -1d)
 	|> filter(fn: (r) => r["_field"] == "c_response_time")
 	|> filter(fn: (r) => r["id"] == "%s")
-	|> aggregateWindow(every: 1m, fn: mean, createEmpty: false)`, id))
+	|> aggregateWindow(every: 1m, fn: mean, createEmpty: true)
+	|> fill(column: "_value", value: 0.0)`, id))
 		if err != nil {
 			glgf.Error(err)
 			ctx.AbortWithStatus(http.StatusNotFound)
@@ -144,7 +145,46 @@ from(bucket: "backend")
 					Formatter:    string(opts.FuncOpts("(data)=>`${data.toFixed(2)} ms`")),
 				},
 			}),
+			charts.WithDataZoomOpts(opts.DataZoom{
+				Type: "inside",
+			}),
 		)
+		line.AddJSFuncs(`
+const chart = %MY_ECHARTS%;
+chart.setOption({
+    graphic: [{
+        type: 'group',
+        right: 0,
+        bottom: 0,
+        z: 100,
+        children: [{
+                type: 'rect',
+                left: 'center',
+                top: 'center',
+                z: 100,
+                shape: {
+                    width: 300,
+                    height: 26
+                },
+                style: {
+                    fill: 'rgba(0,0,0,0.15)'
+                }
+            },
+            {
+                type: 'text',
+                left: 'center',
+                top: 'center',
+                z: 100,
+                style: {
+                    fill: '#fff',
+                    text: 'Chart By bellis.minoic.top 🌼',
+                    font: 'bold 14px sans-serif'
+                }
+            }
+        ]
+    }, ],
+})
+		`)
 		line.SetXAxis(times).AddSeries(entity.Name,
 			values,
 			charts.WithAreaStyleOpts(opts.AreaStyle{}),
