@@ -36,10 +36,16 @@ message ForgetChangePasswordRequest{
   string password = 3;
 }
 
+message PingResponse{
+  string goVersion = 1;
+  string buildTime = 2;
+}
+
 service AuthService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Register(RegisterRequest) returns (google.protobuf.Empty);
   rpc GetRegisterCaptcha(RegisterCaptchaRequest) returns (google.protobuf.Empty);
   rpc GetForgetCaptcha(ForgetCaptchaRequest) returns (google.protobuf.Empty);
   rpc ForgetChangePassword(ForgetChangePasswordRequest) returns (google.protobuf.Empty);
+  rpc Ping(google.protobuf.Empty) returns (PingResponse);
 }

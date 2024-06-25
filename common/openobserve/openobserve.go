@@ -27,18 +27,19 @@ type openObserve struct {
 	org      string
 	username string
 	password string
+	stream   string
 	client   *http.Client
 	writers  []openObserveWriter
 }
 
 func (this *openObserve) send(logs []map[string]any) error {
 	var buf bytes.Buffer
-	json.NewEncoder(&buf).Encode(logs)
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://api.openobserve.ai/api/%s/default/_json", storage.Config().OpenObserveOrg), &buf)
+	_ = json.NewEncoder(&buf).Encode(logs)
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://api.openobserve.ai/api/%s/%s/_json", this.org, this.stream), &buf)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth(storage.Config().OpenObserveUsername, storage.Config().OpenObservePassword)
+	req.SetBasicAuth(this.username, this.password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 	_, err = this.client.Do(req)
@@ -68,7 +69,7 @@ func (this *openObserve) run() {
 			}
 		}()
 	}
-	list := []map[string]any{}
+	var list []map[string]any
 	ticker := time.NewTicker(30 * time.Second)
 	for {
 		select {
@@ -100,6 +101,7 @@ func RegisterGlgf() {
 		org:      storage.Config().OpenObserveOrg,
 		username: storage.Config().OpenObserveUsername,
 		password: storage.Config().OpenObservePassword,
+		stream:   common.AppName,
 		client:   http.DefaultClient,
 		writers: []openObserveWriter{
 			{
@@ -124,9 +126,12 @@ func RegisterGlgf() {
 			},
 		},
 	}
-	glgf.Get().AddLevelWriter(glgf.DEBG, &instance.writers[0])
-	glgf.Get().AddLevelWriter(glgf.INFO, &instance.writers[1])
-	glgf.Get().AddLevelWriter(glgf.WARN, &instance.writers[2])
-	glgf.Get().AddLevelWriter(glgf.ERR, &instance.writers[3])
-	glgf.Get().AddLevelWriter(glgf.OK, &instance.writers[4])
+	glgf.Get().
+		SetMode(glgf.BOTH).
+		AddLevelWriter(glgf.DEBG, &instance.writers[0]).
+		AddLevelWriter(glgf.INFO, &instance.writers[1]).
+		AddLevelWriter(glgf.WARN, &instance.writers[2]).
+		AddLevelWriter(glgf.ERR, &instance.writers[3]).
+		AddLevelWriter(glgf.OK, &instance.writers[4])
+	go instance.run()
 }

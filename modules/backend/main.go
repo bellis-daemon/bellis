@@ -33,8 +33,9 @@ var (
 func init() {
 	common.BuildTime = BuildTime
 	common.GoVersion = GoVersion
+	common.AppName = "Backend"
 	glgf.Infof("BuildTime: %s, GoVersion: %s", BuildTime, GoVersion)
-	if storage.Config().OpenObserveEnabled{
+	if storage.Config().OpenObserveEnabled {
 		openobserve.RegisterGlgf()
 	}
 }

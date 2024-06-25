@@ -10,6 +10,7 @@ var (
 	hostname  string
 	BuildTime string
 	GoVersion string
+	AppName   string
 )
 
 func Hostname() string {
