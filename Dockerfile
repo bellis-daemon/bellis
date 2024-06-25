@@ -1,9 +1,9 @@
-FROM golang:1.22.0-alpine as builder
+FROM golang:1.22.3-alpine as builder
 
 WORKDIR /workspace
 
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
-    &&  apk add --no-cache upx tzdata && rm -rf /var/cache/apk/*
+# RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+RUN apk add --no-cache upx tzdata && rm -rf /var/cache/apk/*
 
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn
@@ -34,8 +34,8 @@ EXPOSE $PORT
 ENV TZ=Asia/Shanghai
 #RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
 #   && apt-get -qq install -y --no-install-recommends ca-certificates curl tzdata
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
- && apk upgrade --no-cache --available \
+#RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+RUN apk upgrade --no-cache --available \
  && apk --no-cache add tzdata ca-certificates libc6-compat libgcc libstdc++ curl
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert

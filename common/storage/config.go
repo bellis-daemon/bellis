@@ -1,16 +1,17 @@
 package storage
 
 import (
-	"github.com/minoic/glgf"
-	"gopkg.in/yaml.v3"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/minoic/glgf"
+	"gopkg.in/yaml.v3"
 )
 
-var etcdOnce sync.Once
-var etcdConfig *ConfigInfo
+var configOnce sync.Once
+var config *ConfigInfo
 
 type ConfigInfo struct {
 	InfluxDBToken          string   `yaml:"influxdb_token"`
@@ -26,24 +27,28 @@ type ConfigInfo struct {
 	RedisAddrs             []string `yaml:"redis_addrs"`
 	RedisUsername          string   `yaml:"redis_username"`
 	RedisPassword          string   `yaml:"redis_password"`
+	OpenObserveEnabled     bool     `yaml:"openobserve_enabled"`
+	OpenObserveOrg         string   `yaml:"openobserve_org"`
+	OpenObserveUsername    string   `yaml:"openobserve_username"`
+	OpenObservePassword    string   `yaml:"openobserve_password"`
 }
 
 func Config() *ConfigInfo {
-	etcdOnce.Do(func() {
+	configOnce.Do(func() {
 		url := os.ExpandEnv("$CONFIG_URL")
-		etcdConfig = new(ConfigInfo)
+		config = new(ConfigInfo)
 		resp, err := http.Get(url)
 		if err != nil {
 			glgf.Error(url)
 			panic(err)
 		}
 		defer resp.Body.Close()
-		err = yaml.NewDecoder(resp.Body).Decode(etcdConfig)
+		err = yaml.NewDecoder(resp.Body).Decode(config)
 		if err != nil {
 			panic(err)
 		}
-		etcdConfig.WebEndpoint = strings.TrimRight(etcdConfig.WebEndpoint, "/")
-		etcdConfig.TelegramBotApiEndpoint = strings.TrimRight(etcdConfig.TelegramBotApiEndpoint, "/")
+		config.WebEndpoint = strings.TrimRight(config.WebEndpoint, "/")
+		config.TelegramBotApiEndpoint = strings.TrimRight(config.TelegramBotApiEndpoint, "/")
 	})
-	return etcdConfig
+	return config
 }
