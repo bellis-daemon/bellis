@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bellis-daemon/bellis/common/openobserve"
 	"github.com/bellis-daemon/bellis/common/storage"
 	gin_cache "github.com/bellis-daemon/bellis/modules/backend/midwares/gin-cache"
 	"github.com/bellis-daemon/bellis/modules/backend/midwares/gin-cache/persist"
@@ -21,8 +22,11 @@ import (
 func ServeWeb(ctx context.Context, lis net.Listener) {
 	store := persist.NewRedisStore(storage.Redis())
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(gin.Logger())
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
+	openobserve.RegisterGin(router)
 	apiRouter := router.Group("api")
 	{
 		apiRouter.GET("ip", services.GetIpInfo())

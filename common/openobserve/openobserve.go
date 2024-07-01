@@ -10,6 +10,7 @@ import (
 
 	"github.com/bellis-daemon/bellis/common"
 	"github.com/bellis-daemon/bellis/common/storage"
+	"github.com/gin-gonic/gin"
 	"github.com/minoic/glgf"
 )
 
@@ -94,6 +95,24 @@ func (this *openObserve) run() {
 			}
 		}
 	}
+}
+
+func RegisterGin(router *gin.Engine) {
+	instance := &openObserve{
+		org:      storage.Config().OpenObserveOrg,
+		username: storage.Config().OpenObserveUsername,
+		password: storage.Config().OpenObservePassword,
+		stream:   common.AppName,
+		client:   http.DefaultClient,
+		writers: []openObserveWriter{
+			{
+				"GIN",
+				make(chan []byte),
+			},
+		},
+	}
+	router.Use(gin.LoggerWithWriter(&instance.writers[0]))
+	go instance.run()
 }
 
 func RegisterGlgf() {
