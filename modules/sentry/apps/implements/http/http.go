@@ -13,17 +13,14 @@ import (
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/implements"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/option"
 	"github.com/bellis-daemon/bellis/modules/sentry/apps/status"
-	"github.com/minoic/glgf"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 var httpClient = http.Client{
-	Timeout: 5 * time.Second,
+	Timeout: 6 * time.Second,
 	Transport: &http.Transport{
-		MaxIdleConns:          100,
-		IdleConnTimeout:       10 * time.Second,
-		TLSHandshakeTimeout:   4 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:    100,
+		IdleConnTimeout: 30 * time.Second,
 	},
 }
 
@@ -35,7 +32,7 @@ type HTTP struct {
 
 func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	ret := &httpStatus{}
-	req, err := http.NewRequest(this.options.Method, this.options.URL, nil)
+	req, err := http.NewRequestWithContext(ctx, this.options.Method, this.options.URL, nil)
 	if err != nil {
 		return ret, err
 	}
@@ -57,6 +54,7 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	if err != nil {
 		return ret, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		return ret, errors.New(resp.Status)
 	}
@@ -64,12 +62,8 @@ func (this *HTTP) Fetch(ctx context.Context) (status.Status, error) {
 	ret.ContentType = resp.Header.Get("Content-Type")
 	ret.ContentLength = resp.ContentLength
 	if ret.ContentLength == -1 {
-		length, err := io.CopyN(io.Discard, resp.Body, 1000000)
-		if err != nil {
-			glgf.Warn(err)
-		} else {
-			ret.ContentLength = length
-		}
+		length, _ := io.CopyN(io.Discard, resp.Body, 100000)
+		ret.ContentLength = length
 	}
 	if this.tlsState != nil {
 		switch this.tlsState.Version {
@@ -124,7 +118,7 @@ func init() {
 		if o.Method == "" {
 			o.Method = "GET"
 		}
-		if !strings.Contains(o.URL, "http://") || !strings.Contains(o.URL, "https://") {
+		if !strings.Contains(o.URL, "http://") && !strings.Contains(o.URL, "https://") {
 			o.URL = "http://" + o.URL
 		}
 		return &HTTP{options: o}

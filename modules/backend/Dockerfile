@@ -1,4 +1,4 @@
-FROM golang:1.22.3-alpine as builder
+FROM golang:1.22.5-alpine as builder
 
 WORKDIR /workspace
 
@@ -6,7 +6,7 @@ WORKDIR /workspace
 RUN apk add --no-cache upx tzdata && rm -rf /var/cache/apk/*
 
 ENV GO111MODULE=on
-ENV GOPROXY=https://goproxy.cn
+# ENV GOPROXY=https://goproxy.cn
 ENV TZ=Asia/Shanghai
 
 ARG MODULE=backend
@@ -38,7 +38,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
 #     && apk upgrade --no-cache --available \
 #     && apk --no-cache add tzdata ca-certificates libc6-compat libgcc libstdc++ curl
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert
+# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert
 COPY --from=builder --chmod=777 /workspace/entry .
 COPY --chmod=777 hostname.sh .
 

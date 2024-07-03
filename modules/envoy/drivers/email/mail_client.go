@@ -11,12 +11,12 @@ func tencentSmtpClient() (*mail.SMTPClient, error) {
 	sv := &mail.SMTPServer{
 		Authentication: mail.AuthAuto,
 		Encryption:     mail.EncryptionSSL,
-		Username:       "envoy@bellis.minoic.top",
-		Password:       storage.Config().TencentSTMPPassword,
-		ConnectTimeout: 3 * time.Second,
-		SendTimeout:    3 * time.Second,
-		Host:           "gz-smtp.qcloudmail.com",
-		Port:           465,
+		Username:       storage.Config().SMTPUsername,
+		Password:       storage.Config().SMTPPassword,
+		ConnectTimeout: 10 * time.Second,
+		SendTimeout:    10 * time.Second,
+		Host:           storage.Config().SMTPHostname,
+		Port:           storage.Config().SMTPPort,
 		KeepAlive:      false,
 	}
 	cl, err := sv.Connect()

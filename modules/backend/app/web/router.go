@@ -37,7 +37,7 @@ func ServeWeb(ctx context.Context, lis net.Listener) {
 		}
 		chartsRouter := apiRouter.Group("charts", gin_cache.CacheByRequestURI(store, time.Minute, gin_cache.WithPrefixKey("GIN_CACHE_")))
 		{
-			chartsRouter.GET(":id/response-time.html", services.ResponseTimeChart(services.ResponseTimeChartModeHtml))
+			chartsRouter.GET(":id/response-time.html ", services.ResponseTimeChart(services.ResponseTimeChartModeHtml))
 			chartsRouter.GET(":id/response-time.png", services.ResponseTimeChart(services.ResponseTimeChartModePng))
 			chartsRouter.GET(":id/response-time.jpg", services.ResponseTimeChart(services.ResponseTimeChartModeJpg))
 			chartsRouter.GET(":id/response-time.svg", services.ResponseTimeChart(services.ResponseTimeChartModeSvg))

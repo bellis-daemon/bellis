@@ -22,7 +22,10 @@ type ConfigInfo struct {
 	TelegramBotToken       string   `yaml:"telegram_bot_token"`
 	TelegramBotApiEndpoint string   `yaml:"telegram_bot_api_endpoint"`
 	TelegramBotName        string   `yaml:"telegram_bot_name"`
-	TencentSTMPPassword    string   `yaml:"tencent_smtp_password"`
+	SMTPHostname           string   `yaml:"smtp_hostname"`
+	SMTPUsername           string   `yaml:"smtp_username"`
+	SMTPPassword           string   `yaml:"smtp_password"`
+	SMTPPort               int      `yaml:"smtp_port"`
 	WebEndpoint            string   `yaml:"web_endpoint"`
 	RedisAddrs             []string `yaml:"redis_addrs"`
 	RedisUsername          string   `yaml:"redis_username"`
