@@ -57,7 +57,7 @@ func main() {
 	go web.ServeWeb(ctx, webL)
 	go m.Serve()
 	go RunHeadlessChrome()
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	glgf.Warn("Shutting down server")

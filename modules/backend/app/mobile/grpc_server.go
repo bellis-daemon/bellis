@@ -2,18 +2,19 @@ package mobile
 
 import (
 	"context"
+	"math"
+	"net"
+	"time"
+
 	"github.com/bellis-daemon/bellis/modules/backend/midwares"
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
-	"math"
-	"net"
-	"time"
 )
 
 var (
-	server *grpc.Server
+	server    *grpc.Server
 )
 
 func init() {
@@ -55,10 +56,9 @@ func ServeGrpc(ctx context.Context, lis net.Listener) {
 			panic(err)
 		}
 	}()
-	select {
-	case <-ctx.Done():
-		server.GracefulStop()
-	}
+	<-ctx.Done()
+	glgf.Info("Stopping GRPC server...")
+	server.GracefulStop()
 }
 
 func Server() *grpc.Server {

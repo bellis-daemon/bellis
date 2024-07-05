@@ -28,12 +28,14 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GoVersion=$(go version)' -X 'main.BuildTime=$(date "+%F %T")'" -o entry modules/$MODULE/main.go \
     && upx -6 entry
 
+FROM envoyproxy/envoy:distroless-v1.30.4 AS envoy-alpine
+    
 FROM chromedp/headless-shell
-
 EXPOSE $PORT
 ENV TZ=Asia/Shanghai
+COPY --from=envoy-alpine --chmod=755 /usr/local/bin/envoy /usr/local/bin
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
-   && apt-get -qq install -y --no-install-recommends ca-certificates curl tzdata
+   && apt-get -qq install -y --no-install-recommends ca-certificates curl tzdata 
 # RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
 #     && apk upgrade --no-cache --available \
 #     && apk --no-cache add tzdata ca-certificates libc6-compat libgcc libstdc++ curl
