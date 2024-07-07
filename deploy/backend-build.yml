@@ -9,7 +9,6 @@ services:
       context: ..
       args:
         MODULE: backend
-        PORT: 7001
   dispatcher:
     image: registry.cn-shanghai.aliyuncs.com/bellis/dispatcher
     build:

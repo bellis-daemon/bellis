@@ -10,7 +10,6 @@ ENV GO111MODULE=on
 ENV TZ=Asia/Shanghai
 
 ARG MODULE=backend
-ARG PORT=7001
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -30,7 +29,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 FROM alpine
 
-EXPOSE $PORT
 ENV TZ=Asia/Shanghai
 # RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
 #   && apt-get -qq install -y --no-install-recommends ca-certificates curl tzdata

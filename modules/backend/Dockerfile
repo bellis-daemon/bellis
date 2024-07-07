@@ -10,7 +10,6 @@ ENV GO111MODULE=on
 ENV TZ=Asia/Shanghai
 
 ARG MODULE=backend
-ARG PORT=7001
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -28,12 +27,13 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GoVersion=$(go version)' -X 'main.BuildTime=$(date "+%F %T")'" -o entry modules/$MODULE/main.go \
     && upx -6 entry
 
-FROM envoyproxy/envoy:distroless-v1.30.4 AS envoy-alpine
-    
-FROM chromedp/headless-shell
-EXPOSE $PORT
+FROM envoyproxy/envoy:distroless-v1.30.4 AS envoy
+
+
+FROM chromedp/headless-shell:128.0.6559.0
+EXPOSE 7001
 ENV TZ=Asia/Shanghai
-COPY --from=envoy-alpine --chmod=755 /usr/local/bin/envoy /usr/local/bin
+COPY --from=envoy --chmod=755 /usr/local/bin/envoy /usr/local/bin
 RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
    && apt-get -qq install -y --no-install-recommends ca-certificates curl tzdata 
 # RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
@@ -41,7 +41,9 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
 #     && apk --no-cache add tzdata ca-certificates libc6-compat libgcc libstdc++ curl
 
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert
-COPY --from=builder --chmod=777 /workspace/entry .
-COPY --chmod=777 hostname.sh .
+COPY --from=builder --chmod=755 /workspace/entry .
+COPY --chmod=755 hostname.sh .
+COPY modules/backend/envoy-config.yaml .
+COPY modules/backend/docker-entry.sh .
 
-ENTRYPOINT ["/entry"]
+ENTRYPOINT ["/docker-entry.sh"]

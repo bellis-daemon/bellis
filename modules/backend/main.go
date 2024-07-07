@@ -45,13 +45,13 @@ func main() {
 	index.InitIndexes()
 	storage.ConnectInfluxDB()
 	jobs.StartAsync()
-	l, err := net.Listen("tcp", "0.0.0.0:7001")
+	l, err := net.Listen("tcp", "0.0.0.0:7002")
 	if err != nil {
 		panic(err)
 	}
 	m := cmux.New(l)
 	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
-	webL := m.Match(cmux.HTTP1Fast())
+	webL := m.Match(cmux.Any())
 	ctx, cancel := context.WithCancel(context.Background())
 	go mobile.ServeGrpc(ctx, grpcL)
 	go web.ServeWeb(ctx, webL)
