@@ -43,7 +43,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai apt-get -qq update \
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert
 COPY --from=builder --chmod=755 /workspace/entry .
 COPY --chmod=755 hostname.sh .
-COPY modules/backend/envoy-config.yaml .
-COPY modules/backend/docker-entry.sh .
+COPY --chmod=644 modules/backend/envoy-config.yaml .
+COPY --chmod=755 modules/backend/docker-entry.sh .
 
 ENTRYPOINT ["/docker-entry.sh"]
