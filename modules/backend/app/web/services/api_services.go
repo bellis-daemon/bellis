@@ -25,11 +25,25 @@ func GetIpInfo() gin.HandlerFunc {
 
 func GetPingInfo() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, map[string]any{
+		ret := map[string]any{
 			"BuildTime": common.BuildTime,
 			"GoVersion": common.GoVersion,
 			"UnixMilli": time.Now().UnixMilli(),
-			"Hostname": common.Hostname(),
-		})
+			"Hostname":  common.Hostname(),
+		}
+		selfGeo, err := geo.Self()
+		if err != nil {
+			glgf.Error(err)
+			ret["Region"] = "Unknown"
+			ret["Country"] = "Unknown"
+			ret["City"] = "Unknown"
+			ret["ISP"] = "Unknown"
+		} else {
+			ret["Region"] = selfGeo.Region
+			ret["Country"] = selfGeo.Country
+			ret["City"] = selfGeo.City
+			ret["ISP"] = selfGeo.ISP
+		}
+		ctx.JSON(http.StatusOK, ret)
 	}
 }

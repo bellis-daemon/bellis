@@ -131,3 +131,17 @@ func FromLocal(address string) (*GeoData, error) {
 		ISP:      splits[4],
 	}, nil
 }
+
+var self *GeoData
+
+func Self() (*GeoData, error) {
+	if self == nil {
+		var err error
+		self, err = FromAPI()
+		if err != nil {
+			self = nil
+			return nil, err
+		}
+	}
+	return self, nil
+}

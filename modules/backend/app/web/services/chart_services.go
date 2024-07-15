@@ -106,8 +106,13 @@ from(bucket: "backend")
 			f := cast.ToFloat64(query.Record().Value())
 			lastValue = f
 			maxValue = math.Max(maxValue, f)
-			values = append(values, opts.LineData{Value: cast.ToFloat64(query.Record().Value())})
-			times = append(times, query.Record().Time().In(loc).Format("01/02 15:04"))
+			val := cast.ToFloat64(query.Record().Value())
+			tim := query.Record().Time().In(loc).Format("01/02 15:04")
+			if len(times) != 0 && times[len(times)-1] == tim {
+				continue
+			}
+			values = append(values, opts.LineData{Value: val})
+			times = append(times, tim)
 		}
 		line := charts.NewLine()
 		line.Animation = opts.Bool(req.Animation)
@@ -152,39 +157,44 @@ from(bucket: "backend")
 		line.AddJSFuncs(`
 const chart = %MY_ECHARTS%;
 chart.setOption({
-    graphic: [{
-        type: 'group',
-        right: 0,
-        bottom: 0,
-        z: 100,
-        children: [{
-                type: 'rect',
-                left: 'center',
-                top: 'center',
-                z: 100,
-                shape: {
-                    width: 300,
-                    height: 26
-                },
-                style: {
-                    fill: 'rgba(0,0,0,0.15)'
-                }
-            },
-            {
-                type: 'text',
-                left: 'center',
-                top: 'center',
-                z: 100,
-                style: {
-                    fill: '#fff',
-                    text: 'Chart By bellis.minoic.top 🌼',
-                    font: 'bold 14px sans-serif'
-                }
-            }
-        ]
-    }, ],
-})
-		`)
+		graphic: 
+		[
+			{
+				type: 'group',
+				right: 0,
+				bottom: 0,
+				z: 100,
+				onclick(){
+				  	window.open("https://bellis.minoic.top","blank")
+				},
+				children: [{
+						type: 'rect',
+						left: 'center',
+						top: 'center',
+						z: 100,
+						shape: {
+							width: 300,
+							height: 26
+						},
+						style: {
+							fill: 'rgba(0,0,0,0.15)'
+						}
+					},
+					{
+						type: 'text',
+						left: 'center',
+						top: 'center',
+						z: 100,
+						style: {
+							fill: '#fff',
+							text: 'Chart By bellis.minoic.top 🌼',
+							font: 'bold 14px sans-serif'
+						}
+					}
+				]
+			}, 
+		],
+	})`)
 		line.SetXAxis(times).AddSeries(entity.Name,
 			values,
 			charts.WithAreaStyleOpts(opts.AreaStyle{}),
