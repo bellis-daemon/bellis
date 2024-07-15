@@ -133,16 +133,11 @@ func makeSnapshot(config *SnapshotConfig) ([]byte, error) {
 }
 
 func saveJsFiles() {
-	f1, err := os.OpenFile("echarts.min.js", os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("echarts.min.js", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
-	f1.Write(assets.EChartsMinJs)
-	f2, err := os.OpenFile("echarts@4.min.js", os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	f2.Write(assets.ECharts4MinJs)
+	f.Write(assets.EChartsMinJs)
 }
 
 func init() {

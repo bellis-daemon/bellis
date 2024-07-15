@@ -47,7 +47,7 @@ func ResponseTimeChart(mode ResponseTimeChartMode) gin.HandlerFunc {
 			return
 		}
 
-		assetsHost := "https://go-echarts.github.io/go-echarts-assets/assets/"
+		assetsHost := "https://cdn.jsdelivr.net/npm/echarts@5/dist/"
 
 		switch mode {
 		case ResponseTimeChartModeHtml:
@@ -98,8 +98,8 @@ from(bucket: "backend")
 			ctx.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		var values []opts.LineData
-		var times []string
+		values := make([]opts.LineData, 1440)
+		times := make([]string, 1440)
 		var maxValue float64
 		var lastValue float64
 		for query.Next() {
