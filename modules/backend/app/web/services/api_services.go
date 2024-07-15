@@ -29,6 +29,7 @@ func GetPingInfo() gin.HandlerFunc {
 			"BuildTime": common.BuildTime,
 			"GoVersion": common.GoVersion,
 			"UnixMilli": time.Now().UnixMilli(),
+			"Hostname": common.Hostname(),
 		})
 	}
 }

@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -367,7 +368,12 @@ from(bucket: "backend")
 			case "c_response_time":
 				entityStatus.ResponseTime = cast.ToInt64(query.Record().Value())
 			default:
-				fields[query.Record().Field()] = query.Record().Value()
+				if val, ok := query.Record().Value().(string); ok {
+					fields[query.Record().Field()] = strings.ToValidUTF8(val, "")
+				} else {
+					fields[query.Record().Field()] = query.Record().Value()
+				}
+
 			}
 		}
 		entityStatus.Fields, err = structpb.NewStruct(fields)
@@ -425,7 +431,7 @@ from(bucket: "backend")
 				ret = append(ret, cast.ToBool(query.Record().Value()))
 			}
 			return ret, nil
-		},time.Minute)
+		}, time.Minute)
 		if err != nil {
 			glgf.Error(err)
 			errC <- err
