@@ -91,29 +91,26 @@ from(bucket: "backend")
 	|> range(start: -1d)
 	|> filter(fn: (r) => r["_field"] == "c_response_time")
 	|> filter(fn: (r) => r["id"] == "%s")
-	|> aggregateWindow(every: 1m, fn: mean, createEmpty: true)
+	|> aggregateWindow(every: 5m, fn: mean, createEmpty: true)
 	|> fill(column: "_value", value: 0.0)`, id))
 		if err != nil {
 			glgf.Error(err)
 			ctx.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		values := make([]opts.LineData, 1440)
-		times := make([]string, 1440)
-		var maxValue float64
-		var lastValue float64
+		defer query.Close()
+		values := make([]opts.LineData, 0, 300)
+		times := make([]string, 0, 300)
+		var maxValue float64 = math.Inf(-1)
 		for query.Next() {
 			f := cast.ToFloat64(query.Record().Value())
-			lastValue = f
 			maxValue = math.Max(maxValue, f)
-			val := cast.ToFloat64(query.Record().Value())
-			tim := query.Record().Time().In(loc).Format("01/02 15:04")
-			if len(times) != 0 && times[len(times)-1] == tim {
-				continue
-			}
-			values = append(values, opts.LineData{Value: val})
-			times = append(times, tim)
+			values = append(values, opts.LineData{Value: f})
+			times = append(times, query.Record().Time().In(loc).Format("01/02 15:04"))
 		}
+		values = values[:len(values)-1]
+		times = times[:len(times)-1]
+		lastValue := cast.ToFloat64(values[len(values)-1].Value)
 		line := charts.NewLine()
 		line.Animation = opts.Bool(req.Animation)
 		line.SetGlobalOptions(
@@ -157,44 +154,44 @@ from(bucket: "backend")
 		line.AddJSFuncs(`
 const chart = %MY_ECHARTS%;
 chart.setOption({
-		graphic: 
-		[
-			{
-				type: 'group',
-				right: 0,
-				bottom: 0,
-				z: 100,
-				onclick(){
-				  	window.open("https://bellis.minoic.top","blank")
-				},
-				children: [{
-						type: 'rect',
-						left: 'center',
-						top: 'center',
-						z: 100,
-						shape: {
-							width: 300,
-							height: 26
-						},
-						style: {
-							fill: 'rgba(0,0,0,0.15)'
-						}
+	graphic: 
+	[
+		{
+			type: 'group',
+			right: 0,
+			bottom: 0,
+			z: 100,
+			onclick(){
+				window.open("https://bellis.minoic.top","blank")
+			},
+			children: [{
+					type: 'rect',
+					left: 'center',
+					top: 'center',
+					z: 100,
+					shape: {
+						width: 300,
+						height: 26
 					},
-					{
-						type: 'text',
-						left: 'center',
-						top: 'center',
-						z: 100,
-						style: {
-							fill: '#fff',
-							text: 'Chart By bellis.minoic.top 🌼',
-							font: 'bold 14px sans-serif'
-						}
+					style: {
+						fill: 'rgba(0,0,0,0.15)'
 					}
-				]
-			}, 
-		],
-	})`)
+				},
+				{
+					type: 'text',
+					left: 'center',
+					top: 'center',
+					z: 100,
+					style: {
+						fill: '#fff',
+						text: 'Chart By bellis.minoic.top 🌼',
+						font: 'bold 14px sans-serif'
+					}
+				}
+			]
+		}, 
+	],
+})`)
 		line.SetXAxis(times).AddSeries(entity.Name,
 			values,
 			charts.WithAreaStyleOpts(opts.AreaStyle{}),
