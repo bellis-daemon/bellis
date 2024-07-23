@@ -32,9 +32,8 @@ FROM chromedp/headless-shell:128.0.6559.0 AS chrome
 
 FROM alpine AS compresser
 RUN apk add --no-cache upx
-COPY upx /usr/local/bin/
 COPY --from=chrome /headless-shell /headless-shell
-RUN upx -6 /headless-shell/headless-shell
+RUN upx -7 /headless-shell/headless-shell
 
 COPY --from=envoy /usr/local/bin/envoy /usr/local/bin/
 RUN upx -6 /usr/local/bin/envoy

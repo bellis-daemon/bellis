@@ -101,7 +101,7 @@ from(bucket: "backend")
 		defer query.Close()
 		values := make([]opts.LineData, 0, 300)
 		times := make([]string, 0, 300)
-		var maxValue float64 = math.Inf(-1)
+		var maxValue = math.Inf(-1)
 		for query.Next() {
 			f := cast.ToFloat64(query.Record().Value())
 			maxValue = math.Max(maxValue, f)
@@ -151,8 +151,18 @@ from(bucket: "backend")
 				Type: "inside",
 			}),
 		)
-		line.AddJSFuncs(`
-const chart = %MY_ECHARTS%;
+		clickFunc := ""
+		if mode == ResponseTimeChartModeHtml {
+			clickFunc = `onclick(){
+				window.open("https://bellis.minoic.top","blank")
+			},`
+		}
+		emoji := ""
+		if mode == ResponseTimeChartModeHtml || mode == ResponseTimeChartModeSvg {
+			emoji = "🌼"
+		}
+		line.AddJSFuncs(fmt.Sprintf(`
+const chart = %%MY_ECHARTS%%;
 chart.setOption({
 	graphic: 
 	[
@@ -161,9 +171,7 @@ chart.setOption({
 			right: 0,
 			bottom: 0,
 			z: 100,
-			onclick(){
-				window.open("https://bellis.minoic.top","blank")
-			},
+			%s
 			children: [{
 					type: 'rect',
 					left: 'center',
@@ -184,14 +192,14 @@ chart.setOption({
 					z: 100,
 					style: {
 						fill: '#fff',
-						text: 'Chart By bellis.minoic.top 🌼',
+						text: 'Chart By bellis.minoic.top %s',
 						font: 'bold 14px sans-serif'
 					}
 				}
 			]
 		}, 
 	],
-})`)
+})`, clickFunc, emoji))
 		line.SetXAxis(times).AddSeries(entity.Name,
 			values,
 			charts.WithAreaStyleOpts(opts.AreaStyle{}),
