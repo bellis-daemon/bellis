@@ -3,7 +3,7 @@ FROM golang:1.22.5-alpine as builder
 WORKDIR /workspace
 
 # RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
-RUN apk add --no-cache upx tzdata && rm -rf /var/cache/apk/*
+RUN apk add --no-cache tzdata && rm -rf /var/cache/apk/*
 
 ENV GO111MODULE=on
 # ENV GOPROXY=https://goproxy.cn
@@ -24,8 +24,8 @@ COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -gcflags "all=-N -l" -ldflags "-s -w -X 'main.GoVersion=$(go version)' -X 'main.BuildTime=$(date "+%F %T")'" -o entry modules/$MODULE/main.go \
-    && upx -6 entry
+    go build -gcflags "all=-m" -ldflags "-s -w -X 'main.GoVersion=$(go version)' -X 'main.BuildTime=$(date "+%F %T")'" -o entry modules/$MODULE/main.go
+
 
 FROM alpine
 
