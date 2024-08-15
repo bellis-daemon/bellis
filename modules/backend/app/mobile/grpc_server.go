@@ -26,8 +26,8 @@ func init() {
 			midwares.BasicLogger(),
 		),
 		grpc.ChainStreamInterceptor(
-			midwares.AuthCheckerStream(),
 			midwares.PanicRecoverStream(),
+			midwares.AuthCheckerStream(),
 			midwares.BasicLoggerStream(),
 		),
 		grpc.KeepaliveParams(keepalive.ServerParameters{

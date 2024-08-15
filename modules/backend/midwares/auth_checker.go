@@ -32,7 +32,7 @@ func GetUserFromCtx(ctx context.Context) *models.User {
 		glgf.Error(err)
 		md, _ := metadata.FromIncomingContext(ctx)
 		storage.Redis().Del(ctx, "LOGIN"+md.Get("Request-Token")[0])
-		panic("Invalid user authed, removing token from redis")
+		return nil
 	}
 	return &user
 }
