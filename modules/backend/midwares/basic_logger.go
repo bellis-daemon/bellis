@@ -2,8 +2,9 @@ package midwares
 
 import (
 	"context"
-	"time"
 	"strings"
+	"time"
+
 	"github.com/minoic/glgf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -45,6 +46,10 @@ func ipFromContext(ctx context.Context) string {
 	md, _ := metadata.FromIncomingContext(ctx)
 	if forwarded := md.Get("X-Forwarded-For"); len(forwarded) > 0 {
 		addr = forwarded[0]
+		index := strings.Index(addr, ",")
+		if index != -1 {
+			addr = addr[:index]
+		}
 	} else {
 		if p, ok := peer.FromContext(ctx); ok {
 			addr, _, _ = strings.Cut(p.Addr.String(), ":")

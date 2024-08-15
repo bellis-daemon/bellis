@@ -16,12 +16,10 @@ import (
 	"github.com/bellis-daemon/bellis/common/openobserve"
 	"github.com/bellis-daemon/bellis/common/storage"
 	"github.com/bellis-daemon/bellis/modules/backend/app/mobile"
-	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/auth"
-	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/entity"
-	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/profile"
+	_ "github.com/bellis-daemon/bellis/modules/backend/app/mobile/all"
 	"github.com/bellis-daemon/bellis/modules/backend/app/web"
 	"github.com/minoic/glgf"
-	"github.com/soheilhy/cmux"
+	"github.com/soheilhy/cmux" 
 )
 
 var (
